@@ -1,0 +1,69 @@
+---
+title: External datasets
+datasets:
+  - name: The Politics of Private Foreign Aid
+    title: "The Politics of Private Foreign Aid"
+    author:
+      - name: Tim Büthe
+        affiliation: Technischen Universität München
+        email: tim.buthe@hfp.tum.de
+      - name: Solomon Major
+        affiliation: Strategic Research Department, U.S. Naval War College
+        email: smajor@stanfordalumni.org
+      - name: André de Mello e Souza 
+        affiliation: Institute for Applied Economic Research, Brasília
+        email: andre.souza@ipea.gov.br
+    url: http://iojournal.org/the-politics-of-private-foreign-aid-humanitarian-principles-economic-development-objectives-and-organizational-interests-in-ngo-private-aid-allocation/
+    filename: "data_raw/BuetheMajorSouza2012/ButheEtAl_ngoaid_IOrep_data"
+    type: dta
+    description: >-
+      Measures distribution of private humanitarian and development aid.
+    citation: >-
+      Büthe, Tim, Solomon Major, and André de Mello e Souza. 2012. "The 
+      Politics of Private Foreign Aid: Humanitarian Principles, Economic 
+      Development Objectives, and Organizational Interests in the Allocation 
+      of Private Aid by NGOs." *International Organization* 66 (4): 571–607. 
+      doi:10.1017/S0020818312000252.
+
+  - name: DPR foreign funding restrictions
+    title: "Foreign funding restrictions"
+    author:
+      - name: Kendra Dupuy
+        affiliation: University of Washington, Seattle
+      - name: James Ron
+        affiliation: University of Minnesota, Twin Cities
+      - name: Aseem Prakash
+        affiliation: University of Washington, Seattle
+    url: http://ssrn.com/abstract=2529620
+    filename: "data_raw/DupuyRonPrakash2014/dpr"
+    type: csv
+    description: >-
+      List of dates of onset of foreign funding restrictions in 45 countries 
+      from 1999–2012. Table 1 from their paper, copied/pasted into CSV.
+    citation: >-
+      Dupuy, Kendra E., James Ron, and Aseem Prakash. 2014. "Stop Meddling in
+      my Country! Governments' Restrictions on Foreign Aid to Non-Governmental
+      Organizations." Working Paper. November 23. Accessed February 18, 2016.
+      http://ssrn.com/abstract=2529620.
+
+  - name: DCJW NGO laws
+    title: "NGO Laws"
+    author:
+      - name: Darin Christensen
+        affiliation: Stanford University
+        email: darin.christensen@gmail.com
+      - name:  Jeremy M. Weinstein
+        affiliation: Stanford University
+        email: jweinst@stanford.edu
+    url: https://darinchristensen.github.io/Data/DCJW_NGO_Laws.xlsx
+    filename: "DCJW NGO Laws/DCJW_NGO_Laws"
+    type: xlsx
+    description: >-
+      Collection of all laws related to general associational rights and
+      barriers to entry, funding, and advocacy for NGOs in 98 countries
+      from 1909–2012
+    citation: >-
+      Christensen, Darin, and Jeremy M. Weinstein. 2013. "Defunding Dissent:
+      Restrictions on Aid to NGOs." *Journal of Democracy 24, no. 2 (April):
+      77–91. doi:10.1353/jod.2013.0026.
+---
