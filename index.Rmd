@@ -10,6 +10,8 @@ output:
     highlight: pygments
     self_contained: yes
     theme: spacelab
+    includes:
+      after_body: html/add_home_link.html
 ---
 
 ```{r setup, include=FALSE}
@@ -22,7 +24,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Manuscript
 
-- Links to drafts and submissions go here
+- [Preliminary hypotheses](Writing/hypotheses.html)
 
 ## Code
 

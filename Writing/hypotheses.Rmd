@@ -1,0 +1,48 @@
+---
+title: "Testable hypotheses"
+author: "Suparna Chaudhry and Andrew Heiss"
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output: 
+  html_document: 
+    css: ../html/fixes.css
+    code_folding: hide
+    toc: yes
+    toc_float: true
+    highlight: pygments
+    self_contained: yes
+    theme: spacelab
+    includes:
+      after_body: ../html/add_home_link.html
+---
+
+## Scaling back
+
+In response to the crackdown on NGOs, bilateral and multilateral donors who channel funds via NGOs to developing countries may end up reducing aid. Restrictive NGO legislation may also make the transfer of private foreign aid to NGOs in the Global South difficult, so we can also expect to see a decline in such kind of transfers.
+
+> **H~1~**: In response to restrictive NGO legislation, bilateral, multilateral, and private donors may reduce their aid to repressive countries.
+
+## Responding to the global pushback
+
+However, it is unlikely to that states, inter-governmental organizations, and funding agencies will simply scale back their operations when faced with repressive legislation in target countries.  In many cases, donors—both state and private—are actively working to find solutions and develop responses to help besieged local NGOs in the Global South. 
+
+As Carothers (2015) points out, scaling back is sometimes only visible with the actual departure of funders from the country. This is the case when a large number of funding organizations such as the MacArthur Foundation and the National Democratic Institute were asked to leave Russia following the 2015 Undesirable Organizations Law. 
+
+However, in cases that are not as high-profile, it is more likely that we should observe subtle changes. Thus, we expect that donors should change the nature of the causes that they support and the organizations that they work with. This is because of two main reasons. First, with increasing restrictions on the nature of activities undertaken by NGOs, donors may find it difficult to find local NGOs that still work on contentious issue areas such as human rights, elections, and other kinds of rights support. Second, with increasing state rhetoric against civil society groups that threaten the security and sovereignty of the state, donors may find it more politically appropriate to increase the amount of funding for 'tame' causes such as education, health, and social service provision.
+
+> **H~2~**: As restrictive laws against NGOs are enacted, donors start increasing funds for 'tamer' causes, and decreasing funds for politically sensitive causes.
+
+Further, due to constraints on registration, funding, and nature of activities undertaken by local NGOs, donor officials may also be more likely to turn to relevant INGOs in order to perform the same task. Previous research by Bush (2015) has shown that American donor officials actually strongly prefer American NGOs in implementing programming abroad. This is because American NGOs are easier to observe and more likely to share donors' preferences. They also mitigate potential implantation problems.
+
+> **H~3~**: As restrictive laws against local NGOs increase, states should be more likely to provide aid to INGOs rather than local NGOs.
+
+Finally, in response to draconian NGO laws, donors may instead start providing more aid to neighboring countries. For instance, following the Russian Foreign Agent law and the Undesirable Organizations Law in 2015 that led to the closure of thousands of domestic NGOs, as well as international groups such as the MacArthur Foundation, National Democratic Institute, and Human Rights, the Prague Civil Society Center has emerged as a bastion to train and coordinate civil society efforts in Russia. Thus, donors—both state and private—may believe that shifting away from having a direct presence in the country implementing restrictive laws—whether in terms of moving offices to the neighboring countries or holding training in adjacent countries, is more likely to achieve organizational goals.
+
+> **H~4~**: As restrictive laws against NGOs in a country are enacted, donors should be more likely to provide aid to neighboring countries.
+
+
+## Alternative explanation: Quality of governance
+
+In countries with weak state institutions, donor expect a higher probability of aid capture and consequently want to channel more funds via NGOs (Dietrich 2013).
+
+> **H~a~**: As countries enact restrictive NGO laws, states are unlikely to reduce funding to NGOs if the country has weak state institutions (though there are probably other ways to word/test this).
+
