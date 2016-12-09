@@ -1,5 +1,4 @@
 # Temporarily ignore data and output
-Data/data_raw/*
 Output/*
 
 # Analysis output
