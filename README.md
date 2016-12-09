@@ -1,6 +1,6 @@
 # Are Funders Really Responding? Analyzing the Impact of Global Restrictions on NGOs
 
-[Suparna Chaudhry](http://www.suparnachaudhry.com/) • Dartmouth College • The John Sloan Dickey Center for International Understanding  
+[Suparna Chaudhry](http://www.suparnachaudhry.com/) • The John Sloan Dickey Center for International Understanding • Dartmouth College  
 [Andrew Heiss](https://www.andrewheiss.com/) • Sanford School of Public Policy • Duke University
 
 ---
