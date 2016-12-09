@@ -1,0 +1,25 @@
+---
+title: "Are Funders Really Responding? Analyzing the Impact of Global Restrictions on NGOs"
+author: "Suparna Chaudhry and Andrew Heiss"
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output: 
+  html_document: 
+    css: html/fixes.css
+    code_folding: hide
+    toc: no
+    highlight: pygments
+    self_contained: yes
+    theme: spacelab
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Analysis
+
+- Links to analysis go here
+
+## Manuscript
+
+- Links to drafts and submissions go here
