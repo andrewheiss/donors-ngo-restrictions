@@ -241,10 +241,28 @@ aiddata.final <- aiddata.clean %>%
   left_join(recipients, by="recipient")
 ```
 
-Summary of clean data from AidData:
+#### List of donors
+
+```{r}
+donors %>% datatable()
+```
+
+#### List of recipients
+
+```{r}
+select(recipients, recipient) %>% datatable()
+```
+
+#### List of purposes
+
+```{r}
+arrange(purposes, desc(n)) %>% datatable()
+```
+
+#### Summary of clean data
 
 ```{r aiddata-summary}
-glimpse(aiddata.clean)
+aiddata.final %>% glimpse()
 ```
 
 ### USAID
