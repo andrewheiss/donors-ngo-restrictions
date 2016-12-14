@@ -21,6 +21,12 @@ In response to the crackdown on NGOs, bilateral and multilateral donors who chan
 
 > **H~1~**: In response to restrictive NGO legislation, bilateral, multilateral, and private donors may reduce their aid to repressive countries.
 
+$$\Delta \text{Overall aid} = \text{NGO legislation} + \text{controls}$$
+
+    Some kind of interrupted time series (normalized to 0-based years) for changes in commitments before/after new legislation
+    
+    Also some kind of direct relationship with CSRE and aid commitments
+
 ## Responding to the global pushback
 
 However, it is unlikely to that states, inter-governmental organizations, and funding agencies will simply scale back their operations when faced with repressive legislation in target countries.  In many cases, donors—both state and private—are actively working to find solutions and develop responses to help besieged local NGOs in the Global South. 
@@ -31,13 +37,19 @@ However, in cases that are not as high-profile, it is more likely that we should
 
 > **H~2~**: As restrictive laws against NGOs are enacted, donors start increasing funds for 'tamer' causes, and decreasing funds for politically sensitive causes.
 
+$$\Delta \text{Aid by issue (contentious | tame)} = \text{NGO legislation} + \text{controls}$$
+
 Further, due to constraints on registration, funding, and nature of activities undertaken by local NGOs, donor officials may also be more likely to turn to relevant INGOs in order to perform the same task. Previous research by Bush (2015) has shown that American donor officials actually strongly prefer American NGOs in implementing programming abroad. This is because American NGOs are easier to observe and more likely to share donors' preferences. They also mitigate potential implantation problems.
 
 > **H~3~**: As restrictive laws against local NGOs increase, states should be more likely to provide aid to INGOs rather than local NGOs.
 
+$$\Delta \text{Aid by scope (domestic | international)} = \text{NGO legislation} + \text{controls}$$
+
 Finally, in response to draconian NGO laws, donors may instead start providing more aid to neighboring countries. For instance, following the Russian Foreign Agent law and the Undesirable Organizations Law in 2015 that led to the closure of thousands of domestic NGOs, as well as international groups such as the MacArthur Foundation, National Democratic Institute, and Human Rights, the Prague Civil Society Center has emerged as a bastion to train and coordinate civil society efforts in Russia. Thus, donors—both state and private—may believe that shifting away from having a direct presence in the country implementing restrictive laws—whether in terms of moving offices to the neighboring countries or holding training in adjacent countries, is more likely to achieve organizational goals.
 
 > **H~4~**: As restrictive laws against NGOs in a country are enacted, donors should be more likely to provide aid to neighboring countries.
+
+$$\Delta \text{Aid to neighboring countries} = \text{NGO legislation in country}_x + \text{controls}$$
 
 
 ## Alternative explanation: Quality of governance
@@ -46,3 +58,4 @@ In countries with weak state institutions, donor expect a higher probability of 
 
 > **H~a~**: As countries enact restrictive NGO laws, states are unlikely to reduce funding to NGOs if the country has weak state institutions (though there are probably other ways to word/test this).
 
+$$\Delta \text{Overall aid} = \text{NGO legislation} + \text{institutional strength; quality of governance; corruption; etc.} + \text{controls}$$
