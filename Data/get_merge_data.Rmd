@@ -28,6 +28,8 @@ library(httr)
 library(countrycode)
 library(pander)
 library(DT)
+library(xml2)
+
 
 panderOptions('table.split.table', Inf)
 panderOptions('table.split.cells', Inf)
@@ -213,6 +215,30 @@ recipients <- aiddata.clean %>%
   # Get rid of tiny countries
   filter(!is.na(gwcode))
 
+# Purposes
+purposes <- aiddata.clean %>%
+  count(coalesced_purpose_name)
+
+# 
+# purposes.url <- "https://www.oecd.org/dac/stats/documentupload/DAC_codeLists.xml"
+# purpose.nodes <- read_xml(purposes.url) %>% xml_find_all("//codelist-item")
+# 
+# purpose.codes <- data_frame(
+#   code = purpose.nodes %>% xml_find_first(".//code") %>% xml_text(),
+#   category = purpose.nodes %>% xml_find_first(".//category") %>% xml_text(),
+#   name = purpose.nodes %>% xml_find_first(".//name") %>% xml_text(),
+#   description = purpose.nodes %>% xml_find_first(".//description") %>% xml_text()
+# )
+# 
+# # Extract the general categories of aid purposes (i.e. the first three digits of the purpose codes)
+# general.codes <- purpose.codes %>%
+#   filter(code %in% as.character(100:1000) & str_detect(name, "^\\d")) %>%
+#   mutate(code = as.integer(code)) %>%
+#   select(purpose.category.code = code, purpose.category.name = name)
+
+aiddata.final <- aiddata.clean %>%
+  left_join(donors, by="donor") %>%
+  left_join(recipients, by="recipient")
 ```
 
 Summary of clean data from AidData:
