@@ -267,7 +267,75 @@ aiddata.final %>% glimpse()
 
 ### USAID
 
-Details about their data
+USAID provides the complete dataset for its [Foreign Aid Explorer](https://explorer.usaid.gov/aid-dashboard.html) as a [giant CSV file](https://explorer.usaid.gov/data.html). The data includes both economic and military aid, but it's easy to filter out the military aid. Here we only look at obligations, not disbursements, so that the data is comparable to the OECD data from AidData.
+
+```{r load-usaid, message=FALSE}
+usaid.url <- "https://explorer.usaid.gov/prepared/us_foreign_aid_complete.csv"
+usaid.path <- file.path(PROJHOME, "Data", "data_raw", "USAID")
+usaid.name <- basename(usaid.url)
+
+# Download USAID data if needed
+if (!file.exists(file.path(usaid.path, usaid.name))) {
+  usaid.get <- GET(usaid.url, 
+                   write_disk(file.path(usaid.path, usaid.name),
+                              overwrite=TRUE), 
+                   progress())
+}
+
+# Clean up USAID data
+usaid.raw <- read_csv(file.path(usaid.path, usaid.name),
+                      na = c("", "NA", "NULL"))
+
+usaid.clean <- usaid.raw %>%
+  filter(assistance_category_name == "Economic") %>%
+  filter(transaction_type_name == "Obligations")
+
+# Get rid of this because it's huge and taking up lots of memory
+rm(usaid.raw)
+```
+
+#### Implementing agencies
+
+Here are the US government agencies giving out money:
+
+```{r}
+implementing.agencies <- usaid.clean %>%
+  count(implementing_agency_name, subagency_name) %>%
+  arrange(desc(n), implementing_agency_name)
+
+implementing.agencies %>% datatable()
+```
+
+
+#### Activities
+
+The activities listed don't follow any standard coding guidelines. There are tens of thousands of them. Here are the first 100, just for reference:
+
+```{r}
+activities <- usaid.clean %>%
+  count(activity_name) %>%
+  slice(1:100)
+
+activities %>% datatable()
+```
+
+#### Channels
+
+USAID distinguishes between domestic, foreign, and international NGOs, companies, multilateral organizations, etc. recipients (or channels) of money:
+
+```{r}
+channels <- usaid.clean %>%
+  count(channel_category_name, channel_subcategory_name) %>%
+  filter(!is.na(channel_category_name))
+
+channels %>% datatable(options=list(pageLength=20))
+```
+
+#### Summary of clean data
+
+```{r usaid-summary}
+usaid.clean %>% glimpse()
+```
 
 
 ## NGO regulations
