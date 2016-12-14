@@ -463,7 +463,81 @@ V-Dem or QoG
 
 GDP per capita
 
-### Other stuff
+### Former colonial status
 
+[Paul Hensel has collected data](http://www.paulhensel.org/icowcol.html) on each country's former colonial status, indicating both a given country's primary colonial ruler and the last colonial ruler prior to independence. The dataset also includes an estimated date of independence.
+
+Colonial status could matter for aid, with donor countries favoring former colonies (i.e. France might be more likely to donate to former African colonies; Spain might be more likely to donate to Latin America; etc.)
+
+Because there are so many columns, the data below has been horizontally collapsed—click on the green plus sign to see the rest of the data in a row.
+
+```{r load-colonial-status, message=FALSE}
+col.url <- "http://www.paulhensel.org/Data/colhist.zip"
+col.path <- file.path(PROJHOME, "Data", "data_raw")
+col.zip.name <- basename(col.url)
+col.name <- tools::file_path_sans_ext(col.zip.name)
+
+col.final.name <- "coldata100.csv"
+col.full.path <- file.path(col.path, "ICOW Colonial History 1.0", 
+                           col.final.name)
+
+# Download ICOW data if needed
+if (!file.exists(col.full.path)) {
+  col.get <- GET(col.url, 
+                 write_disk(file.path(col.path, col.zip.name),
+                            overwrite=TRUE), 
+                 progress())
+  unzip(file.path(col.path, col.zip.name), exdir=col.path)
+  
+  file.remove(file.path(col.path, col.zip.name))
+}
+
+col.raw <- read_csv(col.full.path, na="-9",
+                    col_types=cols(
+                      State = col_integer(),
+                      Name = col_character(),
+                      ColRuler = col_integer(),
+                      IndFrom = col_integer(),
+                      IndDate = col_integer(),
+                      IndViol = col_integer(),
+                      IndType = col_integer(),
+                      SecFrom = col_integer(),
+                      SecDate = col_integer(),
+                      SecViol = col_integer(),
+                      Into = col_integer(),
+                      IntoDate = col_integer(),
+                      COWsys = col_integer(),
+                      GWsys = col_integer(),
+                      Notes = col_character()
+                    )) 
+
+col.clean <- col.raw %>%
+  # Independence dates with unknown months are coded as 00, which makes
+  # lubridate choke. So change those to 01
+  mutate(IndDate.clean = str_replace(IndDate, "00$", "01")) %>%
+  # Years less than 1000 make lubridate choke, so preface them with a 0
+  mutate(IndDate.clean = ifelse(nchar(IndDate.clean) == 5, 
+                                paste0(0, IndDate.clean), IndDate.clean)) %>%
+  mutate(IndDate = ymd(paste0(IndDate.clean, "01"))) %>%
+  left_join(select(gw.codes, iso3, cowcode, country.name),
+            by=c("State" = "cowcode")) %>%
+  left_join(select(gw.codes, col.ruler.cowcode = cowcode, 
+                   col.ruler.iso3 = iso3, 
+                   col.ruler.country.name = country.name),
+            by=c("ColRuler" = "col.ruler.cowcode")) %>%
+  left_join(select(gw.codes, ind.from.cowcode = cowcode,
+                   ind.from.iso3 = iso3, 
+                   ind.from.country.name = country.name),
+            by=c("IndFrom" = "ind.from.cowcode")) %>%
+  select(cowcode = State, country.name, col.ind.date = IndDate,
+         col.ruler.country.name, col.ruler.cowcode = ColRuler, col.ruler.iso3,
+         ind.from.country.name, ind.from.cowcode = IndFrom, ind.from.iso3) %>%
+  # Get rid of smaller ancient states like Tuscany, Parma, and Zanzibar
+  filter(!is.na(country.name))
+
+col.clean %>% datatable(extensions="Responsive")
+
+col.clean %>% glimpse()
+```
 
 ## Final clean combined data
