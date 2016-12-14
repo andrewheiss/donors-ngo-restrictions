@@ -36,6 +36,67 @@ panderOptions('table.style', 'multiline')
 panderOptions('table.alignment.default', 'left')
 ```
 
+## Consistent country names
+
+This is a perpetual nightmare in IR data. Here's a master lookup table of COW codes, ISO3 codes, and Gleditsch Ward codes. 
+
+Gleditsch and Ward do not include a bunch of countries, so I create my own codes for relevant countries that appear in other datasets:
+
+- Somaliland: 521
+- Palestine (West Bank): 667
+- Palestine (Gaza): 668
+- Palestine (both): 669
+- Hong Kong: 715
+
+Also, [following Gleditsch and Ward](http://privatewww.essex.ac.uk/~ksg/data/iisyst_casedesc.pdf), I treat Serbia as 340 and Serbia & Montenegro as a continuation of Yugoslavia, or 345.
+
+```{r}
+# Gleditsch Ward codes
+gw.date <- "%d:%m:%Y"
+gw.states <- read_tsv("http://privatewww.essex.ac.uk/~ksg/data/iisystem.dat",
+                      col_names=c("gwcode", "cowc", "country.name",
+                                  "date.start", "date.end"),
+                      col_types=cols(
+                        gwcode = col_integer(),
+                        cowc = col_character(),
+                        country.name = col_character(),
+                        date.start = col_date(format=gw.date),
+                        date.end = col_date(format=gw.date)
+                      ),
+                      locale=locale(encoding="windows-1252"))
+
+gw.microstates <- read_tsv("http://privatewww.essex.ac.uk/~ksg/data/microstatessystem.dat",
+                           col_names=c("gwcode", "cowc", "country.name",
+                                       "date.start", "date.end"),
+                           col_types=cols(
+                             gwcode = col_integer(),
+                             cowc = col_character(),
+                             country.name = col_character(),
+                             date.start = col_date(format=gw.date),
+                             date.end = col_date(format=gw.date)
+                           ),
+                           locale=locale(encoding="windows-1252"))
+
+gw.codes <- bind_rows(gw.states, gw.microstates) %>%
+  mutate(iso3 = countrycode(gwcode, "cown", "iso3c")) %>%
+  mutate(iso3 = case_when(
+           .$gwcode == 340 ~ "SRB",
+           .$gwcode == 347 ~ "XKX",
+           .$gwcode == 678 ~ "YEM",
+           TRUE ~ .$iso3)) %>%
+  mutate(iso3 = ifelse(is.na(iso3), 
+                       countrycode(country.name, "country.name", "iso3c"), iso3)) %>%
+  # Get rid of old, tiny, and non-statey states
+  filter(!is.na(iso3)) %>%
+  select(gwcode, country.name, iso3) %>%
+  group_by(gwcode) %>%
+  slice(n()) %>%  # Get the most recent country definition
+  ungroup()
+
+gw.codes %>% datatable()
+```
+
+
 ## Foreign aid
 
 ### OECD and AidData
