@@ -175,9 +175,31 @@ aiddata.clean <- aiddata.raw %>%
                            ignore_case=TRUE))) %>%
   filter(year < 9999)
 
-# TODO: Categorize donors by country, IGO, multilateral, private, etc.
-donors <- aiddata.raw %>%
-  distinct(donor)
+# Donor, recipient, and purpose details
+# I pulled these country names out of the dropdown menu at OECD.Stat Table 2a online
+dac.donors <- c("Australia", "Austria", "Belgium", "Canada", "Czech Republic",
+                "Denmark", "Finland", "France", "Germany", "Greece", "Iceland",
+                "Ireland", "Italy", "Japan", "Korea", "Luxembourg", "Netherlands",
+                "New Zealand", "Norway", "Poland", "Portugal", "Slovak Republic",
+                "Slovenia", "Spain", "Sweden", "Switzerland", "United Kingdom",
+                "United States")
+
+non.dac.donors <- c("Bulgaria", "Croatia", "Cyprus", "Estonia", "Hungary",
+                    "Israel", "Kazakhstan", "Kuwait", "Latvia", "Liechtenstein",
+                    "Lithuania", "Malta", "Romania", "Russia", "Saudi Arabia",
+                    "Chinese Taipei", "Thailand", "Timor Leste", "Turkey",
+                    "United Arab Emirates")
+
+other.countries <- c("Brazil", "Chile", "Colombia", "India", "Monaco", "Qatar",
+                     "South Africa", "Taiwan")
+
+donors <- aiddata.clean %>%
+  distinct(donor) %>%
+  mutate(donor.type = case_when(
+    .$donor %in% c(dac.donors, non.dac.donors, other.countries) ~ "Country",
+    .$donor == "Bill & Melinda Gates Foundation" ~ "Private donor",
+    TRUE ~ "Multilateral or IGO"
+  ))
 
 recipients <- aiddata.clean %>%
   distinct(recipient) %>%
