@@ -18,6 +18,10 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Data
+
+- [Data cleaning and merging](Data/get_merge_data.html)
+
 ## Analysis
 
 - Links to analysis go here
