@@ -402,7 +402,55 @@ V-Dem
 
 ## Neighboring states
 
-That one R package
+Calculate three types of distance between all countries with the [`CShapes` R package](https://cran.r-project.org/package=cshapes): mimimum distance, capital distance, and centroid distance. Because this takes a really long time, it's best to run `PROJHOME/Data/get_distances.R` separately elsewhere first (like on a VPS) and then save the resulting `.rds` files in `PROJHOME/Data/data_raw/Country Distances`. 
+
+The `all.distances` data frame below contains all three distance types between every country and every other country in 2012 (though it could potentially include distances from 1991–2015). This is used later to weight variables by distance. It also includes an indicator variable called `is.rough.neighbor` that is true if the two countries are less than 900 km apart, which captures neighbor relationships better than simple contiguous borders.
+
+```{r load-cshapes, message=FALSE, cache=TRUE}
+distance.folder <- file.path(PROJHOME, "Data", "data_raw", "Country distances")
+
+read_distances <- function(type, year) {
+  stopifnot(year >= 1990, year <= 2015)
+  stopifnot(type %in% c("capital", "cent", "min"))
+
+  # Read in the RDS file for the type and year
+  matrix.raw <- readRDS(file.path(distance.folder,
+                                  paste0(type, "_", year, "-01-01.rds")))
+
+  # Convert distance matrix to long dataframe
+  df.clean <- as.data.frame(matrix.raw) %>%
+    mutate(gwcode = rownames(.)) %>%
+    gather(gwcode.other, distance, -gwcode) %>%
+    # Set inverted diagonal 0s to 0, real 0s to 1
+    mutate(distance.inv = ifelse(gwcode == gwcode.other & distance == 0, 0,
+                                 ifelse(gwcode != gwcode.other & distance == 0, 1,
+                                        1 / distance))) %>%
+    mutate(type = type, year = year) %>%
+    mutate_each(funs(as.numeric), starts_with("gwcode")) %>%
+    # Mark if country is within 900 km
+    mutate(is.rough.neighbor = distance < 900) %>%
+    # Standardize inverted distances so that all rows within a country add to 1
+    # so that it can be used in weighted.mean.
+    # This is the same as calculating the row sum of the matrix
+    group_by(gwcode) %>%
+    mutate(distance.std = distance.inv / sum(distance.inv)) %>%
+    ungroup() %>%
+    left_join(gw.codes, by="gwcode") %>%
+    left_join(gw.codes, by=c("gwcode.other"="gwcode"),
+              suffix=c(".self", ".other"))
+
+  return(df.clean)
+}
+
+# Load and combine all distance matrices
+all.distances <- expand.grid(year = 2012,
+                             type = c("capital", "cent", "min"),
+                             stringsAsFactors=FALSE) %>%
+  rowwise() %>% do(read_distances(.$type, .$year)) %>% ungroup()
+
+all.distances %>% glimpse()
+```
+
 
 ## Quality of governance
 
