@@ -50,7 +50,7 @@ Gleditsch and Ward do not include a bunch of countries, so I create my own codes
 
 Also, [following Gleditsch and Ward](http://privatewww.essex.ac.uk/~ksg/data/iisyst_casedesc.pdf), I treat Serbia as 340 and Serbia & Montenegro as a continuation of Yugoslavia, or 345.
 
-```{r}
+```{r load-gwcodes, message=FALSE}
 # Gleditsch Ward codes
 gw.date <- "%d:%m:%Y"
 gw.states <- read_tsv("http://privatewww.essex.ac.uk/~ksg/data/iisystem.dat",
@@ -187,7 +187,7 @@ recipients <- aiddata.clean %>%
     .$recipient == "Serbia and Montenegro" ~ "YUG",
     TRUE ~ .$iso3
   )) %>%
-  left_join(gw.codes) %>%
+  left_join(gw.codes, by="iso3") %>%
   # Get rid of tiny countries
   filter(!is.na(gwcode))
 
