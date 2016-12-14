@@ -3,6 +3,7 @@ Output/*
 
 # Analysis output
 index.html
+Data/**.html
 
 # Manuscript output
 Writing/**.docx

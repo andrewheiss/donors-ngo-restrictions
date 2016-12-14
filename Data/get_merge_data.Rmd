@@ -1,0 +1,150 @@
+---
+title: "Get, clean, and merge data"
+author: "Suparna Chaudhry and Andrew Heiss"
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output: 
+  html_document: 
+    css: ../html/fixes.css
+    code_folding: hide
+    toc: yes
+    toc_float: true
+    toc_depth: 4
+    highlight: pygments
+    self_contained: yes
+    theme: spacelab
+    includes:
+      after_body: ../html/add_home_link.html
+---
+
+```{r load-libraries, message=FALSE}
+knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
+                      tidy.opts=list(width.cutoff=120),  # For code
+                      options(width=120))  # For output
+
+library(tidyverse)
+library(stringr)
+library(lubridate)
+library(httr)
+library(countrycode)
+library(pander)
+library(DT)
+
+panderOptions('table.split.table', Inf)
+panderOptions('table.split.cells', Inf)
+panderOptions('keep.line.breaks', TRUE)
+panderOptions('table.style', 'multiline')
+panderOptions('table.alignment.default', 'left')
+```
+
+## Foreign aid
+
+### OECD and AidData
+
+The OECD collects detailed data on all foreign aid flows (ODA) from OECD member countries (and some non-member countries), mulilateral organizations, and the Bill and Melinda Gates Foundation (for some reason they're the only nonprofit donor) to all DAC-eligible countries (and some non non-DAC-eligible countries). 
+
+The OECD tracks all this in a centralized Creditor Reporting System database and provides a nice front end for it at [OECD.Stat](http://stats.oecd.org/) with an open (but inscrutable) API ([raw CRS data](http://stats.oecd.org/DownloadFiles.aspx?HideTopMenu=yes&DatasetCode=CRS1) is also available). There are a set of pre-built queries with information about ODA flows by donor, recipient, and sector (purpose), but the pre-built data sources do not include all dimensions of the data. For example, [Table DAC2a](http://stats.oecd.org/Index.aspx?DataSetCode=TABLE2A) includes columns for donor, recipient, year, and total ODA (e.g. the US gave \$X to Nigeria in 2008) , but does not indicate the purpose/sector for the ODA. [Table DAC5](http://stats.oecd.org/Index.aspx?DataSetCode=TABLE5) includes columns for the donor, sector, year, and total ODA (e.g. the US gave \$X for education in 2008), but does not include recipient information. 
+
+Instead of using these pre-built queries or attempting to manipulate their parameters, it's possible to use the [OECD's QWIDS query builder](https://stats.oecd.org/qwids/) to create a custom download of data. However, it is slow and clunky and requires singificant munging and filtering after exporting. 
+
+The solution to all of this is to use [data from AidData](http://aiddata.org/aiddata-research-releases), which imports raw data from the OECD, cleans it, verifies it, and makes it freely available on GitHub.
+
+AidData offers multiple versions of the data, including a full release, a thin release, aggregated donor/recipient/year data, and aggregated donor/recipient/year/purpose data. For the purposes of this study, all we care about are ODA flows by donor, recipient, year, and purpose, which is one of the ready-made datasets. 
+
+Notably, this aggregated data shows total aid *commitments*, not aid *disbursements*. Both types of ODA information are available from the OECD and it's possible to get them using OECD's raw data. However, [AidData notes](http://aiddata.org/faqs-about-our-data) that disbursment data is sticky and slow—projects take a long time to fulfil and actual inflows of aid in a year can be tied to commitments made years before. Because we're interested in donor reactions to restrictions on NGOs, any reaction would be visible in the decision to commit money to aid, not in the ultimate disbursement of aid, which is most likely already legally obligated and allocated to the country regardless of restrictions.
+
+So, we look at ODA *commitments*.
+
+```{r load-aiddata, message=FALSE}
+aiddata.url <- "https://github.com/AidData-WM/public_datasets/releases/download/v3.0/AidDataCore_ResearchRelease_Level1_v3.0.zip"
+aiddata.path <- file.path(PROJHOME, "Data", "data_raw", "AidData")
+aiddata.zip.name <- basename(aiddata.url)
+aiddata.name <- tools::file_path_sans_ext(aiddata.zip.name)
+
+aiddata.final.name <- "AidDataCoreDonorRecipientYearPurpose_ResearchRelease_Level1_v3.0.csv"
+
+# Download AidData data if needed
+if (!file.exists(file.path(aiddata.path, aiddata.final.name))) {
+  aiddata.get <- GET(aiddata.url, 
+                     write_disk(file.path(aiddata.path, aiddata.zip.name),
+                                overwrite=TRUE), 
+                     progress())
+  unzip(file.path(aiddata.path, aiddata.zip.name), exdir=aiddata.path)
+  
+  # Clean up zip file and unnecessary CSV files
+  file.remove(file.path(aiddata.path, aiddata.zip.name))
+  list.files(aiddata.path, pattern="csv", full.names=TRUE) %>%
+    map(~ ifelse(str_detect(.x, "DonorRecipientYearPurpose"), 0,
+                 file.remove(file.path(.x))))
+}
+
+# Clean up AidData data
+aiddata.raw <- read_csv(file.path(aiddata.path, aiddata.final.name),
+                        col_types=cols(
+                          donor = col_character(),
+                          recipient = col_character(),
+                          year = col_integer(),
+                          coalesced_purpose_code = col_double(),
+                          coalesced_purpose_name = col_character(),
+                          commitment_amount_usd_constant_sum = col_double()
+                        ))
+
+aiddata.clean <- aiddata.raw %>%
+  # Get rid of non-country recipients
+  filter(!str_detect(recipient,
+                     regex("regional|unspecified|multi|value|global|commission", 
+                           ignore_case=TRUE))) %>%
+  filter(year < 9999)
+
+# TODO: Categorize donors by country, IGO, multilateral, private, etc.
+donors <- aiddata.raw %>%
+  distinct(donor)
+
+# TODO: Get cowcodes for missing countries
+recipients <- aiddata.clean %>%
+  distinct(recipient) %>%
+  mutate(cowcode = countrycode(recipient, "country.name", "cown"),
+         country.name = countrycode(cowcode, "cown", "country.name"))
+
+```
+
+Summary of clean data from AidData:
+
+```{r aiddata-summary}
+glimpse(aiddata.clean)
+```
+
+### USAID
+
+Details about their data
+
+
+## NGO regulations
+
+### NGO legislation
+
+Christensen and Weinstein
+
+### Civil society regulatory environment
+
+V-Dem
+
+
+## Neighboring states
+
+That one R package
+
+## Quality of governance
+
+V-Dem or QoG
+
+
+## Other controls
+
+### World Bank
+
+GDP per capita
+
+### Other stuff
+
+
+## Final clean combined data
