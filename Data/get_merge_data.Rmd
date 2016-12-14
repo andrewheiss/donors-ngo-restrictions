@@ -78,20 +78,39 @@ gw.microstates <- read_tsv("http://privatewww.essex.ac.uk/~ksg/data/microstatess
                            locale=locale(encoding="windows-1252"))
 
 gw.codes <- bind_rows(gw.states, gw.microstates) %>%
-  mutate(iso3 = countrycode(gwcode, "cown", "iso3c")) %>%
+  filter(date.end > ymd("2000-01-01")) %>%
+  # Help out countrycode() 
+  mutate(country.name = recode(country.name,
+                               `Vietnam, Democratic Republic of` = "Vietnam",
+                               `Yemen (Arab Republic of Yemen)` = "Yemen")) %>%
+  mutate(iso3 = countrycode(country.name, "country.name", "iso3c"),
+         cowcode = countrycode(iso3, "iso3c", "cown")) %>%
   mutate(iso3 = case_when(
-           .$gwcode == 340 ~ "SRB",
-           .$gwcode == 347 ~ "XKX",
-           .$gwcode == 678 ~ "YEM",
-           TRUE ~ .$iso3)) %>%
-  mutate(iso3 = ifelse(is.na(iso3), 
-                       countrycode(country.name, "country.name", "iso3c"), iso3)) %>%
-  # Get rid of old, tiny, and non-statey states
+    .$gwcode == 340 ~ "SRB",
+    .$gwcode == 347 ~ "XKK",
+    TRUE ~ .$iso3
+  )) %>%
+  mutate(cowcode = case_when(
+    .$gwcode == 340 ~ as.integer(340),
+    .$gwcode == 347 ~ as.integer(347),
+    TRUE ~ .$cowcode
+  )) %>%
   filter(!is.na(iso3)) %>%
-  select(gwcode, country.name, iso3) %>%
-  group_by(gwcode) %>%
-  slice(n()) %>%  # Get the most recent country definition
-  ungroup()
+  mutate(country.name = countrycode(iso3, "iso3c", "country.name"),
+         country.name = ifelse(iso3 == "XKK", "Kosovo", country.name)) %>%
+  select(country.name, iso3, gwcode, cowcode)
+
+manual.gw <- tribble(
+  ~country.name,            ~iso3,   ~gwcode,  ~cowcode,
+  "Somaliland",             "SOL",   521,      521,     
+  "Palestine (West Bank)",  "PWB",   667,      667,     
+  "Palestine (Gaza)",       "PGZ",   668,      668,     
+  "Palestine",              "PSE",   669,      669,     
+  "Hong Kong",              "HKG",   715,      715
+)
+
+gw.codes <- bind_rows(gw.codes, manual.gw) %>% 
+  arrange(country.name)
 
 gw.codes %>% datatable()
 ```
@@ -160,11 +179,17 @@ aiddata.clean <- aiddata.raw %>%
 donors <- aiddata.raw %>%
   distinct(donor)
 
-# TODO: Get cowcodes for missing countries
 recipients <- aiddata.clean %>%
   distinct(recipient) %>%
-  mutate(cowcode = countrycode(recipient, "country.name", "cown"),
-         country.name = countrycode(cowcode, "cown", "country.name"))
+  mutate(iso3 = countrycode(recipient, "country.name", "iso3c")) %>%
+  mutate(iso3 = case_when(
+    .$recipient == "Kosovo" ~ "XKX",
+    .$recipient == "Serbia and Montenegro" ~ "YUG",
+    TRUE ~ .$iso3
+  )) %>%
+  left_join(gw.codes) %>%
+  # Get rid of tiny countries
+  filter(!is.na(gwcode))
 
 ```
 
