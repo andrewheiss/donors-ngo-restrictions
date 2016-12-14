@@ -269,7 +269,7 @@ aiddata.final %>% glimpse()
 
 USAID provides the complete dataset for its [Foreign Aid Explorer](https://explorer.usaid.gov/aid-dashboard.html) as a [giant CSV file](https://explorer.usaid.gov/data.html). The data includes both economic and military aid, but it's easy to filter out the military aid. Here we only look at obligations, not disbursements, so that the data is comparable to the OECD data from AidData.
 
-```{r load-usaid, message=FALSE}
+```{r load-usaid, message=FALSE, cache=TRUE}
 usaid.url <- "https://explorer.usaid.gov/prepared/us_foreign_aid_complete.csv"
 usaid.path <- file.path(PROJHOME, "Data", "data_raw", "USAID")
 usaid.name <- basename(usaid.url)

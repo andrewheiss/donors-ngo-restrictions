@@ -3,7 +3,12 @@ Output/*
 
 # Analysis output
 index.html
+Analysis/**.html
+Analysis/**_files/*
+Analysis/**_cache/*
 Data/**.html
+Data/**_files/*
+Data/**_cache/*
 
 # Manuscript output
 Writing/**.docx
