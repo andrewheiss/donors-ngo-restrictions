@@ -28,6 +28,7 @@ library(httr)
 library(countrycode)
 library(pander)
 library(DT)
+library(WDI)
 library(xml2)
 
 
@@ -464,9 +465,35 @@ V-Dem or QoG
 
 ## Other controls
 
-### World Bank
+### World Bank development indicators
 
-GDP per capita
+The World Bank has a fantastic API for [their statistical indicators](http://data.worldbank.org/) and there's already [a nice R package](https://cran.r-project.org/package=WDI) for accessing it, so downloading indicators is trivial. For the sake of our models, we care about GDP per capita as a proxy for a country's overall development. We also collect a few other relevant variables just for fun.
+
+```{r load-wdi, cache=TRUE}
+wdi.indicators <- c("NY.GDP.PCAP.KD",        # GDP per capita (constant 2010 USD)
+                    "NY.GDP.MKTP.KD",        # GDP (constant 2010 USD)
+                    "SP.POP.TOTL",           # Population, total
+                    "BX.KLT.DINV.WD.GD.ZS")  # Foreign direct investment, net inflows (% of GDP)
+
+# Get all countries and regions because the World Bank chokes on ISO codes like
+# XK for Kosovo, even though it returns data for Kosovo with the XK code
+# ¯\_(ツ)_/¯
+wdi.raw <- WDI(country="all", wdi.indicators,
+               extra=FALSE, start=1990, end=2015)
+
+# Filter countries here instead
+wdi.clean <- wdi.raw %>%
+  filter(iso2c %in% unique(gw.codes$iso2)) %>%
+  arrange(iso2c, year) %>%
+  rename(gdp.capita = NY.GDP.PCAP.KD, gdp = NY.GDP.MKTP.KD,
+         population = SP.POP.TOTL, fdi.in.pct.gdp = BX.KLT.DINV.WD.GD.ZS) %>%
+  mutate_at(vars(gdp.capita, gdp, population), funs(log=log1p))
+
+wdi.clean %>% datatable(extensions="Responsive")
+
+wdi.clean %>% glimpse()
+```
+
 
 ### Former colonial status
 
