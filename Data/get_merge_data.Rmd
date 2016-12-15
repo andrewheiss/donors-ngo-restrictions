@@ -40,7 +40,7 @@ panderOptions('table.alignment.default', 'left')
 
 ## Consistent country names
 
-This is a perpetual nightmare in IR data. Here's a master lookup table of COW codes, ISO3 codes, and Gleditsch Ward codes. 
+This is a perpetual nightmare in IR data. Here's a master lookup table of COW codes, ISO3 codes, ISO2 codes, and Gleditsch Ward codes. 
 
 Gleditsch and Ward do not include a bunch of countries, so I create my own codes for relevant countries that appear in other datasets:
 
@@ -86,11 +86,16 @@ gw.codes <- bind_rows(gw.states, gw.microstates) %>%
                                `Vietnam, Democratic Republic of` = "Vietnam",
                                `Yemen (Arab Republic of Yemen)` = "Yemen")) %>%
   mutate(iso3 = countrycode(country.name, "country.name", "iso3c"),
+         iso2 = countrycode(iso3, "iso3c", "iso2c"),
          cowcode = countrycode(iso3, "iso3c", "cown")) %>%
   mutate(iso3 = case_when(
     .$gwcode == 340 ~ "SRB",
     .$gwcode == 347 ~ "XKK",
     TRUE ~ .$iso3
+  )) %>%
+  mutate(iso2 = case_when(
+    .$gwcode == 347 ~ "XK",
+    TRUE ~ .$iso2
   )) %>%
   mutate(cowcode = case_when(
     .$gwcode == 340 ~ as.integer(340),
@@ -100,15 +105,15 @@ gw.codes <- bind_rows(gw.states, gw.microstates) %>%
   filter(!is.na(iso3)) %>%
   mutate(country.name = countrycode(iso3, "iso3c", "country.name"),
          country.name = ifelse(iso3 == "XKK", "Kosovo", country.name)) %>%
-  select(country.name, iso3, gwcode, cowcode)
+  select(country.name, iso3, iso2, gwcode, cowcode)
 
 manual.gw <- tribble(
-  ~country.name,            ~iso3,   ~gwcode,  ~cowcode,
-  "Somaliland",             "SOL",   521,      521,     
-  "Palestine (West Bank)",  "PWB",   667,      667,     
-  "Palestine (Gaza)",       "PGZ",   668,      668,     
-  "Palestine",              "PSE",   669,      669,     
-  "Hong Kong",              "HKG",   715,      715
+  ~country.name,            ~iso3,  ~iso2,   ~gwcode,  ~cowcode,
+  "Somaliland",             "SOL",  NA,      521,      521,     
+  "Palestine (West Bank)",  "PWB",  NA,      667,      667,     
+  "Palestine (Gaza)",       "PGZ",  NA,      668,      668,     
+  "Palestine",              "PSE",  "PS",    669,      669,     
+  "Hong Kong",              "HKG",  "HK",    715,      715
 )
 
 gw.codes <- bind_rows(gw.codes, manual.gw) %>% 
