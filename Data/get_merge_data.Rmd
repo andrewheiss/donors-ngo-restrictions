@@ -476,7 +476,7 @@ Colonial status could matter for aid, with donor countries favoring former colon
 
 Because there are so many columns, the data below has been horizontally collapsed—click on the green plus sign to see the rest of the data in a row.
 
-```{r load-colonial-status, message=FALSE}
+```{r load-colonial-status, message=FALSE, cache=TRUE}
 col.url <- "http://www.paulhensel.org/Data/colhist.zip"
 col.path <- file.path(PROJHOME, "Data", "data_raw")
 col.zip.name <- basename(col.url)
