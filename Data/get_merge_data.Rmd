@@ -26,6 +26,7 @@ library(stringr)
 library(lubridate)
 library(httr)
 library(countrycode)
+library(readxl)
 library(pander)
 library(DT)
 library(WDI)
@@ -399,7 +400,170 @@ usaid.clean %>% glimpse()
 
 ### NGO legislation
 
-Christensen and Weinstein
+In 2013, Darin Christensen and Jeremy Weinstein collected [detailed data](https://darinchristensen.github.io/research/#protest-and-repression) on NGO regulations for [their *Journal of Democracy* article](http://www.journalofdemocracy.org/article/defunding-dissent-restrictions-aid-ngos). Suparna Chaudhry expanded this data as part of her dissertation research, but wants her data embargoed until some of her work is publsihed. To prevent data leakage, the code to make minor manual adjustments is included in an untracked file and not made public.
+
+The code below will still work on the original Christensen and Weinstein data, but it will (obviously) not include Chaudhry's expanded data.
+
+```{r load-dcjw, warning=FALSE}
+# Original DCJW data
+dcjw.orig.path <- file.path(PROJHOME, "Data", "data_raw", "DCJW NGO Laws",
+                            "DCJW_NGO_Laws.xlsx")
+
+dcjw.orig <- read_excel(dcjw.orig.path)[,1:50] %>%
+  select(-c(dplyr::contains("source"), dplyr::contains("burden"), 
+            dplyr::contains("subset"), Coder, Date))
+
+
+# Tidy DCJW data
+dcjw.path <- file.path(PROJHOME, "Data", "data_raw", "DCJW NGO Laws",
+                       "Admn Crackdown_updated.xlsx")
+
+dcjw.questions.clean <- tribble(
+  ~question,  ~question_clean,
+  "q_1a",     "const_assoc",
+  "q_1b",     "politcial_parties",
+  "q_2a",     "ngo_register",
+  "q_2b",     "ngo_register_burden",
+  "q_2c",     "ngo_register_appeal",
+  "q_2d",     "ngo_barrier_foreign_funds",
+  "q_3a",     "ngo_disclose_funds",
+  "q_3b",     "ngo_foreign_fund_approval",
+  "q_3c",     "ngo_foreign_fund_channel",
+  "q_3d",     "ngo_foreign_fund_restrict",
+  "q_3e",     "ngo_foreign_fund_prohibit",
+  "q_3f",     "ngo_type_foreign_fund_prohibit",
+  "q_4a",     "ngo_politics",
+  "q_4b",     "ngo_politics_intimitation",
+  "q_4c",     "ngo_politics_foreign_fund"
+)
+
+dcjw.barriers.clean <- tribble(
+  ~question_cat,  ~barrier,
+  "1",            "association",
+  "2",            "entry",
+  "3",            "funding",
+  "4",            "advocacy"
+)
+
+dcjw <- read_excel(dcjw.path)[,1:50] %>%
+  select(-c(dplyr::contains("source"), dplyr::contains("burden"), 
+            dplyr::contains("subset"), Coder, Date)) %>%
+  gather(key, value, -Country) %>%
+  separate(key, c("question", "var.name"), 4) %>%
+  filter(!is.na(Country)) %>%
+  mutate(var.name = ifelse(var.name == "", "value", gsub("_", "", var.name))) %>%
+  spread(var.name, value) %>%
+  # Get rid of rows where year is missing and regulation was not imposed
+  filter(!(is.na(year) & value == 0)) %>%
+  # Some entries have multiple years; for now just use the first year
+  mutate(year = str_split(year, ",")) %>% unnest(year) %>% 
+  group_by(Country, question) %>% slice(1) %>% ungroup() %>%
+  mutate(value = as.integer(value), year = as.integer(year)) %>%
+  # If year is missing but some regulation exists, assume it has always already
+  # existed (since 1950, arbitrarily)
+  mutate(year = ifelse(is.na(year), 1950, year))
+
+potential.dcjw.panel.question <- dcjw %>%
+  tidyr::expand(Country, question, 
+                year = min(.$year, na.rm=TRUE):2015)
+
+dcjw.panel.all.laws <- dcjw %>%
+  right_join(potential.dcjw.panel.question,
+             by=c("Country", "question", "year"))
+
+# Suparna Chaudry updated the original DCJW data, but wants the data embargoed 
+# until some of her dissertation is published. To prevent data leakage onto the
+# internet, minor manual adjustments are included in a hidden file here instead
+# of this main file.
+source(file.path(PROJHOME, "Data", "data_raw", "DCJW NGO Laws",
+                 "chaudhry_manual_changes.R"))
+
+dcjw.panel.all.laws <- dcjw.panel.all.laws %>%
+  group_by(Country, question) %>%
+  # Bring most recent legislation forward
+  mutate(value = zoo::na.locf(value, na.rm=FALSE)) %>%
+  # Assume NAs are 0s
+  # mutate(value = ifelse(is.na(value), as.integer(0), value)) %>%
+  spread(question, value) %>%
+  ungroup()
+
+potential.dcjw.panel.barrier <- potential.dcjw.panel.question %>%
+  mutate(question_cat = substr(question, 3, 3)) %>%
+  left_join(dcjw.barriers.clean, by="question_cat") %>%
+  distinct(Country, year, barrier)
+
+dcjw.panel.barriers <- dcjw.panel.all.laws %>%
+  gather(question, value, -Country, -year) %>%
+  mutate(question_cat = substr(question, 3, 3)) %>%
+  left_join(dcjw.barriers.clean, by="question_cat") %>%
+  # Make an index for each type of barrier
+  mutate(value = case_when(
+    # Reverse values for associational rights
+    .$question == "q_1a" & .$value == 0 ~ as.integer(1),
+    .$question == "q_1a" & .$value == 1 ~ as.integer(0),
+    .$question == "q_1b" & .$value == 0 ~ as.integer(1),
+    .$question == "q_1b" & .$value == 1 ~ as.integer(0),
+    # Reverse value for q_2c
+    .$question == "q_2c" & .$value == 0 ~ as.integer(1),
+    .$question == "q_2c" & .$value == 1 ~ as.integer(0),
+    TRUE ~ .$value
+  )) %>%
+  group_by(Country, year, barrier) %>%
+  # Add up all the barriers for each country year
+  # Use a floor of zero to account for negative values
+  summarise(index = sum(value, na.rm=TRUE)) %>%
+  mutate(index = ifelse(index < 0, as.integer(0), index)) %>%
+  # Join with full possible panel
+  right_join(potential.dcjw.panel.barrier,
+             by=c("Country", "barrier", "year")) %>%
+  spread(barrier, index) %>%
+  ungroup() %>%
+  # Standardize barrier indexes by dividing by maximum number possible
+  mutate(association.std = association / 2,
+         entry.std = entry / 4,
+         funding.std = funding / 8,
+         advocacy.std = advocacy / 4) %>%
+  mutate(barriers.total = advocacy + association + entry + funding,
+         barriers.std.total = advocacy.std + association.std + entry.std + funding.std)
+
+dcjw.full <- dcjw.panel.all.laws %>%
+  left_join(dcjw.panel.barriers, by=c("Country", "year")) %>%
+  # Lop off the ancient observations
+  filter(year > 1980) %>%
+  # Rename q_* variables
+  rename_(.dots = setNames(dcjw.questions.clean$question, 
+                           dcjw.questions.clean$question_clean)) %>%
+  # Add additional variables
+  mutate(Country = countrycode(Country, "country.name", "country.name"),
+         cowcode = countrycode(Country, "country.name", "cown"),
+         cowcode = ifelse(Country == "Serbia", 340, cowcode)) %>%
+  select(country.name = Country, cowcode, year, everything())
+```
+
+Chaudhry's data augments Christensen and Weinstein's data substantially. Christensen and Weinstein include information for `r nrow(dcjw.orig)` countries, while Chaudhry includes `r length(unique(dcjw.full$country.name))` countries.
+
+In addition to panel data on the presence or absence of specific NGO regulations, we create several indexes for each of the categories of regulation, [following Christensen and Weinstein's classification](https://darinchristensen.github.io/Data/DCJW_Codebook.pdf):
+
+- `association` (Q1a, Q1b; 2 points maximum): barriers to associational rights
+    - Q1a and Q1b are reversed, so *not* having the constitutional right to assembly earns 1 point. 
+- `entry` (Q2a, Q2b, Q2c, Q2d; 4 points maximum): barriers to entry
+    - Q2c is reversed, so *not* being allowed to appeal registration status earns 1 point.
+- `funding` (Q3a, Q3b, Q3c, Q3d, Q3e, Q3f; 8 points maximum): barriers to funding
+- `advocacy` (Q4a, Q4b, Q4c; 4 points maximum): barriers to advocacy
+- `barriers.total` (18 points maximum, though actual max is `r max(dcjw.full$barriers.total)`): sum of all four indexes
+
+These indexes are also standardized by dividing by the maximum, yielding the following variables:
+
+- `association.std`: 1 point maximum, actual max = `r max(dcjw.full$association.std)`
+- `entry.std`: 1 point maximum, actual max = `r max(dcjw.full$entry.std)`
+- `funding.std`: 1 point maximum, actual max = `r max(dcjw.full$funding.std)`
+- `advocacy.std`: 1 point maximum, actual max = `r max(dcjw.full$advocacy.std)`
+- `barriers.std.total`: 4 points maximum, actual max = `r max(dcjw.full$barriers.std.total)`
+
+```{r dcjw-glimpse}
+dcjw.full %>% glimpse()
+```
+
 
 ### Civil society regulatory environment
 
