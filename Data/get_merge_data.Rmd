@@ -25,6 +25,7 @@ library(tidyverse)
 library(stringr)
 library(lubridate)
 library(httr)
+library(rvest)
 library(countrycode)
 library(readxl)
 library(pander)
@@ -814,5 +815,125 @@ col.clean %>% datatable(extensions="Responsive")
 
 col.clean %>% glimpse()
 ```
+
+
+### Natural disasters
+
+Natural disaster data comes from the [International Disaster Database (EM-DAT)](http://www.emdat.be/database). The data includes the number of deaths, injuries, homeless displacements, and monetary losses (in 2000 dollars) for a huge number of natural and technological disasters (see [EM-DAT's full classification](http://www.emdat.be/classification)).
+
+Natural disasters could matter for aid too, since donor countries might increase their aid to countries suffering more. 
+
+EM-DAT does not provide a single link to download their data. Instead, you have to create a query using [their advanced search form](http://www.emdat.be/advanced_search/index.html). We downloaded data using the following query:
+
+- Select all countries from up to 2016
+- Select all three disaster classification groups (natural, technological, complex)
+- Group results by country name, year, and disaster type
+- Download CSV and save in `PROJHOME/Data/data_raw/Disasters/Data.csv`
+
+
+```{r load-disasters, message=FALSE}
+# Disaster classification
+disaster.classification.raw <- "http://www.emdat.be/classification" %>%
+  read_html() %>%
+  html_nodes(xpath='//*[@id="article-14627"]/div/div/div/div/table[1]') %>%
+  html_table(header=TRUE)
+
+# For whatever reason, the downloaded data treats technological subgroups as
+# main types (e.g. "industrial accident" is listed as a disaster type, not
+# "chemical spill" or "fire" or whatever). So, make a new column of the actual
+# disaster type using the real type for natural disasters and the subgroup for
+# non-natural disasters.
+#
+# Also, add a couple rows for complex and miscellaneous disasters
+disaster.classification <- disaster.classification.raw[[1]] %>%
+  select(-Definition) %>%
+  mutate_all(funs(str_trim(str_to_lower(.)))) %>%
+  # Fix typo
+  mutate(`Disaster Subgroup` = ifelse(`Disaster Subgroup` == "miscelleanous accident",
+                                      "miscellaneous accident", `Disaster Subgroup`)) %>%
+  mutate(`Actual Type` = ifelse(`Disaster Group` == "natural", 
+                                `Disaster Main Type`, `Disaster Subgroup`)) %>%
+  distinct(`Disaster Group`, `Disaster Subgroup`, `Actual Type`) %>%
+  bind_rows(tribble(
+    ~`Disaster Group`, ~`Disaster Subgroup`, ~`Actual Type`,
+    "complex",         "complex disasters",  "complex disasters"
+  ))
+
+# Disaster data
+# http://www.emdat.be/advanced_search/index.html
+
+# Select all countries from whenever to 2016
+# Select all three disaster classification groups (natural, technological, complex)
+# Group results by country name, year, and disaster type
+# Download CSV and save in PROJHOME/Data/data_raw/Disasters
+
+disasters.raw <- read_csv(file.path(PROJHOME, "Data", "data_raw", 
+                                    "Disasters", "data.csv"),
+                          skip=1)  # First row is junk
+
+# Read in disaster data and join with classification data
+disasters <- disasters.raw %>%
+  mutate(`disaster type` = str_trim(str_to_lower(`disaster type`))) %>%
+  mutate(`disaster type` = ifelse(`disaster type` == "mass movement (dry)",
+                                  "mass movement", `disaster type`)) %>%
+  left_join(disaster.classification, by=c("disaster type"="Actual Type")) %>%
+  mutate(iso = str_to_upper(iso), 
+         cowcode = countrycode(iso, "iso3c", "cown")) %>%
+  mutate(cowcode = case_when(
+    .$iso == "HKG" ~ as.integer(715),
+    .$iso == "DFR" ~ as.integer(255),
+    .$iso == "PSE" ~ as.integer(669),
+    .$iso == "SUN" ~ as.integer(365),
+    .$iso == "YMN" ~ as.integer(679),
+    .$iso == "SRB" ~ as.integer(340),
+    .$iso == "SCG" ~ as.integer(345),
+    TRUE ~ .$cowcode
+  )) %>%
+  # Get rid of tiny countries
+  filter(!is.na(cowcode)) %>%
+  # Fix missing names (collapsing old Germanies, Yemens, and USSR)
+  mutate(country_name = countrycode(iso, "iso3c", "country.name")) %>%
+  mutate(country_name = case_when(
+    .$iso == "DFR" ~ "Germany",
+    .$iso == "SCG" ~ "Yugoslavia",
+    .$iso == "SUN" ~ "Russia",
+    .$iso == "YMN" ~ "Yemen",
+    TRUE ~ country_name
+  )) %>%
+  # Fix ISOs
+  mutate(iso = countrycode(country_name, "country.name", "iso3c")) %>%
+  select(country_name, year, iso3 = iso, cowcode, disaster.type = `disaster type`, 
+         disaster.group = `Disaster Group`, disaster.subgroup = `Disaster Subgroup`,
+         disaster.occurrence = occurrence, disaster.deaths = `Total deaths`,
+         disaster.injured = `Injured`, disaster.affected = `Affected`,
+         disaster.homeless = `Homeless`, disaster.total.affected = `Total affected`,
+         disaster.total.damage = `Total damage`) %>%
+  filter(disaster.group != "complex")
+```
+
+```{r}
+# Summarize disaster variables by country, year, and type/group/subgroup
+disaster.vars <- vars(disaster.occurrence, disaster.deaths, disaster.injured, 
+                      disaster.affected, disaster.homeless, disaster.total.affected,
+                      disaster.total.damage)
+
+disasters.groups <- disasters %>%
+  group_by(country_name, cowcode, year, disaster.group) %>%
+  summarise_at(disaster.vars, funs(sum(., na.rm=TRUE))) %>%
+  ungroup() %>%
+  gather(key, value, disaster.occurrence, disaster.deaths, disaster.injured, 
+                      disaster.affected, disaster.homeless, disaster.total.affected,
+                      disaster.total.damage) %>%
+  unite(key, disaster.group, key) %>%
+  spread(key, value) %>%
+  filter(year > 1990)
+
+disasters.groups %>% datatable(extensions="Responsive")
+```
+
+```{r}
+disasters.groups %>% glimpse()
+```
+
 
 ## Final clean combined data
