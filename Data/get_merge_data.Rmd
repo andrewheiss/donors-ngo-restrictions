@@ -209,7 +209,13 @@ donors <- aiddata.clean %>%
     .$donor %in% c(dac.donors, non.dac.donors, other.countries) ~ "Country",
     .$donor == "Bill & Melinda Gates Foundation" ~ "Private donor",
     TRUE ~ "Multilateral or IGO"
-  ))
+  )) %>%
+  mutate(donor.cowcode = ifelse(donor.type == "Country",
+                                countrycode(donor, "country.name", "cown"),
+                                NA),
+         donor.iso3 = ifelse(donor.type == "Country",
+                             countrycode(donor, "country.name", "iso3c"),
+                             NA))
 
 recipients <- aiddata.clean %>%
   distinct(recipient) %>%
