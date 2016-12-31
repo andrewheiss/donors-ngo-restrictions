@@ -967,7 +967,8 @@ donor.type.total <- donor.level.data %>%
   # Make a full panel and fill with 0s
   right_join(expand(., cowcode, year), by=c("cowcode", "year")) %>%
   mutate_at(vars(starts_with("aid")), funs(ifelse(is.na(.), 0, .))) %>%
-  mutate(aid.total = aid.country + aid.igo + aid.private)
+  mutate(aid.total = aid.country + aid.igo + aid.private) %>%
+  mutate_at(vars(starts_with("aid")), funs(log = log1p(.)))
 
 # TODO: Determine purposes (tame vs. contentious)
 # donor.purpose.total <- donor.level.data %>%
