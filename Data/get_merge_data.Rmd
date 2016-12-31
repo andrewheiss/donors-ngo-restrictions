@@ -252,7 +252,12 @@ purposes <- aiddata.clean %>%
 
 aiddata.final <- aiddata.clean %>%
   left_join(donors, by="donor") %>%
-  left_join(recipients, by="recipient")
+  left_join(recipients, by="recipient") %>%
+  select(donor, donor.type, donor.cowcode, donor.iso3, year,
+         country.name, cowcode, gwcode, iso2, iso3,
+         oda.total = commitment_amount_usd_constant_sum,
+         coalesced_purpose_code, coalesced_purpose_name) %>%
+  arrange(cowcode, year)
 ```
 
 #### List of donors
