@@ -734,7 +734,7 @@ wdi.indicators <- c("NY.GDP.PCAP.KD",        # GDP per capita (constant 2010 USD
 # XK for Kosovo, even though it returns data for Kosovo with the XK code
 # ¯\_(ツ)_/¯
 wdi.raw <- WDI(country="all", wdi.indicators,
-               extra=FALSE, start=1990, end=2015)
+               extra=FALSE, start=1980, end=2015)
 
 # Filter countries here instead
 wdi.clean <- wdi.raw %>%
