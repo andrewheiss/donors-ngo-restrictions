@@ -930,7 +930,7 @@ disaster.vars <- vars(disaster.occurrence, disaster.deaths, disaster.injured,
                       disaster.total.damage)
 
 disasters.groups <- disasters %>%
-  group_by(country_name, cowcode, year, disaster.group) %>%
+  group_by(cowcode, year, disaster.group) %>%
   summarise_at(disaster.vars, funs(sum(., na.rm=TRUE))) %>%
   ungroup() %>%
   gather(key, value, disaster.occurrence, disaster.deaths, disaster.injured, 
@@ -938,7 +938,7 @@ disasters.groups <- disasters %>%
                       disaster.total.damage) %>%
   unite(key, disaster.group, key) %>%
   spread(key, value) %>%
-  filter(year > 1990)
+  filter(year > 1980, year < 2016)
 
 disasters.groups %>% datatable(extensions="Responsive")
 ```
