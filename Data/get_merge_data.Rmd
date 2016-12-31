@@ -964,6 +964,7 @@ donor.type.total <- donor.level.data %>%
                              `Multilateral or IGO` = "aid.igo",
                              `Private donor` = "aid.private")) %>%
   spread(donor.type, total.aid) %>%
+  # Make a full panel and fill with 0s
   right_join(expand(., cowcode, year), by=c("cowcode", "year")) %>%
   mutate_at(vars(starts_with("aid")), funs(ifelse(is.na(.), 0, .))) %>%
   mutate(aid.total = aid.country + aid.igo + aid.private)
