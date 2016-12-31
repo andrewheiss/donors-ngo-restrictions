@@ -949,3 +949,19 @@ disasters.groups %>% glimpse()
 
 
 ## Final clean combined data
+
+```{r build-final-data}
+# Country data
+# Use DCJW 1980+ as base data, since we're limited to the countries included there
+country.level.data <- dcjw.full %>%
+  left_join(select(vdem.cso, year, cowcode, csre), by=c("cowcode", "year")) %>%
+  # TODO: Quality of governance + Polity stuff
+  left_join(select(wdi.clean, -c(iso2c, country)), by=c("cowcode", "year")) %>%
+  left_join(select(col.clean, -country.name), by=c("cowcode")) %>%
+  left_join(select(disasters.groups, cowcode, year, starts_with("natural_")), 
+            by=c("cowcode", "year")) %>%
+  # NAs in disasters are really 0, especially when occurrence is 0
+  mutate_at(vars(starts_with("natural_")), funs(ifelse(is.na(.), 0, .)))
+
+testthat::expect_equal(nrow(country.level.data), nrow(dcjw.full))
+```
