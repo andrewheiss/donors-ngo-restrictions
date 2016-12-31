@@ -215,7 +215,7 @@ recipients <- aiddata.clean %>%
   distinct(recipient) %>%
   mutate(iso3 = countrycode(recipient, "country.name", "iso3c")) %>%
   mutate(iso3 = case_when(
-    .$recipient == "Kosovo" ~ "XKX",
+    .$recipient == "Kosovo" ~ "XKK",
     .$recipient == "Serbia and Montenegro" ~ "YUG",
     TRUE ~ .$iso3
   )) %>%
