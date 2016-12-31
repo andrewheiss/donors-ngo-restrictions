@@ -742,7 +742,8 @@ wdi.clean <- wdi.raw %>%
   arrange(iso2c, year) %>%
   rename(gdp.capita = NY.GDP.PCAP.KD, gdp = NY.GDP.MKTP.KD,
          population = SP.POP.TOTL, fdi.in.pct.gdp = BX.KLT.DINV.WD.GD.ZS) %>%
-  mutate_at(vars(gdp.capita, gdp, population), funs(log=log1p))
+  mutate_at(vars(gdp.capita, gdp, population), funs(log=log1p)) %>%
+  left_join(select(gw.codes, iso2, cowcode), by=c("iso2c" = "iso2"))
 
 wdi.clean %>% datatable(extensions="Responsive")
 
