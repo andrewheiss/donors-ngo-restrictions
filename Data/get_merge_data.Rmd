@@ -144,7 +144,7 @@ Notably, this aggregated data shows total aid *commitments*, not aid *disburseme
 
 So, we look at ODA *commitments*.
 
-```{r load-aiddata, message=FALSE}
+```{r load-aiddata, message=FALSE, warning=FALSE}
 aiddata.url <- "https://github.com/AidData-WM/public_datasets/releases/download/v3.0/AidDataCore_ResearchRelease_Level1_v3.0.zip"
 aiddata.path <- file.path(PROJHOME, "Data", "data_raw", "AidData")
 aiddata.zip.name <- basename(aiddata.url)
