@@ -599,6 +599,15 @@ These indexes are also standardized by dividing by the maximum, yielding the fol
 dcjw.full %>% glimpse()
 ```
 
+#### Missingness
+
+There is some missing data, even with backfilling data since we only backfill columns where a country has *some* observation (i.e. if there is never a value for a question in a country, all values are NA rather than the default). But when creating the indexes, these missing values are ignored, so there are no missing index values.
+
+```{r dcjw-missing, fig.width=7, fig.height=5}
+# https://github.com/njtierney/visdat
+visdat::vis_miss(dcjw.full) + theme(legend.position="top")
+```
+
 
 ### Civil society regulatory environment
 
