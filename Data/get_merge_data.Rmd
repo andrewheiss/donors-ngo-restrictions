@@ -183,7 +183,8 @@ aiddata.clean <- aiddata.raw %>%
   filter(!str_detect(recipient,
                      regex("regional|unspecified|multi|value|global|commission", 
                            ignore_case=TRUE))) %>%
-  filter(year < 9999)
+  filter(year < 9999) %>%
+  mutate(purpose.code.short = as.integer(str_sub(coalesced_purpose_code, 1, 3)))
 
 # Donor, recipient, and purpose details
 # I pulled these country names out of the dropdown menu at OECD.Stat Table 2a online
@@ -231,31 +232,68 @@ recipients <- aiddata.clean %>%
 
 # Purposes
 purposes <- aiddata.clean %>%
-  count(coalesced_purpose_name)
+  count(coalesced_purpose_name, coalesced_purpose_code)
 
-# 
-# purposes.url <- "https://www.oecd.org/dac/stats/documentupload/DAC_codeLists.xml"
-# purpose.nodes <- read_xml(purposes.url) %>% xml_find_all("//codelist-item")
-# 
-# purpose.codes <- data_frame(
-#   code = purpose.nodes %>% xml_find_first(".//code") %>% xml_text(),
-#   category = purpose.nodes %>% xml_find_first(".//category") %>% xml_text(),
-#   name = purpose.nodes %>% xml_find_first(".//name") %>% xml_text(),
-#   description = purpose.nodes %>% xml_find_first(".//description") %>% xml_text()
-# )
-# 
-# # Extract the general categories of aid purposes (i.e. the first three digits of the purpose codes)
-# general.codes <- purpose.codes %>%
-#   filter(code %in% as.character(100:1000) & str_detect(name, "^\\d")) %>%
-#   mutate(code = as.integer(code)) %>%
-#   select(purpose.category.code = code, purpose.category.name = name)
+purposes.url <- "https://www.oecd.org/dac/stats/documentupload/DAC_codeLists.xml"
+purpose.nodes <- read_xml(purposes.url) %>% xml_find_all("//codelist-item")
+
+purpose.codes <- data_frame(
+  code = purpose.nodes %>% xml_find_first(".//code") %>% xml_text(),
+  category = purpose.nodes %>% xml_find_first(".//category") %>% xml_text(),
+  name = purpose.nodes %>% xml_find_first(".//name") %>% xml_text(),
+  description = purpose.nodes %>% xml_find_first(".//description") %>% xml_text()
+) %>%
+  mutate(code = as.integer(code))
+
+# Extract the general categories of aid purposes (i.e. the first three digits of the purpose codes)
+general.codes <- purpose.codes %>%
+  filter(code %in% as.character(100:1000) & str_detect(name, "^\\d")) %>%
+  mutate(code = as.integer(code)) %>%
+  select(purpose.code.short = code, purpose.category.name = name) %>%
+  mutate(purpose.category.clean = str_replace(purpose.category.name,
+                                              "\\d\\.\\d ", "")) %>%
+  separate(purpose.category.clean,
+           into=c("purpose.sector", "purpose.category"), 
+           sep=", ") %>%
+  mutate_at(vars(c(purpose.sector, purpose.category)), funs(str_to_title(.))) %>%
+  select(-purpose.category.name)
+
+# These 7 codes are weird and get filtered out inadvertantly
+codes.not.in.oecd.list <- tribble(
+  ~purpose.code.short, ~purpose.sector, ~purpose.category,
+  100,                 "Social",        "Social Infrastructure",
+  200,                 "Eco",           "Economic Infrastructure",
+  300,                 "Prod",          "Production",
+  310,                 "Prod",          "Agriculture",
+  320,                 "Prod",          "Industry",
+  420,                 "Multisector",   "Women in development",
+  # NB: This actually is splict between 92010 (domestic NGOs), 92020
+  # (international NGOs), and 92030 (local and regional NGOs)
+  920,                 "Non Sector",    "Support to NGOs"
+)
+
+purpose.codes.clean <- general.codes %>%
+  bind_rows(codes.not.in.oecd.list) %>%
+  arrange(purpose.code.short) %>%
+  mutate(purpose.contentiousness = "")
+
+# Manually code contentiousness of purposes
+write_csv(purpose.codes.clean,
+          file.path(PROJHOME, "Data", "data_clean",
+                    "purpose_codes_contention_WILL_BE_OVERWRITTEN.csv"))
+
+purpose.codes.contentiousness <- read_csv(file.path(PROJHOME, "Data", "data_clean",
+                                                    "purpose_codes_contention.csv"))
 
 aiddata.final <- aiddata.clean %>%
   left_join(donors, by="donor") %>%
   left_join(recipients, by="recipient") %>%
+  left_join(purpose.codes.contentiousness, by="purpose.code.short") %>%
   select(donor, donor.type, donor.cowcode, donor.iso3, year,
          country.name, cowcode, gwcode, iso2, iso3,
          oda.total = commitment_amount_usd_constant_sum,
+         purpose.code.short, purpose.sector, purpose.category,
+         purpose.contentiousness,
          coalesced_purpose_code, coalesced_purpose_name) %>%
   arrange(cowcode, year)
 ```
@@ -1002,10 +1040,16 @@ donor.type.total <- donor.level.data %>%
   mutate(aid.total = aid.country + aid.igo + aid.private) %>%
   mutate_at(vars(starts_with("aid")), funs(log = log1p(.)))
 
-# TODO: Determine purposes (tame vs. contentious)
-# donor.purpose.total <- donor.level.data %>%
-#   group_by(cowcode, purpose.type, year) %>%
-#   summarise(total.aid = sum(oda.total, na.rm=TRUE))
+donor.purpose.total <- donor.level.data %>%
+  group_by(cowcode, purpose.contentiousness, year) %>%
+  summarise(total.aid = sum(oda.total, na.rm=TRUE)) %>%
+  ungroup() %>%
+  mutate(purpose.contentiousness = recode(purpose.contentiousness,
+                                          High = "contention.high",
+                                          Low = "contention.low")) %>%
+  spread(purpose.contentiousness, total.aid) %>%
+  mutate_at(vars(starts_with("contention")), funs(ifelse(is.na(.), 0, .))) %>%
+  mutate_at(vars(starts_with("contention")), funs(log = log1p(.)))
 
 # TODO: Aid by scope (domestic NGO vs. international NGO)
 # donor.level.data.us <- usaid.clean
