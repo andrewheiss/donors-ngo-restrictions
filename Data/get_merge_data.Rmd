@@ -721,7 +721,7 @@ vdem.cso.min <- vdem.cso %>%
          starts_with("v2csreprss"), starts_with("v2cseeorgs")) %>%
   arrange(cowcode, year)
 
-vdem.cso.min %>% datatable(extensions="Responsive")
+vdem.cso.min %>% head(100) %>% datatable(extensions="Responsive")
 ```
 
 #### Summary of clean data
@@ -815,7 +815,7 @@ wdi.clean <- wdi.raw %>%
   mutate_at(vars(gdp.capita, gdp, population), funs(log=log1p)) %>%
   left_join(select(gw.codes, iso2, cowcode), by=c("iso2c" = "iso2"))
 
-wdi.clean %>% datatable(extensions="Responsive")
+wdi.clean %>% head(100) %>% datatable(extensions="Responsive")
 
 wdi.clean %>% glimpse()
 ```
@@ -1010,7 +1010,7 @@ disasters.groups <- disasters %>%
   spread(key, value) %>%
   filter(year > 1980, year < 2016)
 
-disasters.groups %>% datatable(extensions="Responsive")
+disasters.groups %>% head(100) %>% datatable(extensions="Responsive")
 ```
 
 ```{r}
