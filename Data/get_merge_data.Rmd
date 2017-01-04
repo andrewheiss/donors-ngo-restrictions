@@ -494,9 +494,32 @@ dcjw.panel.all.laws <- dcjw.panel.all.laws %>%
   group_by(Country, question) %>%
   # Bring most recent legislation forward
   mutate(value = zoo::na.locf(value, na.rm=FALSE)) %>%
-  # Assume NAs are 0s
-  # mutate(value = ifelse(is.na(value), as.integer(0), value)) %>%
-  spread(question, value) %>%
+  mutate(not.all.na = !all(is.na(value))) %>%
+  ungroup() %>%
+  # Set defaults for columns that aren't all NA
+  # I could be fancy and consolidate these conditionals into just one, but this
+  # gives us more flexibility to set different defaults per law (like how q_2b
+  # or q_4c might be better as NA_integer_ instead of 0)
+  mutate(value.fixed = case_when(
+    .$not.all.na & is.na(value) & .$question == "q_1a" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_1b" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_2a" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_2b" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_2c" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_2d" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_3a" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_3b" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_3c" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_3d" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_3e" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_3f" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_4a" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_4b" ~ as.integer(0),
+    .$not.all.na & is.na(value) & .$question == "q_4c" ~ as.integer(0),
+    TRUE ~ .$value
+  )) %>%
+  select(-not.all.na, -value) %>%
+  spread(question, value.fixed) %>%
   ungroup()
 
 potential.dcjw.panel.barrier <- potential.dcjw.panel.question %>%
