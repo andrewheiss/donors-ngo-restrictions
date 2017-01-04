@@ -32,7 +32,9 @@ library(pander)
 library(DT)
 library(WDI)
 library(xml2)
+library(ggstance)
 
+source(file.path(PROJHOME, "lib", "graphics.R"))
 
 panderOptions('table.split.table', Inf)
 panderOptions('table.split.cells', Inf)
@@ -291,7 +293,7 @@ aiddata.final <- aiddata.clean %>%
   left_join(purpose.codes.contentiousness, by="purpose.code.short") %>%
   select(donor, donor.type, donor.cowcode, donor.iso3, year,
          country.name, cowcode, gwcode, iso2, iso3,
-         oda.total = commitment_amount_usd_constant_sum,
+         oda = commitment_amount_usd_constant_sum,
          purpose.code.short, purpose.sector, purpose.category,
          purpose.contentiousness,
          coalesced_purpose_code, coalesced_purpose_name) %>%
@@ -643,7 +645,10 @@ There is some missing data, even with backfilling data since we only backfill co
 
 ```{r dcjw-missing, fig.width=7, fig.height=5}
 # https://github.com/njtierney/visdat
-visdat::vis_miss(dcjw.full) + theme(legend.position="top")
+visdat::vis_miss(dcjw.full) + 
+  theme_donors() +
+  theme(legend.position="top",
+        axis.text.x=element_text(angle=45, vjust=1, hjust=1))
 ```
 
 
@@ -1020,36 +1025,17 @@ disasters.groups %>% glimpse()
 
 ## Final clean combined data
 
+With both donor- and country-level data, we have lots of different options for analysis. Since our hypotheses deal with questions of *donor* responses, the data we use to model donor responses uses donor-years as the unit of observation. Not all donors give money to the same countries, so this final data is not a complete panel (i.e. it does not include every combination of donors and years), which will pose some interesting methodological issues when modeling.
+
 ```{r build-final-data}
 # Donor data
 donor.level.data <- aiddata.final %>%
   filter(cowcode %in% dcjw.full$cowcode) %>%
-  filter(year > 1980)
+  filter(year > 1980) %>%
+  filter(oda > 0) %>%  # Only look at positive aid
+  mutate(oda_log = log1p(oda))
 
-donor.type.total <- donor.level.data %>%
-  group_by(cowcode, donor.type, year) %>%
-  summarise(total.aid = sum(oda.total, na.rm=TRUE)) %>%
-  ungroup() %>%
-  mutate(donor.type = recode(donor.type, Country = "aid.country", 
-                             `Multilateral or IGO` = "aid.igo",
-                             `Private donor` = "aid.private")) %>%
-  spread(donor.type, total.aid) %>%
-  # Make a full panel and fill with 0s
-  right_join(expand(., cowcode, year), by=c("cowcode", "year")) %>%
-  mutate_at(vars(starts_with("aid")), funs(ifelse(is.na(.), 0, .))) %>%
-  mutate(aid.total = aid.country + aid.igo + aid.private) %>%
-  mutate_at(vars(starts_with("aid")), funs(log = log1p(.)))
-
-donor.purpose.total <- donor.level.data %>%
-  group_by(cowcode, purpose.contentiousness, year) %>%
-  summarise(total.aid = sum(oda.total, na.rm=TRUE)) %>%
-  ungroup() %>%
-  mutate(purpose.contentiousness = recode(purpose.contentiousness,
-                                          High = "contention.high",
-                                          Low = "contention.low")) %>%
-  spread(purpose.contentiousness, total.aid) %>%
-  mutate_at(vars(starts_with("contention")), funs(ifelse(is.na(.), 0, .))) %>%
-  mutate_at(vars(starts_with("contention")), funs(log = log1p(.)))
+# TODO: Indicator for changes in laws, year since change
 
 # TODO: Aid by scope (domestic NGO vs. international NGO)
 # donor.level.data.us <- usaid.clean
@@ -1060,7 +1046,6 @@ donor.purpose.total <- donor.level.data %>%
 # Use DCJW 1980+ as base data, since we're limited to the countries included there
 country.level.data <- dcjw.full %>%
   left_join(select(vdem.cso, year, cowcode, csre), by=c("cowcode", "year")) %>%
-  left_join(donor.type.total, by=c("cowcode", "year")) %>%
   # TODO: Quality of governance + Polity stuff
   left_join(select(wdi.clean, -c(iso2c, country)), by=c("cowcode", "year")) %>%
   left_join(select(col.clean, -country.name), by=c("cowcode")) %>%
@@ -1068,6 +1053,53 @@ country.level.data <- dcjw.full %>%
             by=c("cowcode", "year")) %>%
   # NAs in disasters are really 0, especially when occurrence is 0
   mutate_at(vars(starts_with("natural_")), funs(ifelse(is.na(.), 0, .)))
-
 testthat::expect_equal(nrow(country.level.data), nrow(dcjw.full))
+
+# Combine country and donor data
+donor.country.data <- donor.level.data %>%
+  left_join(select(country.level.data, -country.name), by=c("year", "cowcode")) %>%
+  mutate(former.colony = donor.iso3 == col.ruler.iso3 | 
+           donor.iso3 == ind.from.iso3) %>%
+  arrange(donor, year)
+testthat::expect_equal(nrow(donor.country.data), nrow(donor.level.data))
+
+donor.country.data %>% head(100) %>% datatable(extensions="Responsive")
+
+donor.country.data %>% glimpse()
+```
+
+### Missingness in final data
+
+This data is relatively complete, with only a few variables suffering from missing data. The worst offenders are the DCJW laws, which we conservatively left as missing if the law never appears as 0 or 1 in the data. If we assume that the missingness of a law indicates its absence, those variables will be far more complete.
+
+```{r final-data-missing, fig.width=6, fig.height=4.5}
+percent.missing <- donor.country.data %>%
+  mutate_all(funs(is.na(.))) %>%
+  gather(variable, value) %>%
+  group_by(variable) %>%
+  summarise(perc.missing = sum(value) / n()) %>%
+  ungroup() %>%
+  mutate(variable = factor(variable, levels=rev(colnames(donor.country.data)),
+                           ordered=TRUE)) %>%
+  arrange(desc(variable)) %>%
+  mutate(row.name = 1:n())
+
+# Split into columns because there are so many variables
+n.cols <- 2
+perc.missing.rows <- 1:nrow(percent.missing)
+perc.missing.cols <- split(perc.missing.rows,
+                           cut(perc.missing.rows,
+                               quantile(perc.missing.rows, (0:n.cols) / n.cols),
+                               include.lowest=TRUE, labels=FALSE)) %>%
+  as_data_frame() %>% gather(column, row.name)
+
+percent.missing <- percent.missing %>%
+  left_join(perc.missing.cols, by="row.name")
+
+ggplot(percent.missing, aes(x=perc.missing, y=variable)) +
+  geom_barh(stat="identity") + 
+  scale_x_continuous(labels=scales::percent, limits=c(0, 1)) + 
+  labs(x="Percent missing", y=NULL) + 
+  facet_wrap(~ column, nrow=1, scales="free_y") +
+  theme_donors() + theme(strip.text=element_blank())
 ```
