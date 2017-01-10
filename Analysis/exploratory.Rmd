@@ -112,3 +112,37 @@ ggplot(df.restrictions.type, aes(x=year, y=value, colour=barrier)) +
 
 ## Aid
 
+### Aid over time, by donor type
+
+```{r aid-by-donor}
+aid.donor.type.time <- df.donor.country %>%
+  group_by(year, donor.type.collapsed) %>%
+  summarise(total.aid = sum(oda, na.rm=TRUE))
+
+ggplot(aid.donor.type.time, aes(x=year, y=total.aid / 1000000000,
+                                colour=donor.type.collapsed)) +
+  geom_line() +
+  labs(x=NULL, y="Billions of USD",
+       caption="Source: OECD and AidData. 2011 dollars.") +
+  guides(colour=guide_legend(title=NULL)) +
+  scale_y_continuous(labels=scales::dollar) + 
+  theme_donors()
+```
+
+### Aid over time, by contentiousness
+
+```{r aid-by-contention}
+aid.contention.time <- df.donor.country %>%
+  group_by(year, purpose.contentiousness) %>%
+  summarise(total.aid = sum(oda, na.rm=TRUE))
+
+ggplot(aid.contention.time, aes(x=year, y=total.aid / 1000000000,
+                                colour=purpose.contentiousness)) +
+  geom_line() +
+  labs(x=NULL, y="Billions of USD",
+       caption="Source: OECD and AidData. 2011 dollars.") +
+  guides(colour=guide_legend(title=NULL)) +
+  scale_y_continuous(labels=scales::dollar) + 
+  theme_donors()
+```
+
