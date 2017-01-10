@@ -24,7 +24,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Analysis
 
-- Links to analysis go here
+- [Exploratory data analysis](Analysis/exploratory.html)
 
 ## Manuscript
 
