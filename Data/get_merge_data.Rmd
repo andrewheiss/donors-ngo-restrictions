@@ -28,19 +28,13 @@ library(httr)
 library(rvest)
 library(countrycode)
 library(readxl)
-library(pander)
 library(DT)
 library(WDI)
 library(xml2)
 library(ggstance)
 
 source(file.path(PROJHOME, "lib", "graphics.R"))
-
-panderOptions('table.split.table', Inf)
-panderOptions('table.split.cells', Inf)
-panderOptions('keep.line.breaks', TRUE)
-panderOptions('table.style', 'multiline')
-panderOptions('table.alignment.default', 'left')
+source(file.path(PROJHOME, "lib", "pandoc.R"))
 
 all.na.means.zero <- TRUE
 ```
