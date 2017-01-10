@@ -287,7 +287,10 @@ aiddata.final <- aiddata.clean %>%
   left_join(donors, by="donor") %>%
   left_join(recipients, by="recipient") %>%
   left_join(purpose.codes.contentiousness, by="purpose.code.short") %>%
-  select(donor, donor.type, donor.cowcode, donor.iso3, year,
+  mutate(donor.type.collapsed = ifelse(donor.type == "Country", "Country",
+                                       "IGO, Multilateral, or Private")) %>%
+  select(donor, donor.type, donor.type.collapsed,
+         donor.cowcode, donor.iso3, year,
          country.name, cowcode, gwcode, iso2, iso3,
          oda = commitment_amount_usd_constant_sum,
          purpose.code.short, purpose.sector, purpose.category,
