@@ -931,7 +931,28 @@ col.clean <- col.raw %>%
          col.ruler.country.name, col.ruler.cowcode = ColRuler, col.ruler.iso3,
          ind.from.country.name, ind.from.cowcode = IndFrom, ind.from.iso3) %>%
   # Get rid of smaller ancient states like Tuscany, Parma, and Zanzibar
-  filter(!is.na(country.name))
+  filter(!is.na(country.name)) %>%
+  # Mark never modernly colonzied countries as such instead of missing
+  mutate(col.ruler.country.name = ifelse(is.na(col.ruler.cowcode), 
+                                         "Not recently colonized",
+                                         col.ruler.country.name),
+         col.ruler.iso3 = ifelse(is.na(col.ruler.cowcode),
+                                 "ZZZ", col.ruler.iso3),
+         col.ruler.cowcode = ifelse(is.na(col.ruler.cowcode), 
+                                    999, col.ruler.cowcode),
+         ind.from.country.name = ifelse(is.na(ind.from.cowcode), 
+                                        "Already independent",
+                                        ind.from.country.name),
+         ind.from.iso3 = ifelse(is.na(ind.from.cowcode),
+                                "ZZZ", ind.from.iso3),
+         ind.from.cowcode = ifelse(is.na(ind.from.cowcode), 
+                                   999, ind.from.cowcode)) %>%
+  # Serbia isn't included in the colonial ruler data because it's combined with
+  # Yugoslavia and Montenegro. So here we duplicate the "Croatia" row for
+  # Serbia to pick up the colonial relationship (even though it's technically
+  # not 100% correct)
+  bind_rows(filter(., cowcode == 344) %>% 
+              mutate(cowcode = 340, country.name = "Serbia"))
 
 col.clean %>% datatable(extensions="Responsive")
 
@@ -1101,8 +1122,6 @@ fake.codes <- donor.level.data %>%
 # Combine country and donor data
 donor.country.data <- donor.level.data %>%
   left_join(select(country.level.data, -country.name), by=c("year", "cowcode")) %>%
-  mutate(former.colony = donor.iso3 == col.ruler.iso3 | 
-           donor.iso3 == ind.from.iso3) %>%
   left_join(fake.codes, by="donor") %>%
   mutate(donor.cowcode = ifelse(is.na(donor.cowcode), 
                                       fake.donor.cowcode, 
@@ -1111,6 +1130,8 @@ donor.country.data <- donor.level.data %>%
                                       fake.donor.iso3, 
                                       donor.iso3)) %>%
   select(-starts_with("fake")) %>%
+  mutate(former.colony = donor.cowcode == col.ruler.cowcode | 
+           donor.cowcode == ind.from.cowcode) %>%
   arrange(donor, year)
 testthat::expect_equal(nrow(donor.country.data), nrow(donor.level.data))
 
