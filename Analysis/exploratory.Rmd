@@ -17,7 +17,7 @@ output:
     toc_float: yes
 ---
 
-```{r load-libraries-data, message=FALSE}
+```{r load-libraries, message=FALSE}
 knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
                       tidy.opts=list(width.cutoff=120),  # For code
                       options(width=120))  # For output
@@ -28,9 +28,9 @@ library(gridExtra)
 
 source(file.path(PROJHOME, "lib", "graphics.R"))
 source(file.path(PROJHOME, "lib", "pandoc.R"))
+```
 
-
-# Load clean data
+```{r load-data, cache=TRUE}
 df.donor.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
                                       "df_donor_country.rds"))
 df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
