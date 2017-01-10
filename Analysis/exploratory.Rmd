@@ -1,0 +1,114 @@
+---
+title: "Exploratory data analysis"
+author: "Suparna Chaudhry and Andrew Heiss"
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output: 
+  html_document: 
+    code_folding: hide
+    css: ../html/fixes.css
+    fig_height: 3.5
+    fig_width: 5
+    highlight: pygments
+    includes:
+      after_body: ../html/add_home_link.html
+    theme: spacelab
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+---
+
+```{r load-libraries-data, message=FALSE}
+knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
+                      tidy.opts=list(width.cutoff=120),  # For code
+                      options(width=120))  # For output
+
+library(tidyverse)
+library(forcats)
+library(gridExtra)
+
+source(file.path(PROJHOME, "lib", "graphics.R"))
+source(file.path(PROJHOME, "lib", "pandoc.R"))
+
+
+# Load clean data
+df.donor.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                      "df_donor_country.rds"))
+df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                "df_country.rds"))
+df.donor <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                              "df_donor.rds"))
+
+dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
+                                           "dcjw_questions.csv"))
+dcjw.responses.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
+                                           "dcjw_responses.csv"))
+```
+
+## Legal restrictions on NGOs
+
+### Number of countries with restrictive laws
+
+```{r nun-countries-laws, fig.width=11, fig.height=7}
+df.ngo.restrictions.plot <- df.country %>%
+  select(cowcode, year, const_assoc, political_parties, starts_with("ngo_")) %>%
+  gather(restriction, value, -c(cowcode, year)) %>%
+  group_by(year, restriction, value) %>%
+  summarise(n = n()) %>%
+  ungroup() %>%
+  left_join(dcjw.responses.clean, by=c("restriction", "value")) %>%
+  mutate(restriction = factor(restriction,
+                              levels=unique(dcjw.responses.clean$restriction),
+                              ordered=TRUE))
+
+plot.dcjw <- function(df) {
+  df.levels <- dcjw.responses.clean %>%
+    filter(restriction == df$restriction[[1]]) %>%
+    left_join(dcjw.questions.clean, by=c("restriction" = "question_clean"))
+  
+  plot.title <- df.levels$question_display
+  num.countries <- max(df.ngo.restrictions.plot$n)
+  
+  df.leveled <- df %>%
+    mutate(value_clean = factor(value_clean, levels=df.levels$value_clean, 
+                                ordered=TRUE))
+
+  ggplot(df.leveled, aes(x=year, y=n, colour=value_clean)) + 
+    geom_line() + 
+    labs(x=NULL, y=NULL, title=plot.title) +
+    coord_cartesian(ylim=c(0, num.countries)) +
+    scale_y_continuous(sec.axis = sec_axis(~ . / num.countries,
+                                           labels=scales::percent)) +
+    guides(colour=guide_legend(title=NULL)) +
+    theme_donors(8)
+}
+
+plot.all.dcjw.raw <- df.ngo.restrictions.plot %>%
+  split(.$restriction) %>%
+  map(plot.dcjw)
+
+plot.all.dcjw <- arrangeGrob(grobs=plot.all.dcjw.raw, ncol=3)
+grid::grid.draw(plot.all.dcjw)
+```
+
+### NGO restrictions by type
+
+```{r ngo-laws-type}
+df.restrictions.type <- df.country %>%
+  select(year, advocacy, association, entry, funding) %>%
+  group_by(year) %>%
+  summarise_all(mean) %>%
+  gather(barrier, value, -year) %>%
+  mutate(barrier = factor(barrier, 
+                          levels=unique(dcjw.questions.clean$barrier),
+                          labels=unique(dcjw.questions.clean$barrier_display),
+                          ordered=TRUE))
+
+ggplot(df.restrictions.type, aes(x=year, y=value, colour=barrier)) +
+  geom_line() +
+  labs(y="Average number of laws", x=NULL) +
+  guides(colour=guide_legend(title="Barriers to")) +
+  theme_donors()
+```
+
+## Aid
+
