@@ -1124,33 +1124,5 @@ donor.country.data %>% glimpse()
 This data is relatively complete, with only a few variables suffering from missing data. The worst offenders are the DCJW laws, which we conservatively left as missing if the law never appears as 0 or 1 in the data. If we assume that the missingness of a law indicates its absence, those variables will be far more complete.
 
 ```{r final-data-missing, fig.width=6, fig.height=4.5}
-percent.missing <- donor.country.data %>%
-  mutate_all(funs(is.na(.))) %>%
-  gather(variable, value) %>%
-  group_by(variable) %>%
-  summarise(perc.missing = sum(value) / n()) %>%
-  ungroup() %>%
-  mutate(variable = factor(variable, levels=rev(colnames(donor.country.data)),
-                           ordered=TRUE)) %>%
-  arrange(desc(variable)) %>%
-  mutate(row.name = 1:n())
-
-# Split into columns because there are so many variables
-n.cols <- 2
-perc.missing.rows <- 1:nrow(percent.missing)
-perc.missing.cols <- split(perc.missing.rows,
-                           cut(perc.missing.rows,
-                               quantile(perc.missing.rows, (0:n.cols) / n.cols),
-                               include.lowest=TRUE, labels=FALSE)) %>%
-  as_data_frame() %>% gather(column, row.name)
-
-percent.missing <- percent.missing %>%
-  left_join(perc.missing.cols, by="row.name")
-
-ggplot(percent.missing, aes(x=perc.missing, y=variable)) +
-  geom_barh(stat="identity") + 
-  scale_x_continuous(labels=scales::percent, limits=c(0, 1)) + 
-  labs(x="Percent missing", y=NULL) + 
-  facet_wrap(~ column, nrow=1, scales="free_y") +
-  theme_donors() + theme(strip.text=element_blank())
+plot.percent.missing(donor.country.data)
 ```

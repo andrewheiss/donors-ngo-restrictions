@@ -30,3 +30,34 @@ theme_donors <- function(base_size=9, base_family="Open Sans") {
           strip.background = element_rect(fill="#ffffff", colour=NA))
   ret
 }
+
+plot.percent.missing <- function(df, n.cols=2) {
+  percent.missing <- df %>%
+    mutate_all(funs(is.na(.))) %>%
+    gather(variable, value) %>%
+    group_by(variable) %>%
+    summarise(perc.missing = sum(value) / n()) %>%
+    ungroup() %>%
+    mutate(variable = factor(variable, levels=rev(colnames(df)),
+                             ordered=TRUE)) %>%
+    arrange(desc(variable)) %>%
+    mutate(row.name = 1:n())
+  
+  n.cols <- 2
+  perc.missing.rows <- 1:nrow(percent.missing)
+  perc.missing.cols <- split(perc.missing.rows,
+                             cut(perc.missing.rows,
+                                 quantile(perc.missing.rows, (0:n.cols) / n.cols),
+                                 include.lowest=TRUE, labels=FALSE)) %>%
+    as_data_frame() %>% gather(column, row.name)
+  
+  percent.missing <- percent.missing %>%
+    left_join(perc.missing.cols, by="row.name")
+  
+  ggplot(percent.missing, aes(x=perc.missing, y=variable)) +
+    geom_barh(stat="identity") + 
+    scale_x_continuous(labels=scales::percent, limits=c(0, 1)) + 
+    labs(x="Percent missing", y=NULL) + 
+    facet_wrap(~ column, nrow=1, scales="free_y") +
+    theme_donors() + theme(strip.text=element_blank())
+}
