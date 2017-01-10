@@ -580,15 +580,23 @@ dcjw.panel.barriers <- dcjw.panel.all.laws %>%
   mutate(question_cat = as.integer(substr(question, 3, 3))) %>%
   left_join(dcjw.barriers.clean, by="question_cat") %>%
   # Make an index for each type of barrier
+  mutate(value = as.numeric(value)) %>%
   mutate(value = case_when(
     # Reverse values for associational rights
-    .$question == "q_1a" & .$value == 0 ~ as.integer(1),
-    .$question == "q_1a" & .$value == 1 ~ as.integer(0),
-    .$question == "q_1b" & .$value == 0 ~ as.integer(1),
-    .$question == "q_1b" & .$value == 1 ~ as.integer(0),
+    .$question == "q_1a" & .$value == 0 ~ 1,
+    .$question == "q_1a" & .$value == 1 ~ 0,
+    .$question == "q_1b" & .$value == 0 ~ 1,
+    .$question == "q_1b" & .$value == 1 ~ 0,
     # Reverse value for q_2c
-    .$question == "q_2c" & .$value == 0 ~ as.integer(1),
-    .$question == "q_2c" & .$value == 1 ~ as.integer(0),
+    .$question == "q_2c" & .$value == 0 ~ 1,
+    .$question == "q_2c" & .$value == 1 ~ 0,
+    # Recode 0-2 questions as 0-1
+    .$question == "q_3e" & .$value == 1 ~ 0.5,
+    .$question == "q_3e" & .$value == 2 ~ 1,
+    .$question == "q_3f" & .$value == 1 ~ 0.5,
+    .$question == "q_3f" & .$value == 2 ~ 1,
+    .$question == "q_4a" & .$value == 1 ~ 0.5,
+    .$question == "q_4a" & .$value == 2 ~ 1,
     TRUE ~ .$value
   )) %>%
   group_by(Country, year, barrier) %>%
