@@ -674,19 +674,6 @@ These indexes are also standardized by dividing by the maximum, yielding the fol
 dcjw.full %>% glimpse()
 ```
 
-#### Missingness
-
-There is some missing data, even with backfilling data since we only backfill columns where a country has *some* observation (i.e. if there is never a value for a question in a country, all values are NA rather than the default). But when creating the indexes, these missing values are ignored, so there are no missing index values.
-
-```{r dcjw-missing, fig.width=7, fig.height=5}
-# https://github.com/njtierney/visdat
-visdat::vis_miss(dcjw.full) + 
-  theme_donors() +
-  theme(legend.position="top",
-        axis.text.x=element_text(angle=45, vjust=1, hjust=1))
-```
-
-
 ### Civil society regulatory environment
 
 An alternative way of measuring civil society restrictions is to look at the overal civil society regulatory environment rather than specific laws, since de jure restrictions do not always map clearly into de facto restrictions (especially in dictatorships where the implementation of laws is more discretionary). 
@@ -1165,7 +1152,7 @@ donor.country.data %>% glimpse()
 
 ### Missingness in final data
 
-This data is relatively complete, with only a few variables suffering from missing data. The worst offenders are the DCJW laws, which we conservatively left as missing if the law never appears as 0 or 1 in the data. If we assume that the missingness of a law indicates its absence, those variables will be far more complete.
+This data is relatively complete, with only a few variables suffering from missing data, mostly from the World Bank (and some from V-Dem).
 
 ```{r final-data-missing, fig.width=6, fig.height=4.5}
 plot.percent.missing(donor.country.data)
