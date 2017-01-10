@@ -146,3 +146,18 @@ ggplot(aid.contention.time, aes(x=year, y=total.aid / 1000000000,
   theme_donors()
 ```
 
+## Aid and restrictions
+
+```{r avg-barriers-country-year}
+aid.total.restrictions <- df.donor.country %>%
+  group_by(barriers.total) %>%
+  summarise(avg.aid = mean(oda, na.rm=TRUE))
+
+ggplot(aid.total.restrictions, aes(x=barriers.total, y=avg.aid)) + 
+  geom_point() + 
+  geom_smooth(method="loess") + 
+  scale_y_continuous(labels=scales::dollar) + 
+  labs(x="Barriers in a given country-year", y="Average aid") +
+  theme_donors()
+```
+
