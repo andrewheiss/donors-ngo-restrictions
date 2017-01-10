@@ -43,13 +43,13 @@ plot.percent.missing <- function(df, n.cols=2) {
     arrange(desc(variable)) %>%
     mutate(row.name = 1:n())
   
-  n.cols <- 2
   perc.missing.rows <- 1:nrow(percent.missing)
   perc.missing.cols <- split(perc.missing.rows,
                              cut(perc.missing.rows,
                                  quantile(perc.missing.rows, (0:n.cols) / n.cols),
                                  include.lowest=TRUE, labels=FALSE)) %>%
-    as_data_frame() %>% gather(column, row.name)
+    map(~ as_data_frame(.)) %>% bind_rows(.id="column") %>%
+    rename(row.name = value)
   
   percent.missing <- percent.missing %>%
     left_join(perc.missing.cols, by="row.name")
