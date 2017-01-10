@@ -1090,11 +1090,27 @@ country.level.data <- dcjw.full %>%
   mutate_at(vars(starts_with("natural_")), funs(ifelse(is.na(.), 0, .)))
 testthat::expect_equal(nrow(country.level.data), nrow(dcjw.full))
 
+# Create fake country codes for non-country donors
+fake.codes <- donor.level.data %>%
+  distinct(donor, donor.type) %>%
+  filter(donor.type != "Country") %>%
+  arrange(donor.type) %>% select(-donor.type) %>%
+  mutate(fake.donor.cowcode = 2001:(2000 + n()),
+         fake.donor.iso3 = paste0("Z", str_sub(fake.donor.cowcode, 3)))
+
 # Combine country and donor data
 donor.country.data <- donor.level.data %>%
   left_join(select(country.level.data, -country.name), by=c("year", "cowcode")) %>%
   mutate(former.colony = donor.iso3 == col.ruler.iso3 | 
            donor.iso3 == ind.from.iso3) %>%
+  left_join(fake.codes, by="donor") %>%
+  mutate(donor.cowcode = ifelse(is.na(donor.cowcode), 
+                                      fake.donor.cowcode, 
+                                      donor.cowcode),
+         donor.iso3 = ifelse(is.na(donor.iso3), 
+                                      fake.donor.iso3, 
+                                      donor.iso3)) %>%
+  select(-starts_with("fake")) %>%
   arrange(donor, year)
 testthat::expect_equal(nrow(donor.country.data), nrow(donor.level.data))
 
