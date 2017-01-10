@@ -48,7 +48,7 @@ dcjw.responses.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
 
 ### Number of countries with restrictive laws
 
-```{r nun-countries-laws, fig.width=11, fig.height=7}
+```{r num-countries-laws, fig.width=11, fig.height=7}
 df.ngo.restrictions.plot <- df.country %>%
   select(cowcode, year, const_assoc, political_parties, starts_with("ngo_")) %>%
   gather(restriction, value, -c(cowcode, year)) %>%
