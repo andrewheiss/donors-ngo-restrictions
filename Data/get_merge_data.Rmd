@@ -1089,11 +1089,29 @@ With both donor- and country-level data, we have lots of different options for a
 
 ```{r build-final-data}
 # Donor data
-donor.level.data <- aiddata.final %>%
+donor.level.data.raw <- aiddata.final %>%
   filter(cowcode %in% dcjw.full$cowcode) %>%
   filter(year > 1980) %>%
   filter(oda > 0) %>%  # Only look at positive aid
   mutate(oda_log = log1p(oda))
+
+# Create fake country codes for non-country donors
+fake.codes <- donor.level.data.raw %>%
+  distinct(donor, donor.type) %>%
+  filter(donor.type != "Country") %>%
+  arrange(donor.type) %>% select(-donor.type) %>%
+  mutate(fake.donor.cowcode = 2001:(2000 + n()),
+         fake.donor.iso3 = paste0("Z", str_sub(fake.donor.cowcode, 3)))
+
+donor.level.data <- donor.level.data.raw %>%
+  left_join(fake.codes, by="donor") %>%
+  mutate(donor.cowcode = ifelse(is.na(donor.cowcode), 
+                                      fake.donor.cowcode, 
+                                      donor.cowcode),
+         donor.iso3 = ifelse(is.na(donor.iso3), 
+                                      fake.donor.iso3, 
+                                      donor.iso3)) %>%
+  select(-starts_with("fake"))
 
 # TODO: Indicator for changes in laws, year since change
 
@@ -1115,25 +1133,10 @@ country.level.data <- dcjw.full %>%
   mutate_at(vars(starts_with("natural_")), funs(ifelse(is.na(.), 0, .)))
 testthat::expect_equal(nrow(country.level.data), nrow(dcjw.full))
 
-# Create fake country codes for non-country donors
-fake.codes <- donor.level.data %>%
-  distinct(donor, donor.type) %>%
-  filter(donor.type != "Country") %>%
-  arrange(donor.type) %>% select(-donor.type) %>%
-  mutate(fake.donor.cowcode = 2001:(2000 + n()),
-         fake.donor.iso3 = paste0("Z", str_sub(fake.donor.cowcode, 3)))
-
 # Combine country and donor data
 donor.country.data <- donor.level.data %>%
-  left_join(select(country.level.data, -country.name), by=c("year", "cowcode")) %>%
-  left_join(fake.codes, by="donor") %>%
-  mutate(donor.cowcode = ifelse(is.na(donor.cowcode), 
-                                      fake.donor.cowcode, 
-                                      donor.cowcode),
-         donor.iso3 = ifelse(is.na(donor.iso3), 
-                                      fake.donor.iso3, 
-                                      donor.iso3)) %>%
-  select(-starts_with("fake")) %>%
+  left_join(select(country.level.data, -country.name),
+            by=c("year", "cowcode")) %>%
   mutate(former.colony = donor.cowcode == col.ruler.cowcode | 
            donor.cowcode == ind.from.cowcode) %>%
   arrange(donor, year)
@@ -1151,3 +1154,22 @@ This data is relatively complete, with only a few variables suffering from missi
 ```{r final-data-missing, fig.width=6, fig.height=4.5}
 plot.percent.missing(donor.country.data)
 ```
+
+### Save final data
+
+Final, clean country- and donor-level datasets are available in `Data/data_clean/`.
+
+```{r save-final-data, echo=FALSE}
+saveRDS(donor.country.data,
+        file=file.path(PROJHOME, "Data", "data_clean",
+                       "df_donor_country.rds"))
+
+saveRDS(country.level.data,
+        file=file.path(PROJHOME, "Data", "data_clean",
+                       "df_country.rds"))
+
+saveRDS(donor.level.data,
+        file=file.path(PROJHOME, "Data", "data_clean",
+                       "df_donor.rds"))
+```
+

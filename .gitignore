@@ -1,5 +1,6 @@
 # Temporarily ignore data and output
 Output/*
+Data/data_clean/*.rds
 
 # Analysis output
 index.html
