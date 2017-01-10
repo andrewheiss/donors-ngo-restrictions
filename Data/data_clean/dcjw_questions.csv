@@ -1,0 +1,16 @@
+question,question_cat,barrier,question_clean,question_display
+q_1a,1,association,const_assoc,Constitutional associational rights
+q_1b,1,association,political_parties,Citizens form political parties
+q_2a,2,entry,ngo_register,NGO registration required
+q_2b,2,entry,ngo_register_burden,NGO registration burden
+q_2c,2,entry,ngo_register_appeal,NGO registration appeal allowed
+q_2d,2,entry,ngo_barrier_foreign_funds,Registration barriers different if foreign funds
+q_3a,3,funding,ngo_disclose_funds,Funds must be disclosed
+q_3b,3,funding,ngo_foreign_fund_approval,Prior approval for foreign funds
+q_3c,3,funding,ngo_foreign_fund_channel,Foreign funds channeled through government
+q_3d,3,funding,ngo_foreign_fund_restrict,Foreign funds restricted
+q_3e,3,funding,ngo_foreign_fund_prohibit,Foreign funds prohibited
+q_3f,3,funding,ngo_type_foreign_fund_prohibit,Foreign funds prohibited for some types
+q_4a,4,advocacy,ngo_politics,NGOs restricted from politics
+q_4b,4,advocacy,ngo_politics_intimidation,NGOs intimidated from politics
+q_4c,4,advocacy,ngo_politics_foreign_fund,Political barriers different if foreign funds

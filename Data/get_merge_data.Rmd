@@ -466,32 +466,11 @@ dcjw.orig <- read_excel(dcjw.orig.path)[,1:50] %>%
 dcjw.path <- file.path(PROJHOME, "Data", "data_raw", "DCJW NGO Laws",
                        "Admn Crackdown_updated.xlsx")
 
-dcjw.questions.clean <- tribble(
-  ~question,  ~question_clean,
-  "q_1a",     "const_assoc",
-  "q_1b",     "politcial_parties",
-  "q_2a",     "ngo_register",
-  "q_2b",     "ngo_register_burden",
-  "q_2c",     "ngo_register_appeal",
-  "q_2d",     "ngo_barrier_foreign_funds",
-  "q_3a",     "ngo_disclose_funds",
-  "q_3b",     "ngo_foreign_fund_approval",
-  "q_3c",     "ngo_foreign_fund_channel",
-  "q_3d",     "ngo_foreign_fund_restrict",
-  "q_3e",     "ngo_foreign_fund_prohibit",
-  "q_3f",     "ngo_type_foreign_fund_prohibit",
-  "q_4a",     "ngo_politics",
-  "q_4b",     "ngo_politics_intimitation",
-  "q_4c",     "ngo_politics_foreign_fund"
-)
+dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
+                                           "dcjw_questions.csv"))
 
-dcjw.barriers.clean <- tribble(
-  ~question_cat,  ~barrier,
-  "1",            "association",
-  "2",            "entry",
-  "3",            "funding",
-  "4",            "advocacy"
-)
+dcjw.barriers.clean <- dcjw.questions.clean %>%
+  distinct(question_cat, barrier)
 
 dcjw <- read_excel(dcjw.path)[,1:50] %>%
   select(-c(dplyr::contains("source"), dplyr::contains("burden"), 
@@ -592,13 +571,13 @@ if (all.na.means.zero) {
 }
 
 potential.dcjw.panel.barrier <- potential.dcjw.panel.question %>%
-  mutate(question_cat = substr(question, 3, 3)) %>%
+  mutate(question_cat = as.integer(substr(question, 3, 3))) %>%
   left_join(dcjw.barriers.clean, by="question_cat") %>%
   distinct(Country, year, barrier)
 
 dcjw.panel.barriers <- dcjw.panel.all.laws %>%
   gather(question, value, -Country, -year) %>%
-  mutate(question_cat = substr(question, 3, 3)) %>%
+  mutate(question_cat = as.integer(substr(question, 3, 3))) %>%
   left_join(dcjw.barriers.clean, by="question_cat") %>%
   # Make an index for each type of barrier
   mutate(value = case_when(

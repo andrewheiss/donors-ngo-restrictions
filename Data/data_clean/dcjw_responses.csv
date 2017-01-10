@@ -1,0 +1,36 @@
+restriction,value,value_clean
+const_assoc,0,No
+const_assoc,1,Yes
+political_parties,0,No
+political_parties,1,Yes
+ngo_register,0,No
+ngo_register,1,Yes
+ngo_register_burden,0,Timely
+ngo_register_burden,1,Onerous
+ngo_register_appeal,0,No
+ngo_register_appeal,1,Yes
+ngo_barrier_foreign_funds,-1,Less burdensome
+ngo_barrier_foreign_funds,0,Same
+ngo_barrier_foreign_funds,1,More burdensome
+ngo_disclose_funds,0,No
+ngo_disclose_funds,1,Yes
+ngo_foreign_fund_approval,0,No
+ngo_foreign_fund_approval,1,Yes
+ngo_foreign_fund_channel,0,No
+ngo_foreign_fund_channel,1,Yes
+ngo_foreign_fund_restrict,0,No
+ngo_foreign_fund_restrict,1,Yes
+ngo_foreign_fund_prohibit,0,No
+ngo_foreign_fund_prohibit,1,To a certain threshold
+ngo_foreign_fund_prohibit,2,Yes
+ngo_type_foreign_fund_prohibit,0,No
+ngo_type_foreign_fund_prohibit,1,To a certain threshold
+ngo_type_foreign_fund_prohibit,2,Yes
+ngo_politics,0,No
+ngo_politics,1,Partial
+ngo_politics,2,Prohibited
+ngo_politics_intimidation,0,No
+ngo_politics_intimidation,1,Yes
+ngo_politics_foreign_fund,-1,Less restrictive
+ngo_politics_foreign_fund,0,Same
+ngo_politics_foreign_fund,1,More restrictive
