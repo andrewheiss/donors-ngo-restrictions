@@ -932,6 +932,29 @@ col.clean <- col.raw %>%
          ind.from.country.name, ind.from.cowcode = IndFrom, ind.from.iso3) %>%
   # Get rid of smaller ancient states like Tuscany, Parma, and Zanzibar
   filter(!is.na(country.name)) %>%
+  # Add country names and ISO codes for ancient places
+  mutate(col.ruler.country.name = ifelse(col.ruler.cowcode == 300, 
+                                         "Austria-Hungary",
+                                         col.ruler.country.name),
+         col.ruler.iso3 = ifelse(col.ruler.cowcode == 300, 
+                                         "AUH",
+                                         col.ruler.country.name)) %>%
+  mutate(ind.from.country.name = case_when(
+    .$ind.from.cowcode == 89 ~ "United Provinces of Central America",
+    .$ind.from.cowcode == 300 ~ "Austria-Hungary",
+    .$ind.from.cowcode == 315 ~ "Czechoslovakia",
+    .$ind.from.cowcode == 678 ~ "Yemen (Arab Republic of Yemen)",
+    .$ind.from.cowcode == 730 ~ "Korea",
+    TRUE ~ .$ind.from.country.name
+  )) %>%
+  mutate(ind.from.iso3 = case_when(
+    .$ind.from.cowcode == 89 ~ "UPC",
+    .$ind.from.cowcode == 300 ~ "AUH",
+    .$ind.from.cowcode == 315 ~ "CZE",
+    .$ind.from.cowcode == 678 ~ "YEM",
+    .$ind.from.cowcode == 730 ~ "KOR",
+    TRUE ~ .$ind.from.iso3
+  )) %>%
   # Mark never modernly colonzied countries as such instead of missing
   mutate(col.ruler.country.name = ifelse(is.na(col.ruler.cowcode), 
                                          "Not recently colonized",
