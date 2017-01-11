@@ -30,7 +30,7 @@ source(file.path(PROJHOME, "lib", "graphics.R"))
 source(file.path(PROJHOME, "lib", "pandoc.R"))
 ```
 
-```{r load-data, cache=TRUE}
+```{r load-data, cache=TRUE, message=FALSE}
 df.donor.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
                                       "df_donor_country.rds"))
 df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
