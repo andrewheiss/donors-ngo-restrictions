@@ -105,7 +105,7 @@ df.restrictions.type <- df.country %>%
 
 ggplot(df.restrictions.type, aes(x=year, y=value, colour=barrier)) +
   geom_line() +
-  labs(y="Average number of laws", x=NULL) +
+  labs(y="Average number of restrictive laws", x=NULL) +
   guides(colour=guide_legend(title="Barriers to")) +
   theme_donors()
 ```
