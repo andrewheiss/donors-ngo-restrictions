@@ -1103,8 +1103,6 @@ donor.level.data <- donor.level.data.raw %>%
                                       donor.iso3)) %>%
   select(-starts_with("fake"))
 
-# TODO: Indicator for changes in laws, year since change
-
 # TODO: Aid by scope (domestic NGO vs. international NGO)
 # donor.level.data.us <- usaid.clean
 
@@ -1132,9 +1130,47 @@ donor.country.data <- donor.level.data %>%
   arrange(donor, year)
 testthat::expect_equal(nrow(donor.country.data), nrow(donor.level.data))
 
-donor.country.data %>% head(100) %>% datatable(extensions="Responsive")
 
-donor.country.data %>% glimpse()
+# Calculate different versions of aid variables
+aid.by.country.total <- donor.country.data %>%
+  group_by(cowcode, year) %>%
+  summarise(total.oda = sum(oda, na.rm=TRUE))
+
+aid.by.country.purpose <- donor.country.data %>%
+  group_by(cowcode, year, purpose.contentiousness) %>%
+  summarise(total.oda = sum(oda, na.rm=TRUE)) %>%
+  spread(purpose.contentiousness, total.oda, fill=0) %>%
+  mutate(prop.contentious = High / (Low + High)) %>%
+  rename(oda.contentious.high = High, 
+         oda.contentious.low = Low)
+
+# Add aid and diffed + leaded data to main panel
+country.aid.data <- country.level.data %>%
+  filter(year < 2014) %>%  # There's no aid data after 2013
+  left_join(aid.by.country.total, by=c("cowcode", "year")) %>%
+  left_join(aid.by.country.purpose, by=c("cowcode", "year")) %>%
+  mutate_at(vars(contains("oda")), funs(ifelse(is.na(.), 0, .))) %>%
+  mutate_at(vars(total.oda, starts_with("oda.contentious")),
+            funs(log = log1p(.))) %>%
+  # Lag/lead/diff everything within countries
+  group_by(cowcode) %>%
+  # Get leaded and diffed-leaded aid
+  mutate_at(vars(contains("oda"), prop.contentious),
+            funs(lead = lead(.),  # y_{i, t+1}
+                 diff = lead(.) - .)) %>%  # (y_{it} - y_{i, t-1})_{t+1}
+  # Indicate changes in laws
+  mutate_at(vars(advocacy, association, entry, funding, barriers.total),
+            funs(new = . - lag(.),
+                 cat = cut(. - lag(.), 
+                           breaks=c(-Inf, -1, 0, Inf), 
+                           labels=c("New better law", "No new laws", 
+                                    "New worse law"),
+                           ordered_result=TRUE))) %>%
+  ungroup()
+
+country.aid.data %>% head(100) %>% datatable(extensions="Responsive")
+
+country.aid.data %>% glimpse()
 ```
 
 ### Missingness in final data
@@ -1158,8 +1194,11 @@ saveRDS(country.level.data,
         file=file.path(PROJHOME, "Data", "data_clean",
                        "df_country.rds"))
 
+saveRDS(country.aid.data,
+        file=file.path(PROJHOME, "Data", "data_clean",
+                       "df_country_aid.rds"))
+
 saveRDS(donor.level.data,
         file=file.path(PROJHOME, "Data", "data_clean",
                        "df_donor.rds"))
 ```
-
