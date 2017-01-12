@@ -1,3 +1,5 @@
+library(gridExtra)
+
 theme_donors <- function(base_size=9, base_family="Open Sans") {
   update_geom_defaults("bar", list(fill = "grey30"))
   update_geom_defaults("line", list(colour = "grey30"))
