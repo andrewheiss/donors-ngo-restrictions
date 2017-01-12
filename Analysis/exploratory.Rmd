@@ -23,20 +23,26 @@ knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
                       options(width=120))  # For output
 
 library(tidyverse)
+library(stringr)
 library(forcats)
-library(gridExtra)
 
 source(file.path(PROJHOME, "lib", "graphics.R"))
 source(file.path(PROJHOME, "lib", "pandoc.R"))
+source(file.path(PROJHOME, "lib", "bayes.R"))
+
+my.seed <- 1234
+set.seed(my.seed)
 ```
 
 ```{r load-data, cache=TRUE, message=FALSE}
 df.donor.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
                                       "df_donor_country.rds"))
-df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                "df_country.rds"))
 df.donor <- readRDS(file.path(PROJHOME, "Data", "data_clean",
                               "df_donor.rds"))
+df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                "df_country.rds"))
+df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                "df_country_aid.rds"))
 
 dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
                                            "dcjw_questions.csv"))
@@ -148,6 +154,10 @@ ggplot(aid.contention.time, aes(x=year, y=total.aid / 1000000000,
 
 ## Aid and restrictions
 
+### Aid by number of barriers
+
+It seems that countries get less aid as they impose more legal barriers on NGOs, with average aid dropping off after 10+ laws.
+
 ```{r avg-barriers-country-year}
 aid.total.restrictions <- df.donor.country %>%
   group_by(barriers.total) %>%
@@ -161,3 +171,133 @@ ggplot(aid.total.restrictions, aes(x=barriers.total, y=avg.aid)) +
   theme_donors()
 ```
 
+### Changes in aid in the year after a change in laws
+
+More interesting, however, is looking at *changes* in aid. The plot below shows the average amount of aid in the following year, grouped by years where a better law is passed, no law is passed, or a worse law is passed for different categories of laws. On average there isn't a change in the amount of aid in years where no anti-NGO law is passed (the credible interval is so tiny for years with no changes becuase laws rarely change, and the mean is essentially 0 for the same reason). 
+
+When new anti-advocacy, anti-entry, and anti-funding laws are passed, however, average aid appears to increase in the following year. The average change in aid is not always positive (or "significant" in the frequentist null hypothesis testing world), but there's a 75–85% probability that the actual average change in aid is greater than 0.
+
+Interestingly, there's not any aggregate effect on changes in aid after improvements in NGO-related laws are passed, either after barriers are removed or after citizens are granted additional associational rights.
+
+This analysis, however, doesn't account for any control variables since it's essentially a super simple model: 
+
+$$(\text{aid}_{it} - \text{aid}_{i, t-1})_{t+1} = \beta_0 + \beta_1 \text{barrier}_{it}$$
+
+```{r avg-aid-diff-by-barrier, fig.height=5.5, fig.width=8, eval=FALSE, include=FALSE}
+diff.aid.by.barrier <- df.country.aid %>%
+  select(cowcode, country.name, year, total.oda_diff,
+         total.oda, contains("cat")) %>%
+  gather(barrier.type, value, contains("cat")) %>%
+  filter(!is.na(value)) %>%
+  group_by(barrier.type, value) %>%
+  summarise(n = n(),
+            avg.diff = mean(total.oda_diff, na.rm=TRUE),
+            sd.diff = sd(total.oda_diff, na.rm=TRUE),
+            se.diff = sd.diff / sqrt(n),
+            upper.diff = avg.diff + (qnorm(0.975) * se.diff),
+            lower.diff = avg.diff + (qnorm(0.025) * se.diff)) %>%
+  ungroup() %>%
+  mutate(value = factor(value, 
+                        levels=levels(df.country.aid$barriers.total_cat),
+                        ordered=TRUE),
+         barrier.type = str_replace(barrier.type, "_cat", ""),
+         barrier.type = recode(barrier.type, barriers.total = "All barriers"),
+         barrier.type = factor(str_to_title(barrier.type), ordered=TRUE),
+         barrier.type = fct_relevel(barrier.type, "All Barriers"))
+
+ggplot(diff.aid.by.barrier, aes(x=value, y=avg.diff)) +
+  geom_hline(yintercept=0, size=0.25) +
+  geom_pointrange(aes(ymin=lower.diff, ymax=upper.diff, colour=value)) + 
+  scale_y_continuous(labels=scales::dollar) + 
+  scale_colour_manual(values=c("#2ECC40", "#AAAAAA", "#FF4136"), guide=FALSE) +
+  labs(x=NULL, y="Change in aid the following year") +
+  facet_wrap(~ barrier.type, scales="free_x") + 
+  theme_donors()
+```
+
+```{r avg-aid-diff-by-barrier-bayes, fig.height=5.5, fig.width=8, results="asis", cache=TRUE, message=FALSE, warning=FALSE}
+barriers.df <- tribble(
+  ~barrier, ~barrier.clean,
+  "barriers.total_cat", "All barriers",
+  "advocacy_cat", "Advocacy",
+  "association_cat", "Association",
+  "entry_cat", "Entry",
+  "funding_cat", "Funding"
+) %>%
+  mutate(barrier.clean = ordered(fct_inorder(barrier.clean)),
+         diffs.bayes = 
+           map(.x=barrier, 
+               .f = ~ diff.groups.bayes(
+                 form=paste0("total.oda_diff / 100000000 ~ ", .x),
+                 data=df.country.aid,
+                 divide_by=1000000000))) %>%
+  mutate(diffs.plot = diffs.bayes %>% map(~ .$plot.group.diffs),
+         samples = diffs.bayes %>% map(~ .$samples),
+         samples.summary = diffs.bayes %>% map(~ .$samples.summary),
+         bayes.model = diffs.bayes %>% map(~ .$model))
+
+barriers.samples <- barriers.df %>%
+  unnest(samples.summary) %>%
+  mutate(group.name = factor(group.name,
+                             levels=levels(df.country.aid$barriers.total_cat),
+                             ordered=TRUE))
+
+ggplot(barriers.samples, aes(x=group.name, y=mean)) +
+  geom_hline(yintercept=0, size=0.25) +
+  geom_pointrange(aes(ymin=q2.5, ymax=q97.5, colour=group.name)) + 
+  scale_y_continuous(labels=scales::dollar) + 
+  scale_colour_manual(values=c("#2ECC40", "#AAAAAA", "#FF4136"), guide=FALSE) +
+  labs(x=NULL, y="Change in aid the following year") +
+  facet_wrap(~ barrier.clean, scales="free_x") + 
+  theme_donors()
+
+barriers.samples %>% 
+  select(barrier.clean, group.name, mean, q2.5, q97.5, p.greater0) %>%
+  mutate_at(vars(mean, q2.5, q97.5), 
+            funs(nice=scales::dollar(.))) %>%
+  select(-c(mean, q2.5, q97.5)) %>%
+  mutate(p.greater0 = scales::percent(p.greater0)) %>%
+  rename(`Barrier` = barrier.clean, `Change in law` = group.name,
+         `P (∆ > 0)` = p.greater0, Mean = mean_nice,
+         `2.5% quartile` = q2.5_nice, `97.5% quartile` = q97.5_nice) %>%
+  pandoc.table()
+```
+
+
+```{r eval=FALSE, include=FALSE}
+# # http://dss.princeton.edu/training/Panel101R.pdf
+# 
+# Panel <- haven::read_dta("http://dss.princeton.edu/training/Panel101.dta")
+# 
+# plot.panel <- Panel %>%
+#   group_by(year) %>%
+#   summarise(y = mean(y))
+# ggplot(plot.panel, aes(x=year, y=y)) + geom_point()
+# 
+# ols <-lm(y ~ x1, data=Panel)
+# summary(ols)
+# 
+# # These are the same
+# fixed.dum <-lm(y ~ x1 + factor(country) - 1, data=Panel)
+# summary(fixed.dum)
+# 
+# fixed <- plm(y ~ x1, data=Panel, index=c("country", "year"), model="ht")
+# summary(fixed)
+# 
+# fixed.bayes <- stan_glm(y ~ x1 + factor(country), data=Panel,
+#                         family=gaussian(),
+#                         prior=cauchy(), prior_intercept=cauchy(),
+#                         chains=CHAINS, iter=ITER, warmup=WARMUP,
+#                         algorithm="sampling", seed=my.seed)
+# summary(fixed.bayes)
+# fixed.bayes
+#  
+# random1 <- lmer(y ~ x1 + (1|country), data=Panel)
+# summary(random1)
+# 
+# random <- plm(y ~ x1, data=Panel, index=c("country", "year"), model="random")
+# summary(random)
+# 
+# # If significant use fixed effects
+# phtest(fixed, random)
+```
