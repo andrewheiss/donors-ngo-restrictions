@@ -1,0 +1,129 @@
+---
+title: "Models"
+author: "Suparna Chaudhry and Andrew Heiss"
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output: 
+  html_document: 
+    code_folding: hide
+    css: ../html/fixes.css
+    fig_height: 3.5
+    fig_width: 5
+    highlight: pygments
+    includes:
+      after_body: ../html/add_home_link.html
+    theme: spacelab
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+---
+
+```{r load-libraries, message=FALSE}
+knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
+                      tidy.opts=list(width.cutoff=120),  # For code
+                      options(width=120))  # For output
+
+library(tidyverse)
+library(stringr)
+library(forcats)
+
+source(file.path(PROJHOME, "lib", "graphics.R"))
+source(file.path(PROJHOME, "lib", "pandoc.R"))
+source(file.path(PROJHOME, "lib", "bayes.R"))
+
+my.seed <- 1234
+set.seed(my.seed)
+```
+
+```{r load-data, cache=TRUE, message=FALSE}
+df.donor.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                      "df_donor_country.rds"))
+df.donor <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                              "df_donor.rds"))
+df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                "df_country.rds"))
+df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                "df_country_aid.rds"))
+
+dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
+                                           "dcjw_questions.csv"))
+dcjw.responses.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
+                                           "dcjw_responses.csv"))
+```
+
+```{r}
+ggplot(df.country.aid, aes(x=total.oda_log_next_year)) + geom_density()
+
+ggplot(df.country.aid, aes(x=barriers.total_new, y=total.oda_log_next_year)) + 
+  geom_point()
+
+ggplot(df.country.aid, aes(x=entry_worse, y=total.oda_log_next_year)) + 
+  geom_point()
+
+model1 <- lm(total.oda_log_next_year ~ barriers.total_new, data=df.country.aid)
+summary(model1)
+
+model2 <- lm(total.oda_log_next_year ~ advocacy_worse + entry_worse + funding_worse, data=df.country.aid)
+summary(model2)
+
+model3 <- lm(total.oda_log_next_year ~ advocacy_new + entry_new + funding_new + as.factor(cowcode) + as.factor(year), data=df.country.aid)
+summary(model3)
+
+# model6 <- stan_glmer(total.oda_log_next_year ~ 
+#                         advocacy_new + entry_new + funding_new + (1|year), #+ 
+#                         # (1|cowcode) + (1|year),
+#                       data=df.country.aid, family=gaussian(),
+#                       prior=normal(), prior_intercept=normal(), #QR=TRUE,
+#                       chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
+# print(model4)
+# plot(model5, regex_pars="new")
+```
+
+```{r eval=FALSE, include=FALSE}
+# # http://dss.princeton.edu/training/Panel101R.pdf
+# 
+Panel <- haven::read_dta("http://dss.princeton.edu/training/Panel101.dta") %>%
+  mutate(y.small = y / 100000000)
+# 
+# plot.panel <- Panel %>%
+#   group_by(year) %>%
+#   summarise(y = mean(y))
+# ggplot(plot.panel, aes(x=year, y=y)) + geom_point()
+# 
+# ols <-lm(y ~ x1, data=Panel)
+# summary(ols)
+# 
+# # These are the same
+# fixed.dum <-lm(y ~ x1 + factor(country) - 1, data=Panel)
+# summary(fixed.dum)
+# 
+# fixed <- plm(y ~ x1, data=Panel, index=c("country", "year"), model="ht")
+# summary(fixed)
+# 
+# fixed.bayes <- stan_glm(y ~ x1 + factor(country), data=Panel,
+#                         family=gaussian(),
+#                         prior=cauchy(), prior_intercept=cauchy(),
+#                         chains=CHAINS, iter=ITER, warmup=WARMUP,
+#                         algorithm="sampling", seed=my.seed)
+# summary(fixed.bayes)
+# fixed.bayes
+#  
+fixed <- lm(y.small ~ x1 + as.factor(country) + as.factor(year), data=Panel)
+summary(fixed)
+
+random1 <- lme4::lmer(y.small ~ x1 + (1|country) + (1|year), data=Panel)
+summary(random1)
+
+random <- plm::plm(y.small ~ x1, data=Panel, index=c("country", "year"), model="random")
+summary(random)
+
+random.bayes <- stan_glmer(y.small ~ x1 + (1|country) + (1|year),
+                           data=Panel, family=gaussian(),
+                           prior=normal(), prior_intercept=normal(),
+                           chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
+random.bayes
+plot(random.bayes, regex_pars="x1")
+
+# 
+# # If significant use fixed effects
+# phtest(fixed, random)
+```

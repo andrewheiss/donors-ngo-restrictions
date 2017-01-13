@@ -25,6 +25,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Analysis
 
 - [Exploratory data analysis](Analysis/exploratory.html)
+- [Models](Analysis/models.html)
 
 ## Manuscript
 

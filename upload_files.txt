@@ -3,3 +3,4 @@ html/
 Writing/hypotheses.html
 Data/get_merge_data.html
 Analysis/exploratory.html
+Analysis/models.html
