@@ -1144,26 +1144,35 @@ aid.by.country.purpose <- donor.country.data %>%
   rename(oda.contentious.high = High, 
          oda.contentious.low = Low)
 
+# pct.change <- function(x) {
+#   (lead(x) / x) - 1
+# }
+
 # Add aid and diffed + leaded data to main panel
 country.aid.data <- country.level.data %>%
   filter(year < 2014) %>%  # There's no aid data after 2013
   left_join(aid.by.country.total, by=c("cowcode", "year")) %>%
   left_join(aid.by.country.purpose, by=c("cowcode", "year")) %>%
   mutate_at(vars(contains("oda")), funs(ifelse(is.na(.), 0, .))) %>%
-  mutate_at(vars(total.oda, starts_with("oda.contentious")),
+  mutate_at(vars(total.oda, oda.contentious.high, oda.contentious.low),
             funs(log = log1p(.))) %>%
   # Lag/lead/diff everything within countries
   group_by(cowcode) %>%
-  # Get leaded and diffed-leaded aid
+  # Get leaded aid variables
   mutate_at(vars(contains("oda"), prop.contentious),
-            funs(lead = lead(.),  # y_{i, t+1}
-                 diff = lead(.) - .)) %>%  # (y_{it} - y_{i, t-1})_{t+1}
+            funs(next_year = lead(.))) %>%  # y_{i, t+1}
+  # Get diffed leaded aid variables
+  mutate_at(vars(contains("oda"), -contains("log")),
+            funs(diff = lead(.) - .,  # (y_{it} - y_{i, t-1})_{t+1}
+                 diff_log = sign(lead(.) - .) * 
+                   log1p(abs(lead(.) - .)))) %>%  # sign(x) * log1p(abs(x))
   # Indicate changes in laws
   mutate_at(vars(advocacy, association, entry, funding, barriers.total),
             funs(new = . - lag(.),
-                 cat = cut(. - lag(.), 
-                           breaks=c(-Inf, -1, 0, Inf), 
-                           labels=c("New better law", "No new laws", 
+                 worse = (. - lag(.)) > 0,
+                 cat = cut(. - lag(.),
+                           breaks=c(-Inf, -1, 0, Inf),
+                           labels=c("New better law", "No new laws",
                                     "New worse law"),
                            ordered_result=TRUE))) %>%
   ungroup()
@@ -1177,8 +1186,14 @@ country.aid.data %>% glimpse()
 
 This data is relatively complete, with only a few variables suffering from missing data, mostly from the World Bank (and some from V-Dem).
 
-```{r final-data-missing, fig.width=6, fig.height=4.5}
+```{r final-data-missing-donors, fig.width=6, fig.height=4.5}
 plot.percent.missing(donor.country.data)
+```
+
+There are more missing variables in the country-level panel data, but that's because of shifting windows—when variables are leaded or lagged, the first or last observation is missing
+
+```{r final-data-missing-countries, fig.width=6, fig.height=5}
+plot.percent.missing(country.aid.data)
 ```
 
 ### Save final data
