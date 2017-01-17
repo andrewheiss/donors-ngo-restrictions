@@ -5,10 +5,10 @@ library(s3mpi)
 options(s3mpi.path = "s3://ath-data-processing/donors-ngos-restrictions")
 
 # Get data from S3
-df.donor.country <- s3sread("df_donor_country")
-df.donor <- s3sread("df_donor")
-df.country <- s3sread("df_country")
-df.country.aid <- s3sread("df_country_aid")
+df.donor.country <- s3read("df_donor_country")
+df.donor <- s3read("df_donor")
+df.country <- s3read("df_country")
+df.country.aid <- s3read("df_country_aid")
 
 # Save data in S3
 s3store(df.donor.country, "df_donor_country")
