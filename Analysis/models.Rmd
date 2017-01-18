@@ -25,6 +25,8 @@ knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
 library(tidyverse)
 library(stringr)
 library(forcats)
+library(stargazer)
+library(lme4)
 
 source(file.path(PROJHOME, "lib", "graphics.R"))
 source(file.path(PROJHOME, "lib", "pandoc.R"))
@@ -44,113 +46,101 @@ df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
 df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
                                 "df_country_aid.rds"))
 
+df.country.aid.demean <- df.country.aid %>%
+  group_by(cowcode) %>%
+  mutate_at(vars(barriers.total, advocacy, entry, funding, 
+                 polity, gdp.capita, trade.pct.gdp, corruption),
+            funs(between = mean(., na.rm=TRUE),  # meaned
+                 within = . - mean(., na.rm=TRUE)))  # demeaned
+
 dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
                                            "dcjw_questions.csv"))
 dcjw.responses.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
                                            "dcjw_responses.csv"))
 ```
 
-```{r}
-ggplot(df.country.aid, aes(x=total.oda_log_next_year)) + geom_density()
+## H~1~: Donors reduce aid in response to legislation
 
-ggplot(df.country.aid, aes(x=barriers.total_new, y=total.oda_log_next_year)) + 
-  geom_point()
+> **H~1~**: In response to restrictive NGO legislation, bilateral, multilateral, and private donors may reduce their aid to repressive countries.
 
-ggplot(df.country.aid, aes(x=entry_worse, y=total.oda_log_next_year)) + 
-  geom_point()
+$$ln( \text{ODA} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
 
-model1 <- lm(total.oda_log_next_year ~ barriers.total_new, data=df.country.aid)
-summary(model1)
+Our dependent variable for this hypothesis is the log of ODA (constant 2011 dollars), leaded by one year so we don't have to lag every other independent variable. 
 
-model2 <- lm(total.oda_log_next_year ~ advocacy_worse + entry_worse + funding_worse, data=df.country.aid)
-summary(model2)
+We look at NGO legislation in a few different ways:
 
-model3 <- lm(total.oda_log_next_year ~ advocacy_new + entry_new + funding_new + as.factor(cowcode) + as.factor(year), data=df.country.aid)
-summary(model3)
+- `barriers.total`: Number of anti-NGO legal barriers in a country-year
+- `barriers.total_new`: Indicator marking if a new anti-NGO barrier was passed in a country year
+- `advocacy + entry + funding`: Number of anti-NGO legal barriers by type of barrier
+- `advocacy_new + entry_new + funding_new`: Indicators marking new type of barrier
 
-# Transforming data with lots of 0s
-# http://robjhyndman.com/hyndsight/transformations/
-# https://stats.stackexchange.com/questions/1444/how-should-i-transform-non-negative-data-including-zeros
+We use a standard set of controls in each model ([explained in more detail here](/Data/get_merge_data.html#other_controls_and_alternative_hypotheses)):
 
-# Interpretation of logged variables
-# http://stats.stackexchange.com/a/18639/3025
-#
-# Example A: No transformations
-# 
-# DV = Intercept + B1 * IV + Error 
-# "One unit increase in IV is associated with a (B1) unit increase in DV."
-# 
-# Example B: Outcome transformed
-# 
-# log(DV) = Intercept + B1 * IV + Error 
-# "One unit increase in IV is associated with a (B1 * 100) percent increase in DV."
-# 
-# Example C: Exposure transformed
-# 
-# DV = Intercept + B1 * log(IV) + Error 
-# "One percent increase in IV is associated with a (B1 / 100) unit increase in DV."
-# 
-# Example D: Outcome transformed and exposure transformed
-# 
-# log(DV) = Intercept + B1 * log(IV) + Error 
-# "One percent increase in IV is associated with a (B1) percent increase in DV."
+- Democracy: `polity`
+- Wealth: `gdp.capita`
+- Government capacity: `corruption`
+- Bad stuff: `internal.conflict.past.5` and `natural_disaster.occurrence`
 
-# model6 <- stan_glmer(total.oda_log_next_year ~ 
-#                         advocacy_new + entry_new + funding_new + (1|year), #+ 
-#                         # (1|cowcode) + (1|year),
-#                       data=df.country.aid, family=gaussian(),
-#                       prior=normal(), prior_intercept=normal(), #QR=TRUE,
-#                       chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
-# print(model4)
-# plot(model5, regex_pars="new")
+Following Bell and Jones (2012), we use random effects for country and year and use a combination of meaned and demeaned versions of each continuous variable to estimate both the within and between effects of each variable. 
+
+$$ y_{i, t + 1} = \beta_0 + \beta_1 (x_{it} - \bar{x}_i) + \beta_2 \bar{x}_i + \ldots  $$
+
+This approach has multiple benefits. The coefficients for the demeaned variables are roughly equivalent to their corresponding coefficeints in a fixed effects model, but a fixed effects model assumes that the between effect (captured by the mean variables) is 0, which is not the case. A random effects model specified in this manner is more interpretable, as it clearly separates the within and between effects (again, within = demeaned, between = mean).
+
+```{r h1-models, warning=FALSE, message=FALSE}
+mod.h1.barriers.total <- lmer(
+  total.oda_log_next_year ~ 
+    barriers.total_between + barriers.total_within +
+    polity_between + polity_within + 
+    gdp.capita_between + gdp.capita_within +
+    trade.pct.gdp_between + trade.pct.gdp_within + 
+    corruption_between + corruption_within +
+    # Indicator variables don't need to be demeaned
+    internal.conflict.past.5 + natural_disaster.occurrence +
+    (1 | cowcode) + (1 | year),
+  data=df.country.aid.demean)
+
+mod.h1.barriers.new <- lmer(
+  total.oda_log_next_year ~ 
+    barriers.total_new +
+    polity_between + polity_within + 
+    gdp.capita_between + gdp.capita_within +
+    trade.pct.gdp_between + trade.pct.gdp_within + 
+    corruption_between + corruption_within +
+    # Indicator variables don't need to be demeaned
+    internal.conflict.past.5 + natural_disaster.occurrence +
+    (1 | cowcode) + (1 | year),
+  data=df.country.aid.demean)
+
+mod.h1.type.total <- lmer(
+  total.oda_log_next_year ~ 
+    advocacy_between + advocacy_within +
+    entry_between + entry_within +
+    funding_between + funding_within +
+    polity_between + polity_within + 
+    gdp.capita_between + gdp.capita_within +
+    trade.pct.gdp_between + trade.pct.gdp_within + 
+    corruption_between + corruption_within +
+    # Indicator variables don't need to be demeaned
+    internal.conflict.past.5 + natural_disaster.occurrence +
+    (1 | cowcode) + (1 | year),
+  data=df.country.aid.demean)
+
+mod.h1.type.new <- lmer(
+  total.oda_log_next_year ~ 
+    advocacy_new + entry_new + funding_new +
+    polity_between + polity_within + 
+    gdp.capita_between + gdp.capita_within +
+    trade.pct.gdp_between + trade.pct.gdp_within + 
+    corruption_between + corruption_within +
+    # Indicator variables don't need to be demeaned
+    internal.conflict.past.5 + natural_disaster.occurrence +
+    (1 | cowcode) + (1 | year),
+  data=df.country.aid.demean)
 ```
 
-```{r eval=FALSE, include=FALSE}
-# # http://dss.princeton.edu/training/Panel101R.pdf
-# 
-Panel <- haven::read_dta("http://dss.princeton.edu/training/Panel101.dta") %>%
-  mutate(y.small = y / 100000000)
-# 
-# plot.panel <- Panel %>%
-#   group_by(year) %>%
-#   summarise(y = mean(y))
-# ggplot(plot.panel, aes(x=year, y=y)) + geom_point()
-# 
-# ols <-lm(y ~ x1, data=Panel)
-# summary(ols)
-# 
-# # These are the same
-# fixed.dum <-lm(y ~ x1 + factor(country) - 1, data=Panel)
-# summary(fixed.dum)
-# 
-# fixed <- plm(y ~ x1, data=Panel, index=c("country", "year"), model="ht")
-# summary(fixed)
-# 
-# fixed.bayes <- stan_glm(y ~ x1 + factor(country), data=Panel,
-#                         family=gaussian(),
-#                         prior=cauchy(), prior_intercept=cauchy(),
-#                         chains=CHAINS, iter=ITER, warmup=WARMUP,
-#                         algorithm="sampling", seed=my.seed)
-# summary(fixed.bayes)
-# fixed.bayes
-#  
-fixed <- lm(y.small ~ x1 + as.factor(country) + as.factor(year), data=Panel)
-summary(fixed)
-
-random1 <- lme4::lmer(y.small ~ x1 + (1|country) + (1|year), data=Panel)
-summary(random1)
-
-random <- plm::plm(y.small ~ x1, data=Panel, index=c("country", "year"), model="random")
-summary(random)
-
-random.bayes <- stan_glmer(y.small ~ x1 + (1|country) + (1|year),
-                           data=Panel, family=gaussian(),
-                           prior=normal(), prior_intercept=normal(),
-                           chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
-random.bayes
-plot(random.bayes, regex_pars="x1")
-
-# 
-# # If significant use fixed effects
-# phtest(fixed, random)
+```{r, results="asis"}
+stargazer(mod.h1.barriers.total, mod.h1.barriers.new, 
+          mod.h1.type.total, mod.h1.type.new, type="html", omit="factor")
 ```
+
