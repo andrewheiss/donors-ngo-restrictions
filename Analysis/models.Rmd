@@ -68,6 +68,33 @@ summary(model2)
 model3 <- lm(total.oda_log_next_year ~ advocacy_new + entry_new + funding_new + as.factor(cowcode) + as.factor(year), data=df.country.aid)
 summary(model3)
 
+# Transforming data with lots of 0s
+# http://robjhyndman.com/hyndsight/transformations/
+# https://stats.stackexchange.com/questions/1444/how-should-i-transform-non-negative-data-including-zeros
+
+# Interpretation of logged variables
+# http://stats.stackexchange.com/a/18639/3025
+#
+# Example A: No transformations
+# 
+# DV = Intercept + B1 * IV + Error 
+# "One unit increase in IV is associated with a (B1) unit increase in DV."
+# 
+# Example B: Outcome transformed
+# 
+# log(DV) = Intercept + B1 * IV + Error 
+# "One unit increase in IV is associated with a (B1 * 100) percent increase in DV."
+# 
+# Example C: Exposure transformed
+# 
+# DV = Intercept + B1 * log(IV) + Error 
+# "One percent increase in IV is associated with a (B1 / 100) unit increase in DV."
+# 
+# Example D: Outcome transformed and exposure transformed
+# 
+# log(DV) = Intercept + B1 * log(IV) + Error 
+# "One percent increase in IV is associated with a (B1) percent increase in DV."
+
 # model6 <- stan_glmer(total.oda_log_next_year ~ 
 #                         advocacy_new + entry_new + funding_new + (1|year), #+ 
 #                         # (1|cowcode) + (1|year),
