@@ -77,7 +77,7 @@ We look at NGO legislation in a few different ways:
 - `advocacy_new + entry_new + funding_new`: Indicators marking new type of barrier
 - `csre`: Civil society regulatory environment index (CSRE), ranging from roughly -4 to 4 (higher values = better civil society regulations)
 
-We use a standard set of controls in each model ([explained in more detail here](/Data/get_merge_data.html#other_controls_and_alternative_hypotheses)):
+We use a standard set of controls in each model ([explained in more detail here](../Data/get_merge_data.html#other_controls_and_alternative_hypotheses)):
 
 - Democracy: `polity`
 - Wealth: `gdp.capita_log` (logged so it's on the same scale as the other variables) 
