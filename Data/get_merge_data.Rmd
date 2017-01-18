@@ -807,6 +807,7 @@ The World Bank has a fantastic API for [their statistical indicators](http://dat
 
 ```{r load-wdi, cache=TRUE}
 wdi.indicators <- c("NY.GDP.PCAP.KD",        # GDP per capita (constant 2010 USD)
+                    "NY.GDP.MKTP.CD",        # GDP (current dollars)
                     "NY.GDP.MKTP.KD",        # GDP (constant 2010 USD)
                     "SP.POP.TOTL",           # Population, total
                     "BX.KLT.DINV.WD.GD.ZS")  # Foreign direct investment, net inflows (% of GDP)
@@ -818,13 +819,30 @@ wdi.raw <- WDI(country="all", wdi.indicators,
                extra=FALSE, start=1980, end=2015)
 
 # Filter countries here instead
-wdi.clean <- wdi.raw %>%
+wdi.clean.intermediate <- wdi.raw %>%
   filter(iso2c %in% unique(gw.codes$iso2)) %>%
   arrange(iso2c, year) %>%
-  rename(gdp.capita = NY.GDP.PCAP.KD, gdp = NY.GDP.MKTP.KD,
+  rename(gdp.capita.2010 = NY.GDP.PCAP.KD, 
+         gdp.2010 = NY.GDP.MKTP.KD, gdp.current = NY.GDP.MKTP.CD,
          population = SP.POP.TOTL, fdi.in.pct.gdp = BX.KLT.DINV.WD.GD.ZS) %>%
+  mutate(gdp.deflator = gdp.current / gdp.2010 * 100)
+
+# Rescale the 2010 data to 2011 to match AidData
+#
+# Deflator = current GDP / constant GDP * 100
+# Current GDP in year_t * (deflator in year_target / deflator in year_t)
+wdi.rescaled <- wdi.clean.intermediate %>%
+  left_join(select(filter(wdi.clean.intermediate, year == 2011), 
+                   iso2c, deflator.target.year = gdp.deflator), 
+            by="iso2c") %>%
+  mutate(gdp = gdp.current * (deflator.target.year / gdp.deflator)) %>%
+  mutate(gdp.capita = gdp / population)
+
+wdi.clean <- wdi.rescaled %>%
   mutate_at(vars(gdp.capita, gdp, population), funs(log=log1p)) %>%
-  left_join(select(gw.codes, iso2, cowcode), by=c("iso2c" = "iso2"))
+  left_join(select(gw.codes, iso2, cowcode), by=c("iso2c" = "iso2")) %>%
+  select(-c(gdp.capita.2010, gdp.current, gdp.2010, 
+            gdp.deflator, deflator.target.year))
 
 wdi.clean %>% head(100) %>% datatable(extensions="Responsive")
 
