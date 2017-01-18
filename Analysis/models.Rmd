@@ -88,7 +88,7 @@ $$ y_{i, t + 1} = \beta_0 + \beta_1 (x_{it} - \bar{x}_i) + \beta_2 \bar{x}_i + \
 This approach has multiple benefits. The coefficients for the demeaned variables are roughly equivalent to their corresponding coefficeints in a fixed effects model, but a fixed effects model assumes that the between effect (captured by the mean variables) is 0, which is not the case. A random effects model specified in this manner is more interpretable, as it clearly separates the within and between effects (again, within = demeaned, between = mean).
 
 ```{r h1-models, warning=FALSE, message=FALSE}
-mod.h1.barriers.total <- lmer(
+mod.h1.barriers.total <- glmer(
   total.oda_log_next_year ~ 
     barriers.total_between + barriers.total_within +
     polity_between + polity_within + 
@@ -98,9 +98,9 @@ mod.h1.barriers.total <- lmer(
     # Indicator variables don't need to be demeaned
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean)
+  data=df.country.aid.demean, family=gaussian())
 
-mod.h1.barriers.new <- lmer(
+mod.h1.barriers.new <- glmer(
   total.oda_log_next_year ~ 
     barriers.total_new +
     polity_between + polity_within + 
@@ -110,9 +110,9 @@ mod.h1.barriers.new <- lmer(
     # Indicator variables don't need to be demeaned
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean)
+  data=df.country.aid.demean, family=gaussian())
 
-mod.h1.type.total <- lmer(
+mod.h1.type.total <- glmer(
   total.oda_log_next_year ~ 
     advocacy_between + advocacy_within +
     entry_between + entry_within +
@@ -124,9 +124,9 @@ mod.h1.type.total <- lmer(
     # Indicator variables don't need to be demeaned
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean)
+  data=df.country.aid.demean, family=gaussian())
 
-mod.h1.type.new <- lmer(
+mod.h1.type.new <- glmer(
   total.oda_log_next_year ~ 
     advocacy_new + entry_new + funding_new +
     polity_between + polity_within + 
@@ -136,7 +136,7 @@ mod.h1.type.new <- lmer(
     # Indicator variables don't need to be demeaned
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean)
+  data=df.country.aid.demean, family=gaussian())
 ```
 
 ```{r, results="asis"}
