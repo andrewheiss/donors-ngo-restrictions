@@ -1174,6 +1174,7 @@ country.aid.data <- country.level.data %>%
   mutate_at(vars(contains("oda")), funs(ifelse(is.na(.), 0, .))) %>%
   mutate_at(vars(total.oda, oda.contentious.high, oda.contentious.low),
             funs(log = log1p(.))) %>%
+  mutate(aid.pct.gdp = total.oda / gdp) %>%
   # Lag/lead/diff everything within countries
   group_by(cowcode) %>%
   # Get leaded aid variables
