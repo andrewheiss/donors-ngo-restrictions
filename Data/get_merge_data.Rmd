@@ -807,7 +807,7 @@ There are a bunch of reasons why overall aid flows might change over time. We co
     - Aid dependency: `aid.pct.gdp` (Constant 2011 ODA as percent of constant 2011 GDP from AidData and WDI)
 - **Government capacity**: donors likely give more aid to NGOs in countries with weak institutions (and perhaps less aid overall?)
     - Corruption: `corruption` (0-1 scale from V-Dem: public sector + executive + + legislative + judicial corruption, originally `v2x_corr`)
-    - Quality of governance: `govt.effectiveness` (≈-2 to 2 scale from V-Dem and WBGI, originally `e_wbgi_gee`)
+    - **BAD VARIABLE, almost 50% missing; sadface** Quality of governance: `govt.effectiveness` (≈-2 to 2 scale from V-Dem and WBGI, originally `e_wbgi_gee`)
 - **Bad stuff**: donors likely give more aid to countries when bad things happen like wars and natural disasters
     - Internal conflict: `internal.conflict.past.5` (binary indicator variable if there was a conflict in that year or in the previous 5 years from UCDP/PRIO)
     - Disasters: `natural_disaster.affected`, `natural_disaster.deaths`, `natural_disaster.occurrence`, and `natural_disaster.total.affected`, among others (from EM-DAT)
