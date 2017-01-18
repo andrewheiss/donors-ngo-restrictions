@@ -10,6 +10,19 @@ df.donor <- s3read("df_donor")
 df.country <- s3read("df_country")
 df.country.aid <- s3read("df_country_aid")
 
+saveRDS(df.donor.country, 
+        file.path(PROJHOME, "Data", "data_clean",
+                  "df_donor_country.rds"))
+saveRDS(df.donor, 
+        file.path(PROJHOME, "Data", "data_clean",
+                  "df_donor.rds"))
+saveRDS(df.country, 
+        file.path(PROJHOME, "Data", "data_clean",
+                  "df_country.rds"))
+saveRDS(df.country.aid, 
+        file.path(PROJHOME, "Data", "data_clean",
+                  "df_country_aid.rds"))
+
 # Save data in S3
 s3store(df.donor.country, "df_donor_country")
 s3store(df.donor, "df_donor")
