@@ -678,7 +678,7 @@ While the main focus of this paper is donor response to new *legislation*, we al
 # as the default type.
 vdem.raw <- read_csv(file.path(PROJHOME, "Data", "data_raw", 
                                     "V-Dem", "v6.2",
-                                    "V-Dem-DS-CY-v6.2.csv"),
+                                    "V-Dem-DS-CY+Others-v6.2.csv"),
                   col_types=cols(
                               country_name = col_character(),
                               country_id = col_integer(),
@@ -709,6 +709,7 @@ vdem.raw <- read_csv(file.path(PROJHOME, "Data", "data_raw",
 
 # Extract civil society-related variables and create CSRE index
 vdem.cso <- vdem.raw %>% select(country_name, year, cowcode = COWcode, 
+                                e_fh_ipolity2, v2x_corr, e_wbgi_gee,
                                 v2x_frassoc_thick, v2xcs_ccsi,
                                 starts_with("v2cseeorgs"), 
                                 starts_with("v2csreprss"), 
