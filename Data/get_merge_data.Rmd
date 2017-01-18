@@ -811,7 +811,7 @@ wdi.indicators <- c("NY.GDP.PCAP.KD",        # GDP per capita (constant 2010 USD
                     "NY.GDP.MKTP.CD",        # GDP (current dollars)
                     "NY.GDP.MKTP.KD",        # GDP (constant 2010 USD)
                     "SP.POP.TOTL",           # Population, total
-                    "BX.KLT.DINV.WD.GD.ZS")  # Foreign direct investment, net inflows (% of GDP)
+                    "NE.TRD.GNFS.ZS")        # Trade as % of GDP
 
 # Get all countries and regions because the World Bank chokes on ISO codes like
 # XK for Kosovo, even though it returns data for Kosovo with the XK code
@@ -825,7 +825,7 @@ wdi.clean.intermediate <- wdi.raw %>%
   arrange(iso2c, year) %>%
   rename(gdp.capita.2010 = NY.GDP.PCAP.KD, 
          gdp.2010 = NY.GDP.MKTP.KD, gdp.current = NY.GDP.MKTP.CD,
-         population = SP.POP.TOTL, fdi.in.pct.gdp = BX.KLT.DINV.WD.GD.ZS) %>%
+         population = SP.POP.TOTL, trade.pct.gdp = NE.TRD.GNFS.ZS) %>%
   mutate(gdp.deflator = gdp.current / gdp.2010 * 100)
 
 # Rescale the 2010 data to 2011 to match AidData
