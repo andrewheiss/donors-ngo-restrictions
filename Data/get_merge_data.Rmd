@@ -972,6 +972,33 @@ col.clean %>% glimpse()
 ```
 
 
+### Conflict
+
+The [UCDP/PRIO Armed Conflict Dataset](http://ucdp.uu.se/downloads/) tracks a ton of conflict-releated data, including reasons for the conflict, parties in the conflict, intensity of the conflict, and deaths in the conflict. We're only interested in whether a conflict happened in a given year (or in the past 5 years), so here we simply create an indicator variable for whether there was internal conflict in a country-year (conflict type = 3).  
+
+```{r load-conflict, message=FALSE}
+# Uppsala conflict data
+# http://www.pcr.uu.se/research/ucdp/datasets/generate_your_own_datasets/dynamic_datasets/
+# conflicts <- read_tsv(file.path(PROJHOME, "Data", "data_raw", "External", 
+#                                 "Uppsala", "ywd_dataset.csv")) %>%
+#   mutate(intensity = factor(intensity, 
+#                             levels=c("No", "Minor", "Intermediate", "War"), 
+#                             ordered=TRUE))
+conflicts.raw <- read_csv("http://ucdp.uu.se/downloads/ucdpprio/ucdp-prio-acd-4-2016.csv")
+
+conflicts <- conflicts.raw %>%
+  filter(TypeOfConflict == 3) %>%
+  mutate(gwcode = as.integer(GWNoA)) %>%
+  group_by(gwcode, Year) %>%
+  summarise(conflict.internal = n() > 0) %>%
+  ungroup() %>%
+  left_join(gw.codes, by="gwcode") %>%
+  filter(!is.na(cowcode))
+
+glimpse(conflicts)
+```
+
+
 ### Natural disasters
 
 Natural disaster data comes from the [International Disaster Database (EM-DAT)](http://www.emdat.be/database). The data includes the number of deaths, injuries, homeless displacements, and monetary losses (in 2000 dollars) for a huge number of natural and technological disasters (see [EM-DAT's full classification](http://www.emdat.be/classification)).
@@ -1136,7 +1163,12 @@ country.level.data <- dcjw.full %>%
   left_join(select(disasters.groups, cowcode, year, starts_with("natural_")), 
             by=c("cowcode", "year")) %>%
   # NAs in disasters are really 0, especially when occurrence is 0
-  mutate_at(vars(starts_with("natural_")), funs(ifelse(is.na(.), 0, .)))
+  mutate_at(vars(starts_with("natural_")), funs(ifelse(is.na(.), 0, .))) %>%
+  # Treat NAs in conflicts as FALSE
+  left_join(select(conflicts, cowcode, year=Year, conflict.internal),
+            by=c("cowcode", "year")) %>%
+  mutate(conflict.internal = ifelse(is.na(conflict.internal),
+                                    FALSE, conflict.internal))
 testthat::expect_equal(nrow(country.level.data), nrow(dcjw.full))
 
 # Combine country and donor data
@@ -1166,6 +1198,17 @@ aid.by.country.purpose <- donor.country.data %>%
 #   (lead(x) / x) - 1
 # }
 
+# Determine if any of the values in the last k rows are TRUE
+check_last_k <- function(x, k) {
+  # This creates a matrix with a column for each lag value (e.g. column 1 = lag
+  # 0, column 2 = lag 1, etc.)
+  all.lags <- sapply(0:k, FUN=function(k) lag(x, k))
+
+  # Marke TRUE if any of the columns have TRUE in them
+  any.true.in.window <- apply(all.lags, MARGIN=1, FUN=any, na.rm=TRUE)
+  return(any.true.in.window)
+}
+
 # Add aid and diffed + leaded data to main panel
 country.aid.data <- country.level.data %>%
   filter(year < 2014) %>%  # There's no aid data after 2013
@@ -1194,6 +1237,8 @@ country.aid.data <- country.level.data %>%
                            labels=c("New better law", "No new laws",
                                     "New worse law"),
                            ordered_result=TRUE))) %>%
+  # Determine if there was conflict in the past 5 years
+  mutate(internal.conflict.past.5 = check_last_k(conflict.internal, 5)) %>%
   ungroup()
 
 country.aid.data %>% head(100) %>% datatable(extensions="Responsive")
