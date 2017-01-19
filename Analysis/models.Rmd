@@ -139,7 +139,7 @@ mod.test.re.fancy.imp <- lmer(total.oda_log_next_year ~
 stargazer(mod.test.fe, mod.test.re, mod.test.re.fancy,
           mod.test.fe.imp, mod.test.re.imp, mod.test.re.fancy.imp,
           type="html", omit="factor", 
-          add.lines=list(c("Country fixed effects", rep("Yes", 6))),
+          add.lines=list(c("Country effects", rep("Yes", 6))),
           keep.stat=c("n"))
 ```
 
