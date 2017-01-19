@@ -47,17 +47,37 @@ df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
 df.country.aid.impute <- readRDS(file.path(PROJHOME, "Data", "data_clean",
                                            "df_country_aid_imputation.rds"))
 
-df.country.aid.demean <- df.country.aid %>%
-  group_by(cowcode) %>%
-  mutate_at(vars(barriers.total, advocacy, entry, funding, 
-                 polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre),
-            funs(between = mean(., na.rm=TRUE),  # meaned
-                 within = . - mean(., na.rm=TRUE)))  # demeaned
-
 dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
                                            "dcjw_questions.csv"))
 dcjw.responses.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
                                            "dcjw_responses.csv"))
+
+df.country.aid.both <- bind_rows(df.country.aid, df.country.aid.impute)
+
+# All the missing values have been taken care of, but final years for leaded
+# variables *are* still missing (i.e. there's no aid data for 2014, so
+# total.oda_log_next_year will be NA in 2013). For this fancy random effects
+# regression to work, the demeaned variables have to be based on the means of
+# all rows included in the regression, so they can't include rows that are
+# dropped because of missingness. This means we have to make separate demeaned
+# datasets for *_after_2 and *_after_5, but ¯\_(ツ)_/¯
+df.country.aid.demean.next_year.both <- df.country.aid.both %>%
+  filter(!is.na(total.oda_log_next_year)) %>%
+  group_by(m, cowcode) %>%
+  mutate_at(vars(barriers.total, advocacy, entry, funding, 
+                 polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre),
+            funs(between = mean(., na.rm=TRUE),  # meaned
+                 within = . - mean(., na.rm=TRUE))) %>%  # demeaned
+  ungroup()
+
+df.country.aid.demean.next_year <- 
+  filter(df.country.aid.demean.next_year.both, m == "original")
+
+df.country.aid.demean.next_year.impute <- 
+  filter(df.country.aid.demean.next_year.both, m != "original")
+
+# asdf <- df.country.aid.demean.next_year.both %>%
+#   nest(-m)
 ```
 
 ## General model specifications and controls
@@ -144,7 +164,7 @@ mod.h1.barriers.total <- lmer(
     # Indicator variables don't need to be demeaned
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean)
+  data=df.country.aid.demean.next_year)
 
 mod.h1.barriers.new <- lmer(
   total.oda_log_next_year ~ 
@@ -156,7 +176,7 @@ mod.h1.barriers.new <- lmer(
     # Indicator variables don't need to be demeaned
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean)
+  data=df.country.aid.demean.next_year)
 
 mod.h1.type.total <- lmer(
   total.oda_log_next_year ~ 
@@ -170,7 +190,7 @@ mod.h1.type.total <- lmer(
     # Indicator variables don't need to be demeaned
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean)
+  data=df.country.aid.demean.next_year)
 
 mod.h1.type.new <- lmer(
   total.oda_log_next_year ~ 
@@ -182,7 +202,7 @@ mod.h1.type.new <- lmer(
     # Indicator variables don't need to be demeaned
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean)
+  data=df.country.aid.demean.next_year)
 
 mod.h1.csre <- lmer(
   total.oda_log_next_year ~ 
@@ -194,7 +214,7 @@ mod.h1.csre <- lmer(
     # Indicator variables don't need to be demeaned
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean)
+  data=df.country.aid.demean.next_year)
 ```
 
 ```{r h1-models-bayes, warning=FALSE, message=FALSE}
@@ -209,7 +229,7 @@ if (run.rstan) {
       # Indicator variables don't need to be demeaned
       internal.conflict.past.5 + natural_disaster.occurrence +
       (1 | cowcode) + (1 | year),
-    data=df.country.aid.demean, family=gaussian(),
+    data=df.country.aid.demean.next_year, family=gaussian(),
     prior=normal(), prior_intercept=normal(),
     chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
   
@@ -223,7 +243,7 @@ if (run.rstan) {
       # Indicator variables don't need to be demeaned
       internal.conflict.past.5 + natural_disaster.occurrence +
       (1 | cowcode) + (1 | year),
-    data=df.country.aid.demean, family=gaussian(),
+    data=df.country.aid.demean.next_year, family=gaussian(),
     prior=normal(), prior_intercept=normal(),
     chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
   
@@ -239,7 +259,7 @@ if (run.rstan) {
       # Indicator variables don't need to be demeaned
       internal.conflict.past.5 + natural_disaster.occurrence +
       (1 | cowcode) + (1 | year),
-    data=df.country.aid.demean, family=gaussian(),
+    data=df.country.aid.demean.next_year, family=gaussian(),
     prior=normal(), prior_intercept=normal(),
     chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
   
@@ -253,7 +273,7 @@ if (run.rstan) {
       # Indicator variables don't need to be demeaned
       internal.conflict.past.5 + natural_disaster.occurrence +
       (1 | cowcode) + (1 | year),
-    data=df.country.aid.demean, family=gaussian(),
+    data=df.country.aid.demean.next_year, family=gaussian(),
     prior=normal(), prior_intercept=normal(),
     chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
   
@@ -267,7 +287,7 @@ if (run.rstan) {
       # Indicator variables don't need to be demeaned
       internal.conflict.past.5 + natural_disaster.occurrence +
       (1 | cowcode) + (1 | year),
-    data=df.country.aid.demean, family=gaussian(),
+    data=df.country.aid.demean.next_year, family=gaussian(),
     prior=normal(), prior_intercept=normal(),
     chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
 }
