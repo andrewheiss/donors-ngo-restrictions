@@ -75,9 +75,6 @@ df.country.aid.demean.next_year <-
 
 df.country.aid.demean.next_year.impute <- 
   filter(df.country.aid.demean.next_year.both, m != "original")
-
-# asdf <- df.country.aid.demean.next_year.both %>%
-#   nest(-m)
 ```
 
 ## General model specifications and controls
@@ -161,151 +158,37 @@ We look at NGO legislation in a few different ways:
 - `csre`: Civil society regulatory environment index (CSRE), ranging from roughly -4 to 4 (higher values = better civil society regulations)
 
 ```{r h1-models, warning=FALSE, message=FALSE}
-mod.h1.barriers.total <- lmer(
-  total.oda_log_next_year ~ 
-    barriers.total_between + barriers.total_within +
-    polity_between + polity_within + 
-    gdp.capita_log_between + gdp.capita_log_within +
-    trade.pct.gdp_between + trade.pct.gdp_within + 
-    corruption_between + corruption_within +
-    # Indicator variables don't need to be demeaned
-    internal.conflict.past.5 + natural_disaster.occurrence +
-    (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean.next_year)
+source(file.path(PROJHOME, "Analysis", "h1_model_definitions.R"))
+# Run models on each of the datasets (original and imputed) and save in a big data frame
+mods.h1.next_year.raw <- df.country.aid.demean.next_year.both %>%
+  nest(-m) %>%
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total),
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new),
+         mod.h1.type.total = data %>% map(mod.h1.type.total),
+         mod.h1.type.new = data %>% map(mod.h1.type.new),
+         mod.h1.csre = data %>% map(mod.h1.csre))
 
-mod.h1.barriers.new <- lmer(
-  total.oda_log_next_year ~ 
-    barriers.total_new +
-    polity_between + polity_within + 
-    gdp.capita_log_between + gdp.capita_log_within +
-    trade.pct.gdp_between + trade.pct.gdp_within + 
-    corruption_between + corruption_within +
-    # Indicator variables don't need to be demeaned
-    internal.conflict.past.5 + natural_disaster.occurrence +
-    (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean.next_year)
-
-mod.h1.type.total <- lmer(
-  total.oda_log_next_year ~ 
-    advocacy_between + advocacy_within +
-    entry_between + entry_within +
-    funding_between + funding_within +
-    polity_between + polity_within + 
-    gdp.capita_log_between + gdp.capita_log_within +
-    trade.pct.gdp_between + trade.pct.gdp_within + 
-    corruption_between + corruption_within +
-    # Indicator variables don't need to be demeaned
-    internal.conflict.past.5 + natural_disaster.occurrence +
-    (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean.next_year)
-
-mod.h1.type.new <- lmer(
-  total.oda_log_next_year ~ 
-    advocacy_new + entry_new + funding_new +
-    polity_between + polity_within + 
-    gdp.capita_log_between + gdp.capita_log_within +
-    trade.pct.gdp_between + trade.pct.gdp_within + 
-    corruption_between + corruption_within +
-    # Indicator variables don't need to be demeaned
-    internal.conflict.past.5 + natural_disaster.occurrence +
-    (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean.next_year)
-
-mod.h1.csre <- lmer(
-  total.oda_log_next_year ~ 
-    csre_between + csre_within +
-    polity_between + polity_within + 
-    gdp.capita_log_between + gdp.capita_log_within +
-    trade.pct.gdp_between + trade.pct.gdp_within + 
-    corruption_between + corruption_within +
-    # Indicator variables don't need to be demeaned
-    internal.conflict.past.5 + natural_disaster.occurrence +
-    (1 | cowcode) + (1 | year),
-  data=df.country.aid.demean.next_year)
+# Get model details and parameters
+mods.h1.next_year <- mods.h1.next_year.raw %>%
+  gather(model.name, model, -m, -data) %>%
+  mutate(glance = model %>% map(broom::glance),
+         tidy = model %>% map(broom::tidy, conf.int=TRUE),
+         augment = model %>% map(broom::augment))
 ```
 
 ```{r h1-models-bayes, warning=FALSE, message=FALSE}
 if (run.rstan) {
-  mod.h1.barriers.total.bayes <- stan_glmer(
-    total.oda_log_next_year ~ 
-      barriers.total_between + barriers.total_within +
-      polity_between + polity_within + 
-      gdp.capita_log_between + gdp.capita_log_within +
-      trade.pct.gdp_between + trade.pct.gdp_within + 
-      corruption_between + corruption_within +
-      # Indicator variables don't need to be demeaned
-      internal.conflict.past.5 + natural_disaster.occurrence +
-      (1 | cowcode) + (1 | year),
-    data=df.country.aid.demean.next_year, family=gaussian(),
-    prior=normal(), prior_intercept=normal(),
-    chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
-  
-  mod.h1.barriers.new.bayes <- stan_glmer(
-    total.oda_log_next_year ~ 
-      barriers.total_new +
-      polity_between + polity_within + 
-      gdp.capita_log_between + gdp.capita_log_within +
-      trade.pct.gdp_between + trade.pct.gdp_within + 
-      corruption_between + corruption_within +
-      # Indicator variables don't need to be demeaned
-      internal.conflict.past.5 + natural_disaster.occurrence +
-      (1 | cowcode) + (1 | year),
-    data=df.country.aid.demean.next_year, family=gaussian(),
-    prior=normal(), prior_intercept=normal(),
-    chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
-  
-  mod.h1.type.total.bayes <- stan_glmer(
-    total.oda_log_next_year ~ 
-      advocacy_between + advocacy_within +
-      entry_between + entry_within +
-      funding_between + funding_within +
-      polity_between + polity_within + 
-      gdp.capita_log_between + gdp.capita_log_within +
-      trade.pct.gdp_between + trade.pct.gdp_within + 
-      corruption_between + corruption_within +
-      # Indicator variables don't need to be demeaned
-      internal.conflict.past.5 + natural_disaster.occurrence +
-      (1 | cowcode) + (1 | year),
-    data=df.country.aid.demean.next_year, family=gaussian(),
-    prior=normal(), prior_intercept=normal(),
-    chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
-  
-  mod.h1.type.new.bayes <- stan_glmer(
-    total.oda_log_next_year ~ 
-      advocacy_new + entry_new + funding_new +
-      polity_between + polity_within + 
-      gdp.capita_log_between + gdp.capita_log_within +
-      trade.pct.gdp_between + trade.pct.gdp_within + 
-      corruption_between + corruption_within +
-      # Indicator variables don't need to be demeaned
-      internal.conflict.past.5 + natural_disaster.occurrence +
-      (1 | cowcode) + (1 | year),
-    data=df.country.aid.demean.next_year, family=gaussian(),
-    prior=normal(), prior_intercept=normal(),
-    chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
-  
-  mod.h1.csre.bayes <- stan_glmer(
-    total.oda_log_next_year ~ 
-      csre_between + csre_within +
-      polity_between + polity_within + 
-      gdp.capita_log_between + gdp.capita_log_within +
-      trade.pct.gdp_between + trade.pct.gdp_within + 
-      corruption_between + corruption_within +
-      # Indicator variables don't need to be demeaned
-      internal.conflict.past.5 + natural_disaster.occurrence +
-      (1 | cowcode) + (1 | year),
-    data=df.country.aid.demean.next_year, family=gaussian(),
-    prior=normal(), prior_intercept=normal(),
-    chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
+  source(file.path(PROJHOME, "Analysis", "h1_model_definitions_bayes.R"))
 }
 ```
 
 ### Results
 
 ```{r h1-table, results="asis"}
-stargazer(mod.h1.barriers.total, mod.h1.barriers.new, 
-          mod.h1.type.total, mod.h1.type.new, mod.h1.csre,
-          type="html", omit="factor")
+stargazer(filter(mods.h1.next_year, m == "original")$model,
+          type="html",
+          add.lines=list(c("Country random effects", rep("Yes", 5)),
+                         c("Year random effects", rep("Yes", 5))))
 ```
 
 ### Predicted ODA
@@ -313,19 +196,24 @@ stargazer(mod.h1.barriers.total, mod.h1.barriers.new,
 `barriers.total_between` is significant at the 95% level in the first model, and it's substantially so. The grey band below indicates the 90% prediction interval, calculated with 1000 simulated draws from model results (these intervals are waaaay too big for now; they'll be more accurate when running the Bayesian models). One additional anti-NGO law is associated with a 36% increase in ODA in the following year *between* countries in the panel.
 
 ```{r h1-visualize, warning=FALSE}
-new.data <- mod.h1.barriers.total@frame %>%
+model.to.use <- mods.h1.next_year %>%
+  filter(m == "original", model.name == "mod.h1.barriers.total")
+
+model.to.use <- model.to.use$model[[1]]
+
+new.data <- model.to.use@frame %>%
   select(-barriers.total_between) %>%
   summarise_all(typical) %>%
   mutate(id = 1) %>%
   right_join(expand.grid(barriers.total_between = seq(0, 12, 0.1),
                          id = 1), by="id")
 
-plot.predict <- merTools::predictInterval(merMod=mod.h1.barriers.total, newdata=new.data, 
+plot.predict <- merTools::predictInterval(merMod=model.to.use, newdata=new.data, 
                                           level=0.90, n.sims=1000,
                                           stat="median", type="linear.prediction",
                                           include.resid.var=TRUE) %>%
   rename(pred = fit, pred.upper = upr, pred.lower = lwr) %>%
-  bind_cols(augment(mod.h1.barriers.total, newdata=new.data))
+  bind_cols(augment(model.to.use, newdata=new.data))
 
 ggplot(plot.predict, aes(x=barriers.total_between, y=.fitted)) + 
   geom_line() + 
@@ -338,19 +226,24 @@ ggplot(plot.predict, aes(x=barriers.total_between, y=.fitted)) +
 Looking at the overall effect of the civil society regulatory environment, though, does yield a significant effect. A one point increase in the CSRE is associated with a 41% increase in ODA in the following year (and vice versa; worsening CSRE leads to a reduction in aid) *within* countries in the panel.
 
 ```{r h1-visualize1, warning=FALSE}
-new.data <- mod.h1.csre@frame %>%
+model.to.use <- mods.h1.next_year %>%
+  filter(m == "original", model.name == "mod.h1.csre")
+
+model.to.use <- model.to.use$model[[1]]
+
+new.data <- model.to.use@frame %>%
   select(-csre_within) %>%
   summarise_all(typical) %>%
   mutate(id = 1) %>%
   right_join(expand.grid(csre_within = seq(-4, 4, 0.1),
                          id = 1), by="id")
 
-plot.predict <- merTools::predictInterval(merMod=mod.h1.csre, newdata=new.data, 
+plot.predict <- merTools::predictInterval(merMod=model.to.use, newdata=new.data, 
                                           level=0.90, n.sims=1000,
                                           stat="median", type="linear.prediction",
                                           include.resid.var=TRUE) %>%
   rename(pred = fit, pred.upper = upr, pred.lower = lwr) %>%
-  bind_cols(augment(mod.h1.csre, newdata=new.data))
+  bind_cols(augment(model.to.use, newdata=new.data))
 
 ggplot(plot.predict, aes(x=csre_within, y=.fitted)) + 
   geom_line() + 
