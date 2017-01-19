@@ -32,11 +32,15 @@ library(DT)
 library(WDI)
 library(xml2)
 library(ggstance)
+library(Amelia)
 
 source(file.path(PROJHOME, "lib", "graphics.R"))
 source(file.path(PROJHOME, "lib", "pandoc.R"))
 
 all.na.means.zero <- TRUE
+
+my.seed <- 1234
+set.seed(my.seed)
 ```
 
 ## Consistent country names
@@ -666,7 +670,7 @@ Andrew Heiss develops a new civil society regulatory environment index (CSRE) in
 
 While the main focus of this paper is donor response to new *legislation*, we also look at donor response to changes in the overall CSRE as a robustness check.
 
-```{r load-vdem}
+```{r load-vdem, warning=FALSE}
 # There's no direct link for V-Dem data, since it's behind a contact
 # information form. So, download the 6.2 version of the "Country-Year: V-Dem +
 # other" dataset from https://www.v-dem.net/en/data/data-version-6-2/ and place
@@ -847,11 +851,9 @@ wdi.rescaled <- wdi.clean.intermediate %>%
   left_join(select(filter(wdi.clean.intermediate, year == 2011), 
                    iso2c, deflator.target.year = gdp.deflator), 
             by="iso2c") %>%
-  mutate(gdp = gdp.current * (deflator.target.year / gdp.deflator)) %>%
-  mutate(gdp.capita = gdp / population)
+  mutate(gdp = gdp.current * (deflator.target.year / gdp.deflator))
 
 wdi.clean <- wdi.rescaled %>%
-  mutate_at(vars(gdp.capita, gdp, population), funs(log=log1p)) %>%
   left_join(select(gw.codes, iso2, cowcode), by=c("iso2c" = "iso2")) %>%
   select(-c(gdp.capita.2010, gdp.current, gdp.2010, 
             gdp.deflator, deflator.target.year))
@@ -1134,7 +1136,7 @@ disasters.groups %>% glimpse()
 
 With both donor- and country-level data, we have lots of different options for analysis. Since our hypotheses deal with questions of *donor* responses, the data we use to model donor responses uses donor-years as the unit of observation. Not all donors give money to the same countries, so this final data is not a complete panel (i.e. it does not include every combination of donors and years), which will pose some interesting methodological issues when modeling.
 
-```{r build-final-data}
+```{r combine-donor-country-data}
 # Donor data
 donor.level.data.raw <- aiddata.final %>%
   filter(cowcode %in% dcjw.full$cowcode) %>%
@@ -1196,7 +1198,6 @@ donor.country.data <- donor.level.data %>%
   arrange(donor, year)
 testthat::expect_equal(nrow(donor.country.data), nrow(donor.level.data))
 
-
 # Calculate different versions of aid variables
 aid.by.country.total <- donor.country.data %>%
   group_by(cowcode, year) %>%
@@ -1206,9 +1207,101 @@ aid.by.country.purpose <- donor.country.data %>%
   group_by(cowcode, year, purpose.contentiousness) %>%
   summarise(total.oda = sum(oda, na.rm=TRUE)) %>%
   spread(purpose.contentiousness, total.oda, fill=0) %>%
-  mutate(prop.contentious = High / (Low + High)) %>%
   rename(oda.contentious.high = High, 
          oda.contentious.low = Low)
+```
+
+### Missingness and imputation
+
+The donor data is complete with no missing variables(!).
+
+```{r final-data-missing-donors, fig.width=6, fig.height=3}
+plot.percent.missing(donor.level.data)
+```
+
+The country-level panel data is relatively complete, with only a few variables suffering from missing data, mostly from the World Bank and V-Dem.
+
+```{r final-data-missing-countries, fig.width=6, fig.height=5}
+plot.percent.missing(country.level.data)
+```
+
+That said, it's still helpful to impute the missing variables, especially since polity, corruption, and GDP are all main controls (plus [Lall 2016](https://doi.org/10.1093/pan/mpw020) shows the downsides of not imputing). So, we use [Amelia](http://gking.harvard.edu/amelia) to impute missing variables.
+
+We ultimately create a long data frame with each of the imputed datasets stacked under the original dataset. Datasets are identified with the column `m`, like so:
+
+```{r stacked-data-example, results="asis"}
+stacked.data <- tribble(
+  ~m, ~country, ~year, ~variable,
+  "original", "Afghanistan", "2000", 5,
+  "original", "Afghanistan", "2001", NA,
+  "original", "Afghanistan", "2002", 6,
+  "...", "...", "...", NA,
+  "imp1", "Afghanistan", "2000", 5,
+  "imp1", "Afghanistan", "2001", 5.3,
+  "imp1", "Afghanistan", "2002", 6,
+  "...", "...", "...", NA,
+  "imp2", "Afghanistan", "2000", 5,
+  "imp2", "Afghanistan", "2001", 5.8,
+  "imp2", "Afghanistan", "2002", 6,
+  "...", "...", "...", NA
+)
+
+pandoc.table(stacked.data)
+```
+
+We estimate models for each of the imputed datasets and recombine their results. We use `amelia::mi.meld()` to combine estimates and standard errors from frequentist models (following [King et al. 2001](http://gking.harvard.edu/files/abs/evil-abs.shtml)), and we [merge the MCMC chains](https://groups.google.com/d/msg/stan-users/daqP88cFQGY/F-gJLkFuXlQJ) from Bayesian models ([see also this](https://groups.google.com/forum/#!topic/stan-users/0hqV_RDx9MU)).
+
+```{r impute-missing-data}
+# Combine aid data with country data
+country.aid.data.pre.transformation <- country.level.data %>%
+  filter(year < 2014) %>%  # There's no aid data after 2013
+  left_join(aid.by.country.total, by=c("cowcode", "year")) %>%
+  left_join(aid.by.country.purpose, by=c("cowcode", "year")) %>%
+  mutate_at(vars(contains("oda")), funs(ifelse(is.na(.), 0, .)))
+
+# Select the variables to not include in the imputation model. Left join this
+# data frame later with the imputed data
+vars.to.ignore.in.imputation <- country.aid.data.pre.transformation %>%
+  select(year, cowcode,
+         which(sapply(.,is.character)),
+         const_assoc, political_parties, starts_with("ngo"), contains("std"),
+         starts_with("barriers"), contains("contentious"),
+         natural_disaster.total.affected, col.ind.date)
+
+# Vector of variables to exclude
+vars.to.ignore.sans.ids <- vars.to.ignore.in.imputation %>%
+  select(-year, -cowcode) %>% colnames()
+
+# Stripped down dataset for imputation
+country.aid.data.to.impute <- country.aid.data.pre.transformation %>%
+  select(-one_of(vars.to.ignore.sans.ids))
+
+# Imputation model tweaks
+# Variables that will be lagged and leaded
+vars.to.lag.lead <- c("csre", "polity", "corruption", "population",
+                      "trade.pct.gdp", "gdp")
+# Variables that will be logged
+vars.to.log <- c("gdp", "population")
+
+# Run imputation model
+set.seed(my.seed)
+country.aid.data.imputed <- amelia(country.aid.data.to.impute,
+                                   m=5, ts="year", cs="cowcode", p2s=0,
+                                   lags=vars.to.lag.lead,
+                                   leads=vars.to.lag.lead,
+                                   logs=vars.to.log)
+
+# Append list of imputed datasets to original in a long data frame and bring
+# back the omitted variables
+country.aid.data.imputed.long <- 
+  bind_rows(mutate(country.aid.data.to.impute, m="original"),
+            bind_rows(country.aid.data.imputed$imputations, .id="m")) %>%
+  select(m, everything()) %>%
+  left_join(vars.to.ignore.in.imputation, by=c("cowcode", "year"))
+```
+
+```{r log-lead-lag-everything}
+# Log, lead, and lag everything based on the big dataset of imputations
 
 # pct.change <- function(x) {
 #   (lead(x) / x) - 1
@@ -1225,25 +1318,38 @@ check_last_k <- function(x, k) {
   return(any.true.in.window)
 }
 
-# Add aid and diffed + leaded data to main panel
-country.aid.data <- country.level.data %>%
-  filter(year < 2014) %>%  # There's no aid data after 2013
-  left_join(aid.by.country.total, by=c("cowcode", "year")) %>%
-  left_join(aid.by.country.purpose, by=c("cowcode", "year")) %>%
-  mutate_at(vars(contains("oda")), funs(ifelse(is.na(.), 0, .))) %>%
+country.aid.data <- country.aid.data.imputed.long %>%
+  mutate(gdp.capita = gdp / population) %>%
+  mutate_at(vars(gdp.capita, gdp, population), funs(log=log1p)) %>%
+  # Calculate prop.contentious here since there should be some missing values
+  # (since there are country-years where there's no ODA)
+  mutate(prop.contentious = oda.contentious.high / 
+           (oda.contentious.low + oda.contentious.high)) %>%
+  mutate(prop.contentious = ifelse(is.nan(prop.contentious), 
+                                   NA, prop.contentious)) %>%
   mutate_at(vars(total.oda, oda.contentious.high, oda.contentious.low),
             funs(log = log1p(.))) %>%
   mutate(aid.pct.gdp = total.oda / gdp) %>%
-  # Lag/lead/diff everything within countries
-  group_by(cowcode) %>%
+  # Lag/lead/diff everything within countries and samples
+  group_by(m, cowcode) %>%
   # Get leaded aid variables
   mutate_at(vars(contains("oda"), prop.contentious),
-            funs(next_year = lead(.))) %>%  # y_{i, t+1}
+            funs(next_year = lead(.),  # y_{i, t+1}
+                 after_2 = lead(., 2),
+                 after_5 = lead(., 5))) %>%  
   # Get diffed leaded aid variables
-  mutate_at(vars(contains("oda"), -contains("log")),
+  mutate_at(vars(contains("next_year"), -contains("log")),
             funs(diff = lead(.) - .,  # (y_{it} - y_{i, t-1})_{t+1}
                  diff_log = sign(lead(.) - .) * 
                    log1p(abs(lead(.) - .)))) %>%  # sign(x) * log1p(abs(x))
+  mutate_at(vars(contains("after_2"), -contains("log")),
+            funs(diff = lead(., 2) - .,
+                 diff_log = sign(lead(., 2) - .) * 
+                   log1p(abs(lead(., 2) - .)))) %>%
+  mutate_at(vars(contains("after_5"), -contains("log")),
+            funs(diff = lead(., 5) - .,
+                 diff_log = sign(lead(., 5) - .) * 
+                   log1p(abs(lead(., 2) - .)))) %>%
   # Indicate changes in laws
   mutate_at(vars(advocacy, association, entry, funding, barriers.total),
             funs(new = . - lag(.),
@@ -1262,36 +1368,25 @@ country.aid.data %>% head(100) %>% datatable(extensions="Responsive")
 country.aid.data %>% glimpse()
 ```
 
-### Missingness in final data
+The final imputed dataset still has missing data, but that's because of (1) `prop.contentious`, which is missing if there's no aid in a country year, and (2) lags and leads create missing values at the beginnings and ends of the country windows.
 
-This data is relatively complete, with only a few variables suffering from missing data, mostly from the World Bank (and some from V-Dem).
-
-```{r final-data-missing-donors, fig.width=6, fig.height=4.5}
-plot.percent.missing(donor.country.data)
+```{r plot-missing-imputed, fig.width=8, fig.height=5}
+plot.percent.missing(filter(country.aid.data, m != "original"), 3)
 ```
 
-There are more missing variables in the country-level panel data, but that's because of shifting windows—when variables are leaded or lagged, the first or last observation is missing
-
-```{r final-data-missing-countries, fig.width=6, fig.height=5}
-plot.percent.missing(country.aid.data)
-```
 
 ### Save final data
 
 Final, clean country- and donor-level datasets are available in `Data/data_clean/`.
 
 ```{r save-final-data, echo=FALSE}
-saveRDS(donor.country.data,
+saveRDS(filter(country.aid.data, m == "original"),
         file=file.path(PROJHOME, "Data", "data_clean",
-                       "df_donor_country.rds"))
+                       "df_country_aid_no_imputation.rds"))
 
-saveRDS(country.level.data,
+saveRDS(filter(country.aid.data, m != "original"),
         file=file.path(PROJHOME, "Data", "data_clean",
-                       "df_country.rds"))
-
-saveRDS(country.aid.data,
-        file=file.path(PROJHOME, "Data", "data_clean",
-                       "df_country_aid.rds"))
+                       "df_country_aid_imputation.rds"))
 
 saveRDS(donor.level.data,
         file=file.path(PROJHOME, "Data", "data_clean",
