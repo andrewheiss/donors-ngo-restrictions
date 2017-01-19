@@ -41,14 +41,11 @@ run.rstan <- FALSE
 ```
 
 ```{r load-data, cache=TRUE, message=FALSE}
-df.donor.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                      "df_donor_country.rds"))
-df.donor <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                              "df_donor.rds"))
-df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                "df_country.rds"))
 df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                "df_country_aid.rds"))
+                                "df_country_aid_no_imputation.rds"))
+
+df.country.aid.impute <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                           "df_country_aid_imputation.rds"))
 
 df.country.aid.demean <- df.country.aid %>%
   group_by(cowcode) %>%
