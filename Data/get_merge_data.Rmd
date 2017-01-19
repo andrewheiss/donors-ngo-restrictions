@@ -1251,6 +1251,8 @@ pandoc.table(stacked.data)
 
 We estimate models for each of the imputed datasets and recombine their results. We use `amelia::mi.meld()` to combine estimates and standard errors from frequentist models (following [King et al. 2001](http://gking.harvard.edu/files/abs/evil-abs.shtml)), and we [merge the MCMC chains](https://groups.google.com/d/msg/stan-users/daqP88cFQGY/F-gJLkFuXlQJ) from Bayesian models ([see also this](https://groups.google.com/forum/#!topic/stan-users/0hqV_RDx9MU)).
 
+We varied the number of datasets we imputed (*m* = 5 and *m* = 10) and found only trivial differences in coefficients between 5 and 10 datasets (as predicted by King et al.). In the interest of computational efficiency and speed, we impute 5 datasets.
+
 ```{r impute-missing-data}
 # Combine aid data with country data
 country.aid.data.pre.transformation <- country.level.data %>%
