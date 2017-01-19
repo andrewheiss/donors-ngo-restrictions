@@ -77,6 +77,51 @@ df.country.aid.demean.next_year.impute <-
   filter(df.country.aid.demean.next_year.both, m != "original")
 ```
 
+```{r helpful-functions}
+stars <- function(p) {
+  out <- symnum(p, cutpoints=c(0, 0.01, 0.05, 0.1, 1),
+                symbols=c("***", "**", "*", ""))
+  as.character(out)
+}
+
+fixed.digits <- function(x, n=2) {
+  formatC(x, digits=n, format="f")
+}
+
+# Meld a bunch of imputed models
+meld.imputed.models <- function(model.data) {
+  models.df <- model.data$glance[[1]]$df.residual
+  
+  models.tidy <- model.data %>%
+    select(tidy) %>%
+    unnest(.id="imputation") %>%
+    filter(group == "fixed")
+  
+  just.estimates <- models.tidy %>% 
+    select(imputation, term, estimate) %>%
+    spread(term, estimate) %>%
+    select(-imputation)
+  
+  just.ses <- models.tidy %>%
+    select(imputation, term, std.error) %>%
+    spread(term, std.error) %>%
+    select(-imputation)
+  
+  melded <- Amelia::mi.meld(just.estimates, just.ses)
+  
+  melded.tidy <- as.data.frame(cbind(t(melded$q.mi), 
+                                     t(melded$se.mi))) %>%
+    mutate(term = rownames(.)) %>%
+    select(term, estimate = V1, std.error = V2) %>%
+    mutate(statistic = estimate / std.error,
+           conf.low = estimate + std.error * qt(0.025, models.df),
+           conf.high = estimate + std.error * qt(0.975, models.df),
+           p.value = 2 * pt(abs(statistic), models.df, lower.tail=FALSE),
+           stars = stars(p.value))  
+  melded.tidy
+}
+```
+
 ## General model specifications and controls
 
 We use a standard set of controls in each model ([explained in more detail here](../Data/get_merge_data.html#other_controls_and_alternative_hypotheses)):
@@ -157,7 +202,7 @@ We look at NGO legislation in a few different ways:
 - `advocacy_new + entry_new + funding_new`: Indicators marking new type of barrier
 - `csre`: Civil society regulatory environment index (CSRE), ranging from roughly -4 to 4 (higher values = better civil society regulations)
 
-```{r h1-models, warning=FALSE, message=FALSE}
+```{r h1-models, warning=FALSE, message=FALSE, cache=TRUE}
 source(file.path(PROJHOME, "Analysis", "h1_model_definitions.R"))
 # Run models on each of the datasets (original and imputed) and save in a big data frame
 mods.h1.next_year.raw <- df.country.aid.demean.next_year.both %>%
@@ -174,6 +219,14 @@ mods.h1.next_year <- mods.h1.next_year.raw %>%
   mutate(glance = model %>% map(broom::glance),
          tidy = model %>% map(broom::tidy, conf.int=TRUE),
          augment = model %>% map(broom::augment))
+
+# Meld the imputed models
+mods.h1.next_year.melded <- mods.h1.next_year %>%
+  filter(m != "original") %>%
+  group_by(model.name) %>%
+  nest() %>%
+  mutate(tidy.melded = data %>% map(meld.imputed.models),
+         n = data %>% map_int(~ nrow(.$model[[1]]@frame))) 
 ```
 
 ```{r h1-models-bayes, warning=FALSE, message=FALSE}
@@ -184,11 +237,51 @@ if (run.rstan) {
 
 ### Results
 
+#### Non-imputed frequentist models
+
 ```{r h1-table, results="asis"}
 stargazer(filter(mods.h1.next_year, m == "original")$model,
           type="html",
           add.lines=list(c("Country random effects", rep("Yes", 5)),
                          c("Year random effects", rep("Yes", 5))))
+```
+
+#### Imputed and melded frequentist models
+
+```{r h1-melded-table, results="asis", warning=FALSE}
+h1.terms <- c("barriers.total_between", "barriers.total_within", "barriers.total_new", "advocacy_between", "advocacy_within", "entry_between", "entry_within", "funding_between", "funding_within", "advocacy_new", "entry_new", "funding_new", "csre_between", "csre_within", "polity_between", "polity_within", "gdp.capita_log_between", "gdp.capita_log_within", "trade.pct.gdp_between", "trade.pct.gdp_within", "corruption_between", "corruption_within", "internal.conflict.past.5TRUE", "natural_disaster.occurrence", "(Intercept)")
+
+model.order <- c("mod.h1.barriers.total", "mod.h1.barriers.new", "mod.h1.type.total", "mod.h1.type.new", "mod.h1.csre")
+
+mods.h1.next_year.melded.nice <- mods.h1.next_year.melded %>%
+  unnest(tidy.melded) %>%
+  mutate(fancy = paste0(fixed.digits(estimate, 3),
+                        stars, "\\ \n(",
+                        fixed.digits(std.error, 3),
+                        ")")) %>%
+  select(model.name, term, fancy) %>%
+  spread(model.name, fancy, fill="") %>%
+  mutate(term = factor(term, levels=h1.terms, ordered=TRUE)) %>%
+  arrange(term) %>%
+  select_(.dots = c("term", model.order))
+
+ncols <- nrow(mods.h1.next_year.melded)
+bottom <- mods.h1.next_year.melded %>%
+  select(model.name, n) %>%
+  mutate(term = "Observations",
+         n = scales::comma(n)) %>%
+  spread(model.name, n) %>%
+  rbind(c("Country random effects", rep("Yes", ncols))) %>%
+  rbind(c("Year random effects", rep("Yes", ncols)))
+
+nice.top.bottom <- bind_rows(mods.h1.next_year.melded.nice, bottom)
+
+colnames(nice.top.bottom) <- str_replace_all(colnames(nice.top.bottom), 
+                                             "mod\\.h1\\.", "")
+
+# Grid layout because linebreaks in tables are hard
+pandoc.table(nice.top.bottom,
+             style="grid", keep.line.breaks=TRUE)
 ```
 
 ### Predicted ODA
