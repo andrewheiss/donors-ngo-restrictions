@@ -63,6 +63,48 @@ dcjw.responses.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
                                            "dcjw_responses.csv"))
 ```
 
+## General model specifications and controls
+
+We use a standard set of controls in each model ([explained in more detail here](../Data/get_merge_data.html#other_controls_and_alternative_hypotheses)):
+
+- Democracy: `polity`
+- Wealth: `gdp.capita_log` (logged so it's on the same scale as the other variables) 
+- Government capacity: `corruption`
+- Bad stuff: `internal.conflict.past.5` and `natural_disaster.occurrence`
+
+Following [Bell and Jones (2015)](http://dx.doi.org/10.1017/psrm.2014.7), we use random effects for country and year and use a combination of meaned and demeaned versions of each continuous variable to estimate both the within and between effects of each variable. 
+
+$$ y_{i, t + 1} = \beta_0 + \beta_1 (x_{it} - \bar{x}_i) + \beta_2 \bar{x}_i + \ldots $$
+
+This approach has multiple benefits. The coefficients for the demeaned variables are roughly equivalent to their corresponding coefficeints in a fixed effects model, but a fixed effects model assumes that the between effect (captured by the mean variables) is 0, which is not the case. A random effects model specified in this manner is more interpretable, as it clearly separates the within and between effects (again, within = demeaned, between = mean).
+
+Here's proof of how it works in some simple models. Model 1 is a basic OLS with country fixed effects. Model 2 is a basic OLS with country random effects, but potentially misspecified, since the between and within effects are conflated. Model 3 is a basic OLS with country random effects specified with between (mean; $ \bar{x}_i $) and within (demeaned; $ x_{it} - \bar{x}_i $) coefficients. The demeaned/within coefficients in Model 3 are roughly the same as those in the fixed effects Model 1. If all missing values were removed with listwise deletion and *then* the group means were calculated, the within coefficients of Model 3 and the regular coefficients of Model 1 would be identical.
+
+```{r fixed-random-example}
+mod.test.fe <- lm(total.oda_log_next_year ~ 
+                    barriers.total + polity + gdp.capita_log + 
+                    as.factor(cowcode),
+                  data=df.country.aid.demean)
+
+mod.test.re <- lmer(total.oda_log_next_year ~ 
+                    barriers.total + polity + gdp.capita_log + 
+                    (1 | cowcode),
+                  data=df.country.aid.demean)
+
+mod.test.re.fancy <- lmer(total.oda_log_next_year ~ 
+                            barriers.total_between + barriers.total_within +
+                            polity_between + polity_within + 
+                            gdp.capita_log_between + gdp.capita_log_within +
+                            (1 | cowcode),
+                          data=df.country.aid.demean)
+
+stargazer(mod.test.fe, mod.test.re, mod.test.re.fancy,
+          type="html", omit="factor", 
+          add.lines=list(c("Country fixed effects", rep("Yes", 3))),
+          keep.stat=c("n"))
+```
+
+
 ## H~1~: Donors reduce aid in response to legislation
 
 > **H~1~**: In response to restrictive NGO legislation, bilateral, multilateral, and private donors may reduce their aid to repressive countries.
@@ -78,19 +120,6 @@ We look at NGO legislation in a few different ways:
 - `advocacy + entry + funding`: Number of anti-NGO legal barriers by type of barrier
 - `advocacy_new + entry_new + funding_new`: Indicators marking new type of barrier
 - `csre`: Civil society regulatory environment index (CSRE), ranging from roughly -4 to 4 (higher values = better civil society regulations)
-
-We use a standard set of controls in each model ([explained in more detail here](../Data/get_merge_data.html#other_controls_and_alternative_hypotheses)):
-
-- Democracy: `polity`
-- Wealth: `gdp.capita_log` (logged so it's on the same scale as the other variables) 
-- Government capacity: `corruption`
-- Bad stuff: `internal.conflict.past.5` and `natural_disaster.occurrence`
-
-Following [Bell and Jones (2015)](http://dx.doi.org/10.1017/psrm.2014.7), we use random effects for country and year and use a combination of meaned and demeaned versions of each continuous variable to estimate both the within and between effects of each variable. 
-
-$$ y_{i, t + 1} = \beta_0 + \beta_1 (x_{it} - \bar{x}_i) + \beta_2 \bar{x}_i + \ldots $$
-
-This approach has multiple benefits. The coefficients for the demeaned variables are roughly equivalent to their corresponding coefficeints in a fixed effects model, but a fixed effects model assumes that the between effect (captured by the mean variables) is 0, which is not the case. A random effects model specified in this manner is more interpretable, as it clearly separates the within and between effects (again, within = demeaned, between = mean).
 
 ```{r h1-models, warning=FALSE, message=FALSE}
 mod.h1.barriers.total <- lmer(
