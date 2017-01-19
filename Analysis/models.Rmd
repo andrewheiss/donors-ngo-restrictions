@@ -95,44 +95,51 @@ $$ y_{i, t + 1} = \beta_0 + \beta_1 (x_{it} - \bar{x}_i) + \beta_2 \bar{x}_i + \
 
 This approach has multiple benefits. The coefficients for the demeaned variables are roughly equivalent to their corresponding coefficeints in a fixed effects model, but a fixed effects model assumes that the between effect (captured by the mean variables) is 0, which is not the case. A random effects model specified in this manner is more interpretable, as it clearly separates the within and between effects (again, within = demeaned, between = mean).
 
-Here's proof of how it works in some simple models. Model 1 is a basic OLS with country fixed effects. Model 2 is a basic OLS with country random effects, but potentially misspecified, since the between and within effects are conflated. Model 3 is a basic OLS with country random effects specified with between (mean; $\bar{x}_i$) and within (demeaned; $x_{it} - \bar{x}_i$) coefficients. The demeaned/within coefficients in Model 3 are roughly the same as those in the fixed effects Model 1. If all missing values were removed with listwise deletion and *then* the group means were calculated, the within coefficients of Model 3 and the regular coefficients of Model 1 would be identical, as in Model 4.
+Here's proof of how it works in some simple models. Model 1 is a basic OLS with country fixed effects. Model 2 is a basic OLS with country random effects, but potentially misspecified, since the between and within effects are conflated. Model 3 is a basic OLS with country random effects specified with between (mean; $\bar{x}_i$) and within (demeaned; $x_{it} - \bar{x}_i$) coefficients. The demeaned/within coefficients in Model 3 are roughly the same as those in the fixed effects Model 1. However, they're not identical. This is because rows are dropped with listwise deletion when the regression is run, but the demeaned values were based on group means that included values that were dropped (e.g. all 2013 rows are dropped because of lags, but the group means included 2013).
+
+When all missing data is taken care of, like in the imputed data, this isn't a problem and the coefficients in the standard fixed effects model are identical to the within coefficients in the demeaned random effects model. See Models 4, 5, and 6, which are based on one of the imputed datasets—the `barriers.total` coefficient in Model 4 is the same as the `barriers.total_within` coefficient in Model 6.
 
 ```{r fixed-random-example, results="asis"}
+# Example models using original incorrectly demeaned data
 mod.test.fe <- lm(total.oda_log_next_year ~ 
                     barriers.total + polity + gdp.capita_log + 
                     as.factor(cowcode),
-                  data=df.country.aid.demean)
+                  data=df.country.aid.demean.next_year)
 
 mod.test.re <- lmer(total.oda_log_next_year ~ 
                     barriers.total + polity + gdp.capita_log + 
                     (1 | cowcode),
-                  data=df.country.aid.demean)
+                  data=df.country.aid.demean.next_year)
 
 mod.test.re.fancy <- lmer(total.oda_log_next_year ~ 
                             barriers.total_between + barriers.total_within +
                             polity_between + polity_within + 
                             gdp.capita_log_between + gdp.capita_log_within +
                             (1 | cowcode),
-                          data=df.country.aid.demean)
+                          data=df.country.aid.demean.next_year)
 
-df.example.complete <- df.country.aid %>%
-  select(cowcode, year, total.oda_log_next_year, 
-         barriers.total, polity, gdp.capita_log) %>%
-  filter(complete.cases(.)) %>%
-  group_by(cowcode) %>%
-  mutate_at(vars(-c(cowcode, year, total.oda_log_next_year)),
-            funs(between = mean(.), within = . - mean(.)))
+# Example models using correctly demeaned data from one of the imputations
+mod.test.fe.imp <- lm(total.oda_log_next_year ~
+                        barriers.total + polity + gdp.capita_log +
+                        as.factor(cowcode),
+                      data=filter(df.country.aid.demean.next_year.both, m == "imp1"))
 
-mod.test.re.complete <- lmer(total.oda_log_next_year ~ 
-                               barriers.total_between + barriers.total_within +
-                               polity_between + polity_within + 
-                               gdp.capita_log_between + gdp.capita_log_within +
-                               (1 | cowcode),
-                             data=df.example.complete)
+mod.test.re.imp <- lmer(total.oda_log_next_year ~
+                          barriers.total + polity + gdp.capita_log +
+                          (1 | cowcode),
+                        data=filter(df.country.aid.demean.next_year.both, m == "imp1"))
 
-stargazer(mod.test.fe, mod.test.re, mod.test.re.fancy, mod.test.re.complete,
+mod.test.re.fancy.imp <- lmer(total.oda_log_next_year ~
+                                barriers.total_between + barriers.total_within +
+                                polity_between + polity_within +
+                                gdp.capita_log_between + gdp.capita_log_within +
+                                (1 | cowcode),
+                              data=filter(df.country.aid.demean.next_year.both, m == "imp1"))
+
+stargazer(mod.test.fe, mod.test.re, mod.test.re.fancy,
+          mod.test.fe.imp, mod.test.re.imp, mod.test.re.fancy.imp,
           type="html", omit="factor", 
-          add.lines=list(c("Country fixed effects", rep("Yes", 4))),
+          add.lines=list(c("Country fixed effects", rep("Yes", 6))),
           keep.stat=c("n"))
 ```
 
