@@ -206,7 +206,7 @@ We use a standard set of controls in each model ([explained in more detail here]
 - Government capacity: `corruption`
 - Bad stuff: `internal.conflict.past.5` and `natural_disaster.occurrence`
 
-Following [Bell and Jones (2015)](http://dx.doi.org/10.1017/psrm.2014.7), we use random effects for country and year and use a combination of meaned and demeaned versions of each continuous variable to estimate both the within and between effects of each variable. 
+Following [Bell and Jones (2015)](http://dx.doi.org/10.1017/psrm.2014.7), we use crossed random effects for country and year and use a combination of meaned and demeaned versions of each continuous variable to estimate both the within and between effects of each variable. 
 
 $$ y_{i, t + 1} = \beta_0 + \beta_1 (x_{it} - \bar{x}_i) + \beta_2 \bar{x}_i + \ldots $$
 
