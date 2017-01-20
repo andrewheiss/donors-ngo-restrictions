@@ -88,6 +88,15 @@ fixed.digits <- function(x, n=2) {
   formatC(x, digits=n, format="f")
 }
 
+# Take apart the pieces of a random effects formula and rebuild it
+build.formula <- function(DV, IVs) {
+  terms.all <- attr(terms(IVs), "term.labels")
+  terms.fixed <- terms.all[!stringr::str_detect(terms.all, "\\|")]
+  terms.rand <- sapply(findbars(formula(IVs)),function(x) paste0("(", deparse(x), ")"))
+  
+  reformulate(c(terms.fixed, terms.rand), response=DV)
+}
+
 # Meld a bunch of imputed models
 meld.imputed.models <- function(model.data) {
   models.df <- model.data$glance[[1]]$df.residual
