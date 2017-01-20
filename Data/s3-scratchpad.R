@@ -8,25 +8,17 @@ options(s3mpi.path = "s3://ath-data-processing/donors-ngos-restrictions")
 # --------------------------- STUFF TO RUN REMOTELY ---------------------------
 # -----------------------------------------------------------------------------
 # Get data
-df.donor.country <- s3read("df_donor_country")
-df.donor <- s3read("df_donor")
-df.country <- s3read("df_country")
-df.country.aid <- s3read("df_country_aid")
+df.country.aid <- s3read("df_country_aid_no_imputation")
+df.country.aid.impute <- s3read("df_country_aid_imputation")
 
 # Save locally (on remote)
-saveRDS(df.donor.country, 
-        file.path(PROJHOME, "Data", "data_clean",
-                  "df_donor_country.rds"))
-saveRDS(df.donor, 
-        file.path(PROJHOME, "Data", "data_clean",
-                  "df_donor.rds"))
-saveRDS(df.country, 
-        file.path(PROJHOME, "Data", "data_clean",
-                  "df_country.rds"))
 saveRDS(df.country.aid, 
         file.path(PROJHOME, "Data", "data_clean",
-                  "df_country_aid.rds"))
+                  "df_country_aid_no_imputation.rds"))
 
+saveRDS(df.country.aid.impute, 
+        file.path(PROJHOME, "Data", "data_clean",
+                  "df_country_aid_imputation.rds"))
 
 # Save models in S3
 s3store(mod.h1.barriers.total.bayes)
@@ -40,11 +32,8 @@ s3store(mod.h1.csre.bayes)
 # --------------------------- STUFF TO RUN LOCALLY ----------------------------
 # -----------------------------------------------------------------------------
 # Save data
-s3store(df.donor.country, "df_donor_country")
-s3store(df.donor, "df_donor")
-s3store(df.country, "df_country")
-s3store(df.country.aid, "df_country_aid")
-
+s3store(df.country.aid, "df_country_aid_no_imputation")
+s3store(df.country.aid.impute, "df_country_aid_imputation")
 
 # Load models
 mod.h1.barriers.total.bayes <- s3read("mod.h1.barriers.total.bayes")
