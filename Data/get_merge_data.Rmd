@@ -1251,7 +1251,7 @@ pandoc.table(stacked.data)
 
 We estimate models for each of the imputed datasets and recombine their results. We use `amelia::mi.meld()` to combine estimates and standard errors from frequentist models (following [King et al. 2001](http://gking.harvard.edu/files/abs/evil-abs.shtml)), and we [merge the MCMC chains](https://groups.google.com/d/msg/stan-users/daqP88cFQGY/F-gJLkFuXlQJ) from Bayesian models ([see also this](https://groups.google.com/forum/#!topic/stan-users/0hqV_RDx9MU)).
 
-We varied the number of datasets we imputed (*m* = 5 and *m* = 10) and found only trivial differences in coefficients between 5 and 10 datasets (as predicted by King et al.). In the interest of computational efficiency and speed, we impute 5 datasets.
+We varied the number of datasets we imputed (*m* = 5 and *m* = 10) and found only trivial differences in coefficients between 5 and 10 datasets (as predicted by King et al.). In the interest of computational efficiency and speed, we only use 5 imputed datasets. To avoid needing to recreate both 5 and 10 datasets, we impute 10, but only use the first 5 for analysis.
 
 ```{r impute-missing-data}
 # Combine aid data with country data
@@ -1288,7 +1288,7 @@ vars.to.log <- c("gdp", "population")
 # Run imputation model
 set.seed(my.seed)
 country.aid.data.imputed <- amelia(country.aid.data.to.impute,
-                                   m=5, ts="year", cs="cowcode", p2s=0,
+                                   m=10, ts="year", cs="cowcode", p2s=0,
                                    lags=vars.to.lag.lead,
                                    leads=vars.to.lag.lead,
                                    logs=vars.to.log)
@@ -1365,6 +1365,13 @@ country.aid.data <- country.aid.data.imputed.long %>%
   mutate(internal.conflict.past.5 = check_last_k(conflict.internal, 5)) %>%
   ungroup()
 
+# Save all 10 imputed datasets
+country.aid.data.m10 <- country.aid.data
+
+# Use just the first 5 imputed datasets
+country.aid.data <- country.aid.data %>%
+  filter(!(m %in% paste0("imp", 6:10)))
+
 country.aid.data %>% head(100) %>% datatable(extensions="Responsive")
 
 country.aid.data %>% glimpse()
@@ -1389,6 +1396,10 @@ saveRDS(filter(country.aid.data, m == "original"),
 saveRDS(filter(country.aid.data, m != "original"),
         file=file.path(PROJHOME, "Data", "data_clean",
                        "df_country_aid_imputation.rds"))
+
+saveRDS(filter(country.aid.data.m10, m != "original"),
+        file=file.path(PROJHOME, "Data", "data_clean",
+                       "df_country_aid_imputation_m10.rds"))
 
 saveRDS(donor.level.data,
         file=file.path(PROJHOME, "Data", "data_clean",
