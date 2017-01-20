@@ -373,17 +373,17 @@ mods.h1.after_5.melded <- mods.h1.after_5 %>%
 if (run.rstan) {
   source(file.path(PROJHOME, "Analysis", "h1_model_definitions_bayes.R"))
   
-  mods.h1.next_year.raw <- df.country.aid.demean.next_year.both %>%
+  mods.h1.next_year.raw.bayes <- df.country.aid.demean.next_year.both %>%
   nest(-m) %>%
-  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
                                               "total.oda_log_next_year"),
-         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
                                             "total.oda_log_next_year"),
-         mod.h1.type.total = data %>% map(mod.h1.type.total,
+         mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
                                           "total.oda_log_next_year"),
-         mod.h1.type.new = data %>% map(mod.h1.type.new,
+         mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
                                         "total.oda_log_next_year"),
-         mod.h1.csre = data %>% map(mod.h1.csre,
+         mod.h1.csre = data %>% map(mod.h1.csre.bayes,
                                     "total.oda_log_next_year"))
 }
 ```
