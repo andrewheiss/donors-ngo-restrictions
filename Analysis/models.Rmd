@@ -369,9 +369,101 @@ mods.h1.after_5.melded <- mods.h1.after_5 %>%
          n = data %>% map_int(~ nrow(.$model[[1]]@frame))) 
 ```
 
-```{r h1-models-bayes, warning=FALSE, message=FALSE}
+```{r h1-models-bayes-1, warning=FALSE, message=FALSE}
 if (run.rstan) {
   source(file.path(PROJHOME, "Analysis", "h1_model_definitions_bayes.R"))
+  
+  mods.h1.next_year.raw <- df.country.aid.demean.next_year.both %>%
+  nest(-m) %>%
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
+                                              "total.oda_log_next_year"),
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
+                                            "total.oda_log_next_year"),
+         mod.h1.type.total = data %>% map(mod.h1.type.total,
+                                          "total.oda_log_next_year"),
+         mod.h1.type.new = data %>% map(mod.h1.type.new,
+                                        "total.oda_log_next_year"),
+         mod.h1.csre = data %>% map(mod.h1.csre,
+                                    "total.oda_log_next_year"))
+  
+  mods.h1.after_2.raw <- df.country.aid.demean.after_2.both %>%
+  nest(-m) %>%
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
+                                              "total.oda_log_next_year"),
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
+                                            "total.oda_log_next_year"),
+         mod.h1.type.total = data %>% map(mod.h1.type.total,
+                                          "total.oda_log_next_year"),
+         mod.h1.type.new = data %>% map(mod.h1.type.new,
+                                        "total.oda_log_next_year"),
+         mod.h1.csre = data %>% map(mod.h1.csre,
+                                    "total.oda_log_next_year"))
+  
+  mods.h1.after_5.raw <- df.country.aid.demean.after_5.both %>%
+  nest(-m) %>%
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
+                                              "total.oda_log_next_year"),
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
+                                            "total.oda_log_next_year"),
+         mod.h1.type.total = data %>% map(mod.h1.type.total,
+                                          "total.oda_log_next_year"),
+         mod.h1.type.new = data %>% map(mod.h1.type.new,
+                                        "total.oda_log_next_year"),
+         mod.h1.csre = data %>% map(mod.h1.csre,
+                                    "total.oda_log_next_year"))
+}
+```
+
+```{r h1-models-bayes-1, warning=FALSE, message=FALSE}
+if (run.rstan) {
+  source(file.path(PROJHOME, "Analysis", "h1_model_definitions_bayes.R"))
+  
+  mods.h1.next_year.raw.bayes <- df.country.aid.demean.next_year.both %>%
+  nest(-m) %>%
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
+                                              "total.oda_log_next_year"),
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
+                                            "total.oda_log_next_year"),
+         mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
+                                          "total.oda_log_next_year"),
+         mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
+                                        "total.oda_log_next_year"),
+         mod.h1.csre = data %>% map(mod.h1.csre.bayes,
+                                    "total.oda_log_next_year"))
+}
+```
+
+```{r h1-models-bayes-2, warning=FALSE, message=FALSE}
+if (run.rstan) {
+  mods.h1.after_2.raw.bayes <- df.country.aid.demean.after_2.both %>%
+  nest(-m) %>%
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
+                                              "total.oda_log_next_year"),
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
+                                            "total.oda_log_next_year"),
+         mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
+                                          "total.oda_log_next_year"),
+         mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
+                                        "total.oda_log_next_year"),
+         mod.h1.csre = data %>% map(mod.h1.csre.bayes,
+                                    "total.oda_log_next_year"))
+}
+```
+
+```{r h1-models-bayes-5, warning=FALSE, message=FALSE}
+if (run.rstan) {
+  mods.h1.after_5.raw.bayes <- df.country.aid.demean.after_5.both %>%
+  nest(-m) %>%
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
+                                              "total.oda_log_next_year"),
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
+                                            "total.oda_log_next_year"),
+         mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
+                                          "total.oda_log_next_year"),
+         mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
+                                        "total.oda_log_next_year"),
+         mod.h1.csre = data %>% map(mod.h1.csre.bayes,
+                                    "total.oda_log_next_year"))
 }
 ```
 
