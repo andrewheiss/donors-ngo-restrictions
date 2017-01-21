@@ -36,6 +36,7 @@ s3store(df.country.aid, "df_country_aid_no_imputation")
 s3store(df.country.aid.impute, "df_country_aid_imputation")
 
 # Load models
+mods.h1.next_year.raw.bayes <- s3read("mods.h1.next_year.raw.bayes")
 mod.h1.barriers.total.bayes <- s3read("mod.h1.barriers.total.bayes")
 mod.h1.barriers.new.bayes <- s3read("mod.h1.barriers.new.bayes")
 mod.h1.type.total.bayes <- s3read("mod.h1.type.total.bayes")
