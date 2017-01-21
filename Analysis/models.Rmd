@@ -192,7 +192,7 @@ meld.imputed.models <- function(model.data) {
 }
 
 # Expects a data frame with a column named tidy.melded and a row for model names
-stargazer.fake <- function(df, term.labels, model.order) {
+stargazer.fake <- function(df, term.labels) {
   top.coefs <- df %>%
     unnest(tidy.melded) %>%
     mutate(fancy = paste0(fixed.digits(estimate, 3),
@@ -204,7 +204,7 @@ stargazer.fake <- function(df, term.labels, model.order) {
     mutate(term = factor(term, levels=term.labels, ordered=TRUE)) %>%
     arrange(term) %>%
     mutate(term = as.character(term)) %>%
-    select_(.dots = c("term", model.order))
+    select_(.dots = c("term", df$model.name))
   
   bottom.details <- df %>%
     mutate(n = data %>% map_int(~ nrow(.$model[[1]]@frame))) %>%
@@ -221,8 +221,7 @@ stargazer.fake <- function(df, term.labels, model.order) {
                                                "mod\\.h\\d\\.", "")
   
   # Grid layout because linebreaks in tables are hard
-  pandoc.table(nice.top.bottom,
-               style="grid", keep.line.breaks=TRUE)
+  pandoc.table(nice.top.bottom, keep.line.breaks=TRUE)
 }
 ```
 
@@ -370,7 +369,6 @@ We look at NGO legislation in a few different ways:
 - `csre`: Civil society regulatory environment index (CSRE), ranging from roughly -4 to 4 (higher values = better civil society regulations)
 
 ```{r h1-models-1, warning=FALSE, message=FALSE, cache=TRUE}
-source(file.path(PROJHOME, "Analysis", "h1_model_definitions.R"))
 # Run models on each of the datasets (original and imputed) and save in a big data frame
 mods.h1.next_year.raw <- df.country.aid.demean.next_year.both %>%
   nest(-m) %>%
@@ -404,7 +402,7 @@ mods.h1.next_year.melded <- mods.h1.next_year %>%
   group_by(model.name) %>%
   nest() %>%
   mutate(tidy.melded = data %>% map(meld.imputed.models),
-         n = data %>% map_int(~ nrow(.$model[[1]]@frame))) 
+         n = data %>% map_int(~ nrow(.$model[[1]]@frame)))
 ```
 
 ```{r h1-models-2, warning=FALSE, message=FALSE, cache=TRUE}
@@ -536,23 +534,21 @@ stargazer(filter(mods.h1.next_year, m == "original")$model,
 Effect on ODA after 1 year:
 
 ```{r h1-melded-table-1, results="asis", warning=FALSE}
-h1.terms <- c("barriers.total_between", "barriers.total_within", "barriers.total_new", "advocacy_between", "advocacy_within", "entry_between", "entry_within", "funding_between", "funding_within", "advocacy_new", "entry_new", "funding_new", "csre_between", "csre_within", "polity_between", "polity_within", "gdp.capita_log_between", "gdp.capita_log_within", "trade.pct.gdp_between", "trade.pct.gdp_within", "corruption_between", "corruption_within", "internal.conflict.past.5TRUE", "natural_disaster.occurrence", "(Intercept)")
+h1.terms <- c("barriers.total_between", "barriers.total_within", "barriers.total_new", "advocacy_between", "advocacy_within", "entry_between", "entry_within", "funding_between", "funding_within", "advocacy_new", "entry_new", "funding_new", "csre_between", "csre_within", "polity_between", "polity_within", "gdp.capita_log_between", "gdp.capita_log_within", "trade.pct.gdp_between", "trade.pct.gdp_within", "corruption_between", "corruption_within", "total.oda_log_between", "total.oda_log_within", "internal.conflict.past.5TRUE", "natural_disaster.occurrence", "(Intercept)")
 
-h1.model.order <- c("mod.h1.barriers.total", "mod.h1.barriers.new", "mod.h1.type.total", "mod.h1.type.new", "mod.h1.csre")
-
-stargazer.fake(mods.h1.next_year.melded, h1.terms, h1.model.order)
+stargazer.fake(mods.h1.next_year.melded, h1.terms)
 ```
 
 Effect on ODA after 2 years:
 
 ```{r h1-melded-table-2, results="asis", warning=FALSE}
-stargazer.fake(mods.h1.after_2.melded, h1.terms, h1.model.order)
+stargazer.fake(mods.h1.after_2.melded, h1.terms)
 ```
 
 Effect on ODA after 5 years:
 
 ```{r h1-melded-table-5, results="asis", warning=FALSE}
-stargazer.fake(mods.h1.after_5.melded, h1.terms, h1.model.order)
+stargazer.fake(mods.h1.after_5.melded, h1.terms)
 ```
 
 ### Predicted ODA
