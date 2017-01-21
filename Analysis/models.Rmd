@@ -34,6 +34,9 @@ source(file.path(PROJHOME, "lib", "graphics.R"))
 source(file.path(PROJHOME, "lib", "pandoc.R"))
 source(file.path(PROJHOME, "lib", "bayes.R"))
 
+source(file.path(PROJHOME, "Analysis", "robustness_models_definitions.R"))
+source(file.path(PROJHOME, "Analysis", "h1_model_definitions.R"))
+
 my.seed <- 1234
 set.seed(my.seed)
 
@@ -376,6 +379,12 @@ mods.h1.next_year.raw <- df.country.aid.demean.next_year.both %>%
          mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
                                             "total.oda_log_next_year"),
          mod.h1.type.total = data %>% map(mod.h1.type.total,
+                                          "total.oda_log_next_year"),
+         mod.h1.advocacy.total = data %>% map(mod.h1.advocacy.total,
+                                          "total.oda_log_next_year"),
+         mod.h1.entry.total = data %>% map(mod.h1.entry.total,
+                                          "total.oda_log_next_year"),
+         mod.h1.funding.total = data %>% map(mod.h1.funding.total,
                                           "total.oda_log_next_year"),
          mod.h1.type.new = data %>% map(mod.h1.type.new,
                                         "total.oda_log_next_year"),
