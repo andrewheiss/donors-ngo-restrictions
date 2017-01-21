@@ -5,6 +5,7 @@ mod.h1.barriers.total <- function(df, outcome) {
     gdp.capita_log_between + gdp.capita_log_within +
     trade.pct.gdp_between + trade.pct.gdp_within + 
     corruption_between + corruption_within +
+    total.oda_log_between + total.oda_log_within +
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
@@ -18,6 +19,7 @@ mod.h1.barriers.new <- function(df, outcome) {
     gdp.capita_log_between + gdp.capita_log_within +
     trade.pct.gdp_between + trade.pct.gdp_within + 
     corruption_between + corruption_within +
+    total.oda_log_between + total.oda_log_within +
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
@@ -33,6 +35,7 @@ mod.h1.type.total <- function(df, outcome) {
     gdp.capita_log_between + gdp.capita_log_within +
     trade.pct.gdp_between + trade.pct.gdp_within + 
     corruption_between + corruption_within +
+    total.oda_log_between + total.oda_log_within +
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
@@ -46,6 +49,7 @@ mod.h1.type.new <- function(df, outcome) {
     gdp.capita_log_between + gdp.capita_log_within +
     trade.pct.gdp_between + trade.pct.gdp_within + 
     corruption_between + corruption_within +
+    total.oda_log_between + total.oda_log_within +
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
@@ -59,6 +63,7 @@ mod.h1.csre <- function(df, outcome) {
     gdp.capita_log_between + gdp.capita_log_within +
     trade.pct.gdp_between + trade.pct.gdp_within + 
     corruption_between + corruption_within +
+    total.oda_log_between + total.oda_log_within +
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
