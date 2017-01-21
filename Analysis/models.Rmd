@@ -73,7 +73,8 @@ df.country.aid.demean.next_year.all <- df.country.aid.all %>%
   filter(!is.na(total.oda_log_next_year)) %>%
   group_by(m, cowcode) %>%
   mutate_at(vars(barriers.total, advocacy, entry, funding, 
-                 polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre),
+                 polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre,
+                 total.oda_log),
             funs(between = mean(., na.rm=TRUE),  # meaned
                  within = . - mean(., na.rm=TRUE))) %>%  # demeaned
   ungroup()
@@ -92,12 +93,14 @@ df.country.aid.demean.next_year.impute <-
 df.country.aid.demean.next_year.impute.m10 <- 
   filter(df.country.aid.demean.next_year.all, m != "original")
 
+# Demean data with total.oda_log leaded by 2 years and 5 years
 # After 2 years
 df.country.aid.demean.after_2.both <- df.country.aid.both %>%
   filter(!is.na(total.oda_log_after_2)) %>%
   group_by(m, cowcode) %>%
   mutate_at(vars(barriers.total, advocacy, entry, funding, 
-                 polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre),
+                 polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre,
+                 total.oda_log),
             funs(between = mean(., na.rm=TRUE),  # meaned
                  within = . - mean(., na.rm=TRUE))) %>%  # demeaned
   ungroup()
@@ -113,7 +116,8 @@ df.country.aid.demean.after_5.both <- df.country.aid.both %>%
   filter(!is.na(total.oda_log_after_5)) %>%
   group_by(m, cowcode) %>%
   mutate_at(vars(barriers.total, advocacy, entry, funding, 
-                 polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre),
+                 polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre,
+                 total.oda_log),
             funs(between = mean(., na.rm=TRUE),  # meaned
                  within = . - mean(., na.rm=TRUE))) %>%  # demeaned
   ungroup()
