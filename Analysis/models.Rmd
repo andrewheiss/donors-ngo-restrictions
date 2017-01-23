@@ -191,8 +191,35 @@ meld.imputed.models <- function(model.data) {
   melded.tidy
 }
 
-# Expects a data frame with a column named tidy.melded and a row for model names
-stargazer.fake <- function(df, term.labels) {
+# Expects a data frame with a column named tidy.melded and a row for model
+# names. Term names are based on the first model in the data column for each
+# row, and are filtered through stargazer to get the correct row order.
+stargazer.fake <- function(df) {
+  coef.order.models <- df %>%
+    # Select just the first row of each model
+    unnest(data) %>%
+    # Sometimes there are duplicate column names
+    magrittr::set_colnames(make.unique(colnames(.))) %>%
+    # Keep order of model.name
+    mutate(model.name = ordered(fct_inorder(model.name))) %>%
+    group_by(model.name) %>%
+    slice(1) %>% ungroup() %>%
+    select(model) %>% as.list()
+  
+  # Use stargazer to get the coefficient order. I tried recreating stargazer's
+  # coefficient ordering algorithm but it's way too complicated. So instead, we
+  # cheat and let stargazer do the heavy lifting, save the output to a string,
+  # and then extract the coefficient names with str_extract. Super super hacky,
+  # but it works.
+  #
+  # See http://stackoverflow.com/a/41801861/120898
+  capture.output({
+    stargazer.coefs <- stargazer::stargazer(coef.order.models, 
+                                            type="text", table.layout="t")
+  }, file="/dev/null")
+  
+  coef.order <- setdiff(stringr::str_extract(stargazer.coefs, "^[\\w\\.]*"), c(""))
+  
   top.coefs <- df %>%
     unnest(tidy.melded) %>%
     mutate(fancy = paste0(fixed.digits(estimate, 3),
@@ -201,7 +228,11 @@ stargazer.fake <- function(df, term.labels) {
                           ")")) %>%
     select(model.name, term, fancy) %>%
     spread(model.name, fancy, fill="") %>%
-    mutate(term = factor(term, levels=term.labels, ordered=TRUE)) %>%
+    # Clean up term names
+    mutate(term = stringr::str_replace(term, "TRUE$|FALSE$", ""),
+           term = recode(term, `(Intercept)` = "Constant")) %>%
+    # Use stargazer's coefficient order
+    mutate(term = factor(term, levels=coef.order, ordered=TRUE)) %>%
     arrange(term) %>%
     mutate(term = as.character(term)) %>%
     select_(.dots = c("term", df$model.name))
@@ -343,13 +374,8 @@ mods.robust.check.m.next_year.melded.all <- bind_rows(
 ```
 
 ```{r tbl-show-imputations, results="asis"}
-mods.robust.check.m.terms <- c("barriers.total_between", "barriers.total_within", "barriers.total_new", "advocacy_between", "advocacy_within", "entry_between", "entry_within", "funding_between", "funding_within", "advocacy_new", "entry_new", "funding_new", "csre_between", "csre_within", "polity_between", "polity_within", "gdp.capita_log_between", "gdp.capita_log_within", "trade.pct.gdp_between", "trade.pct.gdp_within", "corruption_between", "corruption_within", "total.oda_log_between", "total.oda_log_within", "internal.conflict.past.5TRUE", "natural_disaster.occurrence", "(Intercept)")
-
-mods.robust.check.m.model.order <- mods.robust.check.m.next_year.melded.all$model.name
-
-stargazer.fake(mods.robust.check.m.next_year.melded.all, mods.robust.check.m.terms)
+stargazer.fake(mods.robust.check.m.next_year.melded.all)
 ```
-
 
 
 ## H~1~: Donors reduce aid in response to legislation
@@ -534,21 +560,19 @@ stargazer(filter(mods.h1.next_year, m == "original")$model,
 Effect on ODA after 1 year:
 
 ```{r h1-melded-table-1, results="asis", warning=FALSE}
-h1.terms <- c("barriers.total_between", "barriers.total_within", "barriers.total_new", "advocacy_between", "advocacy_within", "entry_between", "entry_within", "funding_between", "funding_within", "advocacy_new", "entry_new", "funding_new", "csre_between", "csre_within", "polity_between", "polity_within", "gdp.capita_log_between", "gdp.capita_log_within", "trade.pct.gdp_between", "trade.pct.gdp_within", "corruption_between", "corruption_within", "total.oda_log_between", "total.oda_log_within", "internal.conflict.past.5TRUE", "natural_disaster.occurrence", "(Intercept)")
-
-stargazer.fake(mods.h1.next_year.melded, h1.terms)
+stargazer.fake(mods.h1.next_year.melded)
 ```
 
 Effect on ODA after 2 years:
 
 ```{r h1-melded-table-2, results="asis", warning=FALSE}
-stargazer.fake(mods.h1.after_2.melded, h1.terms)
+stargazer.fake(mods.h1.after_2.melded)
 ```
 
 Effect on ODA after 5 years:
 
 ```{r h1-melded-table-5, results="asis", warning=FALSE}
-stargazer.fake(mods.h1.after_5.melded, h1.terms)
+stargazer.fake(mods.h1.after_5.melded)
 ```
 
 ### Predicted ODA
