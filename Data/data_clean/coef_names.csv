@@ -1,0 +1,19 @@
+term,term_clean
+barriers.total,Total legal barriers
+barriers.total_new,New legal barrier
+advocacy,Barriers to advocacy
+entry,Barriers to entry
+funding,Barriers to funding
+advocacy_new,New barrier to advocacy
+entry_new,New barrier to entry
+funding_new,New barrier to funding
+csre,Civil society reg. env. (CSRE)
+polity,Polity IV (0–10)
+gdp.capita_log,GDP per capita (log)
+trade.pct.gdp,Trade as % of GDP
+corruption,Corruption
+total.oda_log,Total aid in present year (log)
+internal.conflict.past.5,Internal conflict in last 5 years
+natural_disaster.occurrence,Natural disaster occurred
+cowcode,Within-country variability ($\sigma$)
+year,Within-year variability ($\sigma$)

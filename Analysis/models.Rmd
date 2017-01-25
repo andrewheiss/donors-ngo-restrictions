@@ -58,6 +58,22 @@ dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
 dcjw.responses.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
                                            "dcjw_responses.csv"))
 
+# Load clean coefficient names and append "within" and "between" to them,
+# resulting in a giant table of possible coefficient names
+coef.names <- read_csv(file.path(PROJHOME, "Data", "data_clean",
+                                 "coef_names.csv"))
+
+coef.names.within <- coef.names %>%
+  mutate(term = paste0(term, "_within"),
+         term_clean = paste0(term_clean, "~within~"))
+
+coef.names.between <- coef.names %>%
+  mutate(term = paste0(term, "_between"),
+         term_clean = paste0(term_clean, "~between~"))
+
+coef.names.all <- bind_rows(coef.names, coef.names.within, coef.names.between)
+
+
 # Combine original data and imputed data so calculations can happen at the same time
 df.country.aid.both <- bind_rows(df.country.aid, df.country.aid.impute)
 
@@ -158,19 +174,20 @@ meld.imputed.models <- function(model.data) {
   
   models.tidy <- model.data %>%
     select(tidy) %>%
-    unnest(.id="imputation") %>%
-    filter(group == "fixed")
+    unnest(.id="imputation")
   
   just.estimates <- models.tidy %>% 
+    filter(group == "fixed") %>%
     select(imputation, term, estimate) %>%
     spread(term, estimate) %>%
     select(-imputation)
   
   just.ses <- models.tidy %>%
+    filter(group == "fixed") %>%
     select(imputation, term, std.error) %>%
     spread(term, std.error) %>%
     select(-imputation)
-  
+
   # If no imputed data was passed in, use the actual estimates and SEs
   if (nrow(just.estimates) > 1) {
     melded <- Amelia::mi.meld(just.estimates, just.ses)
@@ -195,6 +212,13 @@ meld.imputed.models <- function(model.data) {
 # names. Term names are based on the first model in the data column for each
 # row, and are filtered through stargazer to get the correct row order.
 stargazer.fake <- function(df) {
+  # Create a blank row with a bolded row name
+  header.row <- function(header) {
+    data_frame(term = paste0("**", header, "**"), 
+               models = df$model.name, value = "") %>%
+    spread(models, value)
+  }
+  
   coef.order.models <- df %>%
     # Select just the first row of each model
     unnest(data) %>%
@@ -220,7 +244,8 @@ stargazer.fake <- function(df) {
   
   coef.order <- setdiff(stringr::str_extract(stargazer.coefs, "^[\\w\\.]*"), c(""))
   
-  top.coefs <- df %>%
+  # Fixed parts
+  fixed.coefs <- df %>%
     unnest(tidy.melded) %>%
     mutate(fancy = paste0(fixed.digits(estimate, 3),
                           stars, "\\ \n(",
@@ -235,24 +260,86 @@ stargazer.fake <- function(df) {
     mutate(term = factor(term, levels=coef.order, ordered=TRUE)) %>%
     arrange(term) %>%
     mutate(term = as.character(term)) %>%
-    select_(.dots = c("term", df$model.name))
+    left_join(coef.names.all, by="term") %>%
+    mutate(term_clean = ifelse(term == "Constant", "Constant", term_clean)) %>%
+    select(-term) %>% rename(term = term_clean)
   
-  bottom.details <- df %>%
+  # Random parts
+  random.coef.order.raw <- df %>%
+    unnest(data) %>% magrittr::set_colnames(make.unique(colnames(.))) %>%
+    select(model.name, model) %>%
+    mutate(ranef = model %>% map(~ as.data.frame(VarCorr(.)))) %>%
+    unnest(ranef)
+  random.coef.order <- c(setdiff(unique(random.coef.order.raw$grp), "Residual"), "Residual")
+  
+  random.coefs <- df %>%
+    unnest(data) %>% 
+    # Sometimes there are duplicate column names
+    magrittr::set_colnames(make.unique(colnames(.))) %>%
+    unnest(tidy) %>%
+    filter(group != "fixed") %>%
+    rename(term.raw = term, term = group) %>%
+    group_by(model.name, term) %>%
+    summarise(avg.random.sd = mean(estimate),
+              sd.random.sd = sd(estimate)) %>%
+    mutate(fancy = paste0(fixed.digits(avg.random.sd, 3),
+                          "\\ \n(",
+                          fixed.digits(sd.random.sd, 3),
+                          ")")) %>%
+    select(model.name, term, fancy) %>%
+    spread(model.name, fancy, fill="") %>%
+    mutate(term = factor(term, levels=random.coef.order, ordered=TRUE)) %>%
+    arrange(term) %>% mutate(term = as.character(term)) %>%
+    left_join(coef.names.all, by="term") %>%
+    mutate(term_clean = ifelse(term == "Residual", 
+                               "Residual random error ($\\sigma$)", term_clean)) %>%
+    select(-term) %>% select(term=term_clean, everything())
+
+  # Create the bottom half of the table
+  # Calculate the average log likelihood for all imputed models
+  avg.loglik <- df %>%
+    unnest(data) %>%
+    magrittr::set_colnames(make.unique(colnames(.))) %>%
+    unnest(glance) %>%
+    group_by(model.name) %>%
+    summarise(avg.loglik = as.character(round(mean(logLik), 2))) %>%
+    mutate(term = "Log likelihood (mean)") %>%
+    spread(model.name, avg.loglik)
+
+  # Imputation frames
+  n.obs <- df %>%
     mutate(n = data %>% map_int(~ nrow(.$model[[1]]@frame))) %>%
     select(model.name, n) %>%
     mutate(term = "Observations",
            n = scales::comma(n)) %>%
-    spread(model.name, n) %>%
-    rbind(c("Country random effects", rep("Yes", nrow(df)))) %>%
-    rbind(c("Year random effects", rep("Yes", nrow(df))))
+    spread(model.name, n)
   
-  nice.top.bottom <- bind_rows(top.coefs, bottom.details)
+  n.m <- df %>%
+    mutate(m.new = data %>% map_int(~ nrow(.))) %>%
+    select(model.name, m.new) %>% 
+    mutate(m.new = ifelse(m.new == 1, 0, m.new),
+           m.new = as.character(m.new)) %>%
+    mutate(term = "Imputated datasets (*m*)") %>%
+    spread(model.name, m.new)
   
-  colnames(nice.top.bottom) <- str_replace_all(colnames(nice.top.bottom), 
-                                               "mod\\.h\\d\\.", "")
+  bottom.details <- bind_rows(n.obs, avg.loglik, n.m)
+
+  nice.top.bottom <- bind_rows(header.row("Fixed part"), fixed.coefs, 
+                               header.row("Random part"), random.coefs,
+                               header.row("Model details"), bottom.details) %>%
+    select_(.dots = c("term", df$model.name))
   
-  # Grid layout because linebreaks in tables are hard
-  pandoc.table(nice.top.bottom, keep.line.breaks=TRUE)
+  # colnames(nice.top.bottom) <- str_replace_all(colnames(nice.top.bottom), 
+  #                                              "mod\\.h\\d\\.", "")
+  # Make column names (1), (2), etc.
+  # TODO: Allow for custom column names
+  colnames(nice.top.bottom) <- c("", paste0("(", 1:length(df$model.name), ")"))
+  
+  # All columns are centered except the first
+  # TODO: MAYBE: Let this be user configurable
+  table.align <- paste0(c("l", rep("c", length(df$model.name))), collapse="")
+  
+  pandoc.table(nice.top.bottom, keep.line.breaks=TRUE, justify=table.align)
 }
 ```
 
@@ -315,7 +402,8 @@ mod.test.re.fancy.imp <- lmer(total.oda_log_next_year ~
 stargazer(mod.test.fe, mod.test.re, mod.test.re.fancy,
           mod.test.fe.imp, mod.test.re.imp, mod.test.re.fancy.imp,
           type="html", omit="factor", 
-          add.lines=list(c("Country effects", rep("Yes", 6))),
+          add.lines=list(c("Country effects", 
+                           rep(c("Fixed", "Random", "Random"), 2))),
           keep.stat=c("n"))
 ```
 
@@ -546,36 +634,31 @@ if (run.rstan) {
 
 ### Results
 
-#### Non-imputed frequentist models
-
-```{r h1-table, results="asis"}
-stargazer(filter(mods.h1.next_year, m == "original")$model,
-          type="html",
-          add.lines=list(c("Country random effects", rep("Yes", 5)),
-                         c("Year random effects", rep("Yes", 5))))
-```
-
 #### Imputed and melded frequentist models
 
-Effect on ODA after 1 year:
+All of these models use imputed data ($m = 5$) with crossed year and country random effects.
+
+**Effect on ODA after 1 year:**
 
 ```{r h1-melded-table-1, results="asis", warning=FALSE}
 stargazer.fake(mods.h1.next_year.melded)
 ```
 
-Effect on ODA after 2 years:
+**Effect on ODA after 2 years:**
 
 ```{r h1-melded-table-2, results="asis", warning=FALSE}
 stargazer.fake(mods.h1.after_2.melded)
 ```
 
-Effect on ODA after 5 years:
+**Effect on ODA after 5 years:**
 
 ```{r h1-melded-table-5, results="asis", warning=FALSE}
 stargazer.fake(mods.h1.after_5.melded)
 ```
 
 ### Predicted ODA
+
+**THIS IS ALL WRONG DISREGARD**
 
 `barriers.total_between` is significant at the 95% level in the first model, and it's substantially so. The grey band below indicates the 90% prediction interval, calculated with 1000 simulated draws from model results (these intervals are waaaay too big for now; they'll be more accurate when running the Bayesian models). One additional anti-NGO law is associated with a 36% increase in ODA in the following year *between* countries in the panel.
 
