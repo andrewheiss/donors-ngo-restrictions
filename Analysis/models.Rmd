@@ -582,6 +582,8 @@ stargazer.fake(mods.robust.check.m.next_year.melded.all)
 
 ### Longer lags
 
+Looking at aid 2 years and 5 years after the change in anti-NGO legislation shows similar trends to 1 year after.
+
 ```{r h1-models-2, warning=FALSE, message=FALSE, cache=TRUE}
 mods.h1.after_2.raw <- df.country.aid.demean.after_2 %>%
   nest(-m) %>%
