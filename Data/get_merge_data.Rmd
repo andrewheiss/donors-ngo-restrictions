@@ -1186,7 +1186,13 @@ country.level.data <- dcjw.full %>%
   left_join(select(conflicts, cowcode, year=Year, conflict.internal),
             by=c("cowcode", "year")) %>%
   mutate(conflict.internal = ifelse(is.na(conflict.internal),
-                                    FALSE, conflict.internal))
+                                    FALSE, conflict.internal)) %>%
+  # Add indicator for post-Cold War, but no real need to use it since we
+  # account for time in the random effects and in the current year's aid. The
+  # post-Cold War coefficients are all hugely significant, but that's mostly
+  # because there's more aid given after the Cold War anyway and it doesn't
+  # really help explain much.
+  mutate(post.1989 = year >= 1990)
 testthat::expect_equal(nrow(country.level.data), nrow(dcjw.full))
 
 # Combine country and donor data
@@ -1268,7 +1274,7 @@ vars.to.ignore.in.imputation <- country.aid.data.pre.transformation %>%
          which(sapply(.,is.character)),
          const_assoc, political_parties, starts_with("ngo"), contains("std"),
          starts_with("barriers"), contains("contentious"),
-         natural_disaster.total.affected, col.ind.date)
+         natural_disaster.total.affected, col.ind.date, post.1989)
 
 # Vector of variables to exclude
 vars.to.ignore.sans.ids <- vars.to.ignore.in.imputation %>%
