@@ -1328,11 +1328,8 @@ country.level.data <- dcjw.full %>%
             by=c("cowcode", "year")) %>%
   mutate(conflict.internal = ifelse(is.na(conflict.internal),
                                     FALSE, conflict.internal)) %>%
-  # Add indicator for post-Cold War, but no real need to use it since we
-  # account for time in the random effects and in the current year's aid. The
-  # post-Cold War coefficients are all hugely significant, but that's mostly
-  # because there's more aid given after the Cold War anyway and it doesn't
-  # really help explain much.
+  # Add indicator for post-Cold War, since all the former Soviet republics have
+  # no GDP data before 1990
   mutate(post.1989 = year >= 1990)
 testthat::expect_equal(nrow(country.level.data), nrow(dcjw.full))
 
