@@ -223,7 +223,7 @@ stargazer.fake <- function(df) {
     # Select just the first row of each model
     unnest(data) %>%
     # Sometimes there are duplicate column names
-    magrittr::set_colnames(make.unique(colnames(.))) %>%
+    # magrittr::set_colnames(make.unique(colnames(.))) %>%
     # Keep order of model.name
     mutate(model.name = ordered(fct_inorder(model.name))) %>%
     group_by(model.name) %>%
@@ -262,20 +262,20 @@ stargazer.fake <- function(df) {
     mutate(term = as.character(term)) %>%
     left_join(coef.names.all, by="term") %>%
     mutate(term_clean = ifelse(term == "Constant", "Constant", term_clean)) %>%
-    select(-term) %>% rename(term = term_clean)
+    select(-term) %>% rename(term = term_clean) %>%
+    select_(.dots = c("term", df$model.name))
   
   # Random parts
   random.coef.order.raw <- df %>%
-    unnest(data) %>% magrittr::set_colnames(make.unique(colnames(.))) %>%
+    unnest(data) %>%
+    # unnest(data) %>% magrittr::set_colnames(make.unique(colnames(.))) %>%
     select(model.name, model) %>%
     mutate(ranef = model %>% map(~ as.data.frame(VarCorr(.)))) %>%
     unnest(ranef)
   random.coef.order <- c(setdiff(unique(random.coef.order.raw$grp), "Residual"), "Residual")
   
   random.coefs <- df %>%
-    unnest(data) %>% 
-    # Sometimes there are duplicate column names
-    magrittr::set_colnames(make.unique(colnames(.))) %>%
+    unnest(data) %>%
     unnest(tidy) %>%
     filter(group != "fixed") %>%
     rename(term.raw = term, term = group) %>%
@@ -284,7 +284,7 @@ stargazer.fake <- function(df) {
               sd.random.sd = sd(estimate)) %>%
     mutate(fancy = paste0(fixed.digits(avg.random.sd, 3),
                           "\\ \n(",
-                          fixed.digits(sd.random.sd, 3),
+                          ifelse(is.na(sd.random.sd), "NA", fixed.digits(sd.random.sd, 3)),
                           ")")) %>%
     select(model.name, term, fancy) %>%
     spread(model.name, fancy, fill="") %>%
@@ -298,9 +298,7 @@ stargazer.fake <- function(df) {
   # Create the bottom half of the table
   # Calculate the average log likelihood for all imputed models
   avg.loglik <- df %>%
-    unnest(data) %>%
-    magrittr::set_colnames(make.unique(colnames(.))) %>%
-    unnest(glance) %>%
+    unnest(data) %>% unnest(glance) %>%
     group_by(model.name) %>%
     summarise(avg.loglik = as.character(round(mean(logLik), 2))) %>%
     mutate(term = "Log likelihood (mean)") %>%
@@ -308,8 +306,10 @@ stargazer.fake <- function(df) {
 
   # Imputation frames
   n.obs <- df %>%
-    mutate(n = data %>% map_int(~ nrow(.$model[[1]]@frame))) %>%
+    unnest(data) %>%
+    mutate(n = model %>% map_int(~ nrow(.@frame))) %>%
     select(model.name, n) %>%
+    group_by(model.name) %>% slice(1) %>% ungroup() %>%
     mutate(term = "Observations",
            n = scales::comma(n)) %>%
     spread(model.name, n)
@@ -321,7 +321,7 @@ stargazer.fake <- function(df) {
            m.new = as.character(m.new)) %>%
     mutate(term = "Imputated datasets (*m*)") %>%
     spread(model.name, m.new)
-  
+
   bottom.details <- bind_rows(n.obs, avg.loglik, n.m)
 
   nice.top.bottom <- bind_rows(header.row("Fixed part"), fixed.coefs, 
@@ -329,8 +329,6 @@ stargazer.fake <- function(df) {
                                header.row("Model details"), bottom.details) %>%
     select_(.dots = c("term", df$model.name))
   
-  # colnames(nice.top.bottom) <- str_replace_all(colnames(nice.top.bottom), 
-  #                                              "mod\\.h\\d\\.", "")
   # Make column names (1), (2), etc.
   # TODO: Allow for custom column names
   colnames(nice.top.bottom) <- c("", paste0("(", 1:length(df$model.name), ")"))
