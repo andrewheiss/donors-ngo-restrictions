@@ -33,6 +33,7 @@ library(WDI)
 library(xml2)
 library(ggstance)
 library(Amelia)
+library(imputeTS)
 
 source(file.path(PROJHOME, "lib", "graphics.R"))
 source(file.path(PROJHOME, "lib", "pandoc.R"))
@@ -301,6 +302,13 @@ aiddata.final <- aiddata.clean %>%
          purpose.contentiousness,
          coalesced_purpose_code, coalesced_purpose_name) %>%
   arrange(cowcode, year)
+
+ever.dac.eligible <- read_csv(file.path(PROJHOME, "Data", "data_clean", 
+                                    "oecd_dac_countries.csv")) %>%
+  # Ignore High Income Countries and More Advanced Developing Countries
+  filter(!(dac_abbr %in% c("HIC", "ADC"))) %>%
+  left_join(gw.codes, by="iso3") %>%
+  select(cowcode) %>% unlist() %>% c() %>% unique()
 ```
 
 #### List of donors
@@ -821,6 +829,126 @@ There are a bunch of reasons why overall aid flows might change over time. We co
 
 The World Bank has a fantastic API for [their statistical indicators](http://data.worldbank.org/) and there's already [a nice R package](https://cran.r-project.org/package=WDI) for accessing it, so downloading indicators is trivial. For the sake of our models, we care about GDP per capita as a proxy for a country's overall development. We also collect a few other relevant variables just for fun.
 
+```{r load-un}
+# UN country codes
+un.codes <- read_csv(file.path(PROJHOME, "Data",
+                               "data_clean", "un_codes.csv")) %>%
+  select(un_code, iso3)
+
+# GDP by Type of Expenditure at constant (2005) prices - US dollars
+# http://data.un.org/Data.aspx?q=gdp&d=SNAAMA&f=grID%3a102%3bcurrID%3aUSD%3bpcFlag%3a0
+un.gdp.raw <- read_csv(file.path(PROJHOME, "Data", "data_raw", "UN data",
+                                 "UNdata_Export_20170125_042818046.csv")) %>%
+  rename(un_code = `Country or Area Code`) %>%
+  mutate(value.type = "Constant")
+
+# http://data.un.org/Data.aspx?q=gdp&d=SNAAMA&f=grID%3a101%3bcurrID%3aUSD%3bpcFlag%3a0
+un.gdp.current.raw <- read_csv(file.path(PROJHOME, "Data", "data_raw", "UN data",
+                                 "UNdata_Export_20170125_063718499.csv")) %>%
+  rename(un_code = `Country or Area Code`) %>%
+  mutate(value.type = "Current")
+
+# https://esa.un.org/unpd/wpp/Download/Standard/Population/
+un.pop.raw <- read_excel(file.path(PROJHOME, "Data", "data_raw", "UN data",
+                                   "WPP2015_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES.xls"),
+                         skip=16)
+
+un.pop <- un.pop.raw %>%
+  filter((`Country code` %in% un.codes$un_code)) %>%
+  select(-c(Index, Variant, Notes, `Major area, region, country or area *`), 
+         un_code = `Country code`) %>%
+  gather(year, population, -un_code) %>%
+  left_join(un.codes, by="un_code") %>% filter(!is.na(iso3)) %>%
+  mutate(year = as.integer(year),
+         un.population = population * 1000) %>%  # Values are in 1000s
+  left_join(gw.codes, by="iso3") %>%
+  # Get rid of tiny countries
+  filter(!is.na(cowcode)) %>%
+  select(cowcode, year, un.population)
+
+un.pop %>% glimpse()
+
+un.gdp <- bind_rows(un.gdp.raw, un.gdp.current.raw) %>%
+  filter(Item %in% c("Gross Domestic Product (GDP)",
+                     "Exports of goods and services",
+                     "Imports of goods and services")) %>%
+  left_join(un.codes, by="un_code") %>%
+  # Fix weird edge cases with country names
+  # Get rid of Former Netherlands Antilles, Zanzibar, Former Czechoslovakia,
+  # Former Yugoslavia, and Former USSR
+  filter(!(un_code %in% c(530, 836, 200, 890, 810))) %>%
+  # Add code for Kosovo, Tanzania, and Sudan
+  mutate(iso3 = ifelse(un_code == 412, "XKK", iso3),
+         iso3 = ifelse(un_code == 835, "TZA", iso3),
+         iso3 = ifelse(un_code == 736, "SDN", iso3))
+
+# Combine the two Yemens, then keep one of the values in the two overlapping years
+un.gdp.yemen <- un.gdp %>%
+  filter(un_code %in% c(720, 886)) %>%
+  group_by(value.type, Item, Year) %>%
+  mutate(Value.combined = sum(Value)) %>%
+  ungroup() %>%
+  filter(un_code == 720) %>%
+  mutate(iso3 = "YEM") %>%
+  select(-Value) %>% select(Value = Value.combined, everything()) %>%
+  bind_rows(filter(un.gdp, un_code == 887)) %>%
+  group_by(value.type, Item, Year) %>%
+  slice(1) %>% ungroup()
+
+# Keep one of the Ethiopias' GDP, since they overlap for a few years
+un.gdp.ethiopia <- un.gdp %>%
+  filter(un_code %in% c(230, 231)) %>%
+  group_by(value.type, Item, Year) %>%
+  # mutate(Value.combined = mean(Value)) %>%
+  slice(1) %>% ungroup() %>%
+  mutate(iso3 = "ETH")
+
+un.gdp.clean <- un.gdp %>%
+  # Remove Yemens and Ethiopias
+  filter(!(un_code %in% c(720, 886, 230, 231))) %>%
+  # Add consolidated Yemens and Ethiopias
+  bind_rows(un.gdp.yemen) %>%
+  bind_rows(un.gdp.ethiopia) %>%
+  left_join(gw.codes, by="iso3") %>%
+  # Get rid of tiny places
+  filter(!is.na(cowcode))
+
+un.gdp.wide <- un.gdp.clean %>%
+  select(cowcode, year = Year, Item, Value, value.type) %>%
+  unite(temp, value.type, Item) %>%
+  # Temporary id column for spreading correctly
+  group_by(temp) %>% mutate(id = 1:n()) %>%
+  spread(temp, Value) %>% select(-id) %>% ungroup() %>%
+  rename(exports.constant.2005 = `Constant_Exports of goods and services`,
+         imports.constant.2005 = `Constant_Imports of goods and services`,
+         gdp.constant.2005 = `Constant_Gross Domestic Product (GDP)`,
+         exports.current = `Current_Exports of goods and services`,
+         imports.current = `Current_Imports of goods and services`,
+         gdp.current = `Current_Gross Domestic Product (GDP)`) %>%
+  mutate(gdp.deflator = gdp.current / gdp.constant.2005 * 100)
+
+# Rescale the 2005 data to 2011 to match AidData
+#
+# Deflator = current GDP / constant GDP * 100
+# Current GDP in year_t * (deflator in year_target / deflator in year_t)
+un.gdp.rescaled <- un.gdp.wide %>%
+  left_join(select(filter(un.gdp.wide, year == 2011),
+                   cowcode, deflator.target.year = gdp.deflator),
+            by="cowcode") %>%
+  mutate(un.gdp = gdp.current * (deflator.target.year / gdp.deflator),
+         un.trade.pct.gdp = (imports.current + exports.current) / gdp.current)
+
+un.gdp.final <- un.gdp.rescaled %>%
+  select(cowcode, year, un.trade.pct.gdp, un.gdp) %>%
+  group_by(cowcode, year) %>%
+  slice(1) %>% ungroup()
+
+un.gdp.final %>% head(100) %>% datatable(extensions="Responsive")
+
+un.gdp.final %>% glimpse()
+```
+
+
 ```{r load-wdi, cache=TRUE}
 wdi.indicators <- c("NY.GDP.PCAP.KD",        # GDP per capita (constant 2010 USD)
                     "NY.GDP.MKTP.CD",        # GDP (current dollars)
@@ -1170,6 +1298,7 @@ donor.level.data <- donor.level.data.raw %>%
 # Country data
 # Use DCJW 1980+ as base data, since we're limited to the countries included there
 country.level.data <- dcjw.full %>%
+  mutate(ever.dac.eligible = cowcode %in% ever.dac.eligible) %>%
   left_join(select(vdem.cso, year, cowcode, csre, 
                    polity = e_fh_ipolity2, 
                    corruption=v2x_corr, 
@@ -1177,6 +1306,18 @@ country.level.data <- dcjw.full %>%
             by=c("cowcode", "year")) %>%
   mutate(corruption = corruption * 10) %>%
   left_join(select(wdi.clean, -c(iso2c, country)), by=c("cowcode", "year")) %>%
+    # Bring in UN population data
+  left_join(un.pop, by=c("cowcode", "year")) %>%
+  # Prefer UN population data, but use World Bank if missing
+  mutate(population = ifelse(is.na(un.population), population, un.population)) %>%
+  # Bring in UN GDP data
+  # Prefer UN GDP data, but use World Bank if missing
+  left_join(un.gdp.final, by=c("cowcode", "year")) %>%
+  mutate(un.trade.pct.gdp = un.trade.pct.gdp * 100) %>%
+  mutate(gdp = ifelse(is.na(un.gdp), gdp, un.gdp),
+         trade.pct.gdp = ifelse(is.na(un.trade.pct.gdp), 
+                                trade.pct.gdp, un.trade.pct.gdp)) %>%
+  select(-starts_with("un.")) %>%
   left_join(select(col.clean, -country.name), by=c("cowcode")) %>%
   left_join(select(disasters.groups, cowcode, year, starts_with("natural_")), 
             by=c("cowcode", "year")) %>%
@@ -1187,11 +1328,8 @@ country.level.data <- dcjw.full %>%
             by=c("cowcode", "year")) %>%
   mutate(conflict.internal = ifelse(is.na(conflict.internal),
                                     FALSE, conflict.internal)) %>%
-  # Add indicator for post-Cold War, but no real need to use it since we
-  # account for time in the random effects and in the current year's aid. The
-  # post-Cold War coefficients are all hugely significant, but that's mostly
-  # because there's more aid given after the Cold War anyway and it doesn't
-  # really help explain much.
+  # Add indicator for post-Cold War, since all the former Soviet republics have
+  # no GDP data before 1990
   mutate(post.1989 = year >= 1990)
 testthat::expect_equal(nrow(country.level.data), nrow(dcjw.full))
 
@@ -1267,9 +1405,22 @@ country.aid.data.pre.transformation <- country.level.data %>%
   left_join(aid.by.country.purpose, by=c("cowcode", "year")) %>%
   mutate_at(vars(contains("oda")), funs(ifelse(is.na(.), 0, .)))
 
+# Missing Polity values are easy—most are just one-year gaps with the same
+# value before and after, so interpolate the missing values
+polity.imputed <- country.aid.data.pre.transformation %>%
+  select(cowcode, year, polity) %>%
+  group_by(cowcode) %>%
+  mutate(impute.polity = !all(is.na(polity))) %>%
+  mutate(polity = ifelse(impute.polity, na.interpolation(polity), polity)) %>%
+  ungroup() %>% select(-impute.polity)
+
+country.aid.data.pre.amelia <- country.aid.data.pre.transformation %>% 
+  select(-polity) %>% 
+  left_join(polity.imputed, by=c("cowcode", "year"))
+
 # Select the variables to not include in the imputation model. Left join this
 # data frame later with the imputed data
-vars.to.ignore.in.imputation <- country.aid.data.pre.transformation %>%
+vars.to.ignore.in.imputation <- country.aid.data.pre.amelia %>%
   select(year, cowcode,
          which(sapply(.,is.character)),
          const_assoc, political_parties, starts_with("ngo"), contains("std"),
@@ -1281,7 +1432,7 @@ vars.to.ignore.sans.ids <- vars.to.ignore.in.imputation %>%
   select(-year, -cowcode) %>% colnames()
 
 # Stripped down dataset for imputation
-country.aid.data.to.impute <- country.aid.data.pre.transformation %>%
+country.aid.data.to.impute <- country.aid.data.pre.amelia %>%
   select(-one_of(vars.to.ignore.sans.ids))
 
 # Imputation model tweaks
@@ -1293,17 +1444,17 @@ vars.to.log <- c("gdp", "population")
 
 # Run imputation model
 set.seed(my.seed)
-country.aid.data.imputed <- amelia(country.aid.data.to.impute,
-                                   m=10, ts="year", cs="cowcode", p2s=0,
-                                   lags=vars.to.lag.lead,
-                                   leads=vars.to.lag.lead,
-                                   logs=vars.to.log)
+country.aid.data.amelia <- amelia(country.aid.data.to.impute,
+                                  m=10, ts="year", cs="cowcode", p2s=0,
+                                  lags=vars.to.lag.lead,
+                                  leads=vars.to.lag.lead,
+                                  logs=vars.to.log)
 
 # Append list of imputed datasets to original in a long data frame and bring
 # back the omitted variables
 country.aid.data.imputed.long <- 
   bind_rows(mutate(country.aid.data.to.impute, m="original"),
-            bind_rows(country.aid.data.imputed$imputations, .id="m")) %>%
+            bind_rows(country.aid.data.amelia$imputations, .id="m")) %>%
   select(m, everything()) %>%
   left_join(vars.to.ignore.in.imputation, by=c("cowcode", "year"))
 ```

@@ -223,7 +223,7 @@ stargazer.fake <- function(df) {
     # Select just the first row of each model
     unnest(data) %>%
     # Sometimes there are duplicate column names
-    magrittr::set_colnames(make.unique(colnames(.))) %>%
+    # magrittr::set_colnames(make.unique(colnames(.))) %>%
     # Keep order of model.name
     mutate(model.name = ordered(fct_inorder(model.name))) %>%
     group_by(model.name) %>%
@@ -262,20 +262,20 @@ stargazer.fake <- function(df) {
     mutate(term = as.character(term)) %>%
     left_join(coef.names.all, by="term") %>%
     mutate(term_clean = ifelse(term == "Constant", "Constant", term_clean)) %>%
-    select(-term) %>% rename(term = term_clean)
+    select(-term) %>% rename(term = term_clean) %>%
+    select_(.dots = c("term", df$model.name))
   
   # Random parts
   random.coef.order.raw <- df %>%
-    unnest(data) %>% magrittr::set_colnames(make.unique(colnames(.))) %>%
+    unnest(data) %>%
+    # unnest(data) %>% magrittr::set_colnames(make.unique(colnames(.))) %>%
     select(model.name, model) %>%
     mutate(ranef = model %>% map(~ as.data.frame(VarCorr(.)))) %>%
     unnest(ranef)
   random.coef.order <- c(setdiff(unique(random.coef.order.raw$grp), "Residual"), "Residual")
   
   random.coefs <- df %>%
-    unnest(data) %>% 
-    # Sometimes there are duplicate column names
-    magrittr::set_colnames(make.unique(colnames(.))) %>%
+    unnest(data) %>%
     unnest(tidy) %>%
     filter(group != "fixed") %>%
     rename(term.raw = term, term = group) %>%
@@ -284,7 +284,7 @@ stargazer.fake <- function(df) {
               sd.random.sd = sd(estimate)) %>%
     mutate(fancy = paste0(fixed.digits(avg.random.sd, 3),
                           "\\ \n(",
-                          fixed.digits(sd.random.sd, 3),
+                          ifelse(is.na(sd.random.sd), "NA", fixed.digits(sd.random.sd, 3)),
                           ")")) %>%
     select(model.name, term, fancy) %>%
     spread(model.name, fancy, fill="") %>%
@@ -298,9 +298,7 @@ stargazer.fake <- function(df) {
   # Create the bottom half of the table
   # Calculate the average log likelihood for all imputed models
   avg.loglik <- df %>%
-    unnest(data) %>%
-    magrittr::set_colnames(make.unique(colnames(.))) %>%
-    unnest(glance) %>%
+    unnest(data) %>% unnest(glance) %>%
     group_by(model.name) %>%
     summarise(avg.loglik = as.character(round(mean(logLik), 2))) %>%
     mutate(term = "Log likelihood (mean)") %>%
@@ -308,8 +306,10 @@ stargazer.fake <- function(df) {
 
   # Imputation frames
   n.obs <- df %>%
-    mutate(n = data %>% map_int(~ nrow(.$model[[1]]@frame))) %>%
+    unnest(data) %>%
+    mutate(n = model %>% map_int(~ nrow(.@frame))) %>%
     select(model.name, n) %>%
+    group_by(model.name) %>% slice(1) %>% ungroup() %>%
     mutate(term = "Observations",
            n = scales::comma(n)) %>%
     spread(model.name, n)
@@ -321,7 +321,7 @@ stargazer.fake <- function(df) {
            m.new = as.character(m.new)) %>%
     mutate(term = "Imputated datasets (*m*)") %>%
     spread(model.name, m.new)
-  
+
   bottom.details <- bind_rows(n.obs, avg.loglik, n.m)
 
   nice.top.bottom <- bind_rows(header.row("Fixed part"), fixed.coefs, 
@@ -329,8 +329,6 @@ stargazer.fake <- function(df) {
                                header.row("Model details"), bottom.details) %>%
     select_(.dots = c("term", df$model.name))
   
-  # colnames(nice.top.bottom) <- str_replace_all(colnames(nice.top.bottom), 
-  #                                              "mod\\.h\\d\\.", "")
   # Make column names (1), (2), etc.
   # TODO: Allow for custom column names
   colnames(nice.top.bottom) <- c("", paste0("(", 1:length(df$model.name), ")"))
@@ -358,12 +356,9 @@ $$ y_{i, t + 1} = \beta_0 + \beta_1 (x_{it} - \bar{x}_i) + \beta_2 \bar{x}_i + \
 
 This approach has multiple benefits. The coefficients for the demeaned variables are roughly equivalent to their corresponding coefficeints in a fixed effects model, but a fixed effects model assumes that the between effect (captured by the mean variables) is 0, which is not the case. A random effects model specified in this manner is more interpretable, as it clearly separates the within and between effects (again, within = demeaned, between = mean).
 
-Here's proof of how it works in some simple models. Model 1 is a basic OLS with country fixed effects. Model 2 is a basic OLS with country random effects, but potentially misspecified, since the between and within effects are conflated. Model 3 is a basic OLS with country random effects specified with between (mean; $\bar{x}_i$) and within (demeaned; $x_{it} - \bar{x}_i$) coefficients. The demeaned/within coefficients in Model 3 are roughly the same as those in the fixed effects Model 1. However, they're not identical. This is because rows are dropped with listwise deletion when the regression is run, but the demeaned values were based on group means that included values that were dropped (e.g. all 2013 rows are dropped because of lags, but the group means included 2013).
-
-When all missing data is taken care of, like in the imputed data, this isn't a problem and the coefficients in the standard fixed effects model are identical to the within coefficients in the demeaned random effects model. See Models 4, 5, and 6, which are based on one of the imputed datasets—the `barriers.total` coefficient in Model 4 is the same as the `barriers.total_within` coefficient in Model 6.
+Here's proof of how it works in some simple models. Model 1 is a basic OLS with country fixed effects. Model 2 is a basic OLS with country random effects, but potentially misspecified, since the between and within effects are conflated. Model 3 is a basic OLS with country random effects specified with between (mean; $\bar{x}_i$) and within (demeaned; $x_{it} - \bar{x}_i$) coefficients. The demeaned/within coefficients in Model 3 are identical to the fixed effects coefficients in Model 1. If rows had been dropped because of listwise deletion (like, if there were missing values in one of independent variables), the coefficients would be slightly off, since the demeaned values would have been based on group means that included the values that were dropped (e.g. all 2013 rows are dropped because of lags, but the group means included 2013). This isn't  a problem in these reduced models, but that's one reason we impute all the data—we need the data to be as complete as possible to get the most accurate random effects.
 
 ```{r fixed-random-example, results="asis"}
-# Example models using original incorrectly demeaned data
 mod.test.fe <- lm(total.oda_log_next_year ~ 
                     barriers.total + polity + gdp.capita_log + 
                     as.factor(cowcode),
@@ -381,33 +376,158 @@ mod.test.re.fancy <- lmer(total.oda_log_next_year ~
                             (1 | cowcode),
                           data=df.country.aid.demean.next_year)
 
-# Example models using correctly demeaned data from one of the imputations
-mod.test.fe.imp <- lm(total.oda_log_next_year ~
-                        barriers.total + polity + gdp.capita_log +
-                        as.factor(cowcode),
-                      data=filter(df.country.aid.demean.next_year.both, m == "imp1"))
-
-mod.test.re.imp <- lmer(total.oda_log_next_year ~
-                          barriers.total + polity + gdp.capita_log +
-                          (1 | cowcode),
-                        data=filter(df.country.aid.demean.next_year.both, m == "imp1"))
-
-mod.test.re.fancy.imp <- lmer(total.oda_log_next_year ~
-                                barriers.total_between + barriers.total_within +
-                                polity_between + polity_within +
-                                gdp.capita_log_between + gdp.capita_log_within +
-                                (1 | cowcode),
-                              data=filter(df.country.aid.demean.next_year.both, m == "imp1"))
-
 stargazer(mod.test.fe, mod.test.re, mod.test.re.fancy,
-          mod.test.fe.imp, mod.test.re.imp, mod.test.re.fancy.imp,
           type="html", omit="factor", 
-          add.lines=list(c("Country effects", 
-                           rep(c("Fixed", "Random", "Random"), 2))),
+          add.lines=list(c("Country effects",
+                           c("Fixed", "Random", "Random"))),
           keep.stat=c("n"))
 ```
 
-## Imputation
+
+## H~1~: Donors reduce aid in response to legislation
+
+> **H~1~**: In response to restrictive NGO legislation, bilateral, multilateral, and private donors may reduce their aid to repressive countries.
+
+$$ln( \text{ODA} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
+
+Our dependent variable for this hypothesis is the log of ODA (constant 2011 dollars), leaded by one year so we don't have to lag every other independent variable. As a robustness check, we also include models with log ODA leaded by 2 years and 5 years to account the implementation period following the passage of a law.
+
+We look at NGO legislation in a few different ways:
+
+- `barriers.total`: Number of anti-NGO legal barriers in a country-year
+- `barriers.total_new`: Indicator marking if a new anti-NGO barrier was passed in a country year
+- `advocacy + entry + funding`: Number of anti-NGO legal barriers by type of barrier
+- `advocacy_new + entry_new + funding_new`: Indicators marking new type of barrier
+- `csre`: Civil society regulatory environment index (CSRE), ranging from roughly -4 to 4 (higher values = better civil society regulations)
+
+```{r h1-models-1, warning=FALSE, message=FALSE, cache=TRUE}
+# Run models on each of the datasets (original and imputed) and save in a big data frame
+mods.h1.next_year.raw <- df.country.aid.demean.next_year.both %>%
+  nest(-m) %>%
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
+                                              "total.oda_log_next_year"),
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
+                                            "total.oda_log_next_year"),
+         mod.h1.type.total = data %>% map(mod.h1.type.total,
+                                          "total.oda_log_next_year"),
+         mod.h1.type.new = data %>% map(mod.h1.type.new,
+                                        "total.oda_log_next_year"),
+         mod.h1.csre = data %>% map(mod.h1.csre,
+                                    "total.oda_log_next_year"))
+
+# Get model details and parameters
+mods.h1.next_year <- mods.h1.next_year.raw %>%
+  gather(model.name, model, -m, -data) %>%
+  mutate(glance = model %>% map(broom::glance),
+         tidy = model %>% map(broom::tidy, conf.int=TRUE),
+         augment = model %>% map(broom::augment))
+
+# Meld the imputed models
+mods.h1.next_year.melded <- mods.h1.next_year %>%
+  filter(m != "original") %>%
+  group_by(model.name) %>%
+  nest() %>%
+  mutate(tidy.melded = data %>% map(meld.imputed.models))
+```
+
+```{r h1-models-bayes-1, warning=FALSE, message=FALSE}
+if (run.rstan) {
+  source(file.path(PROJHOME, "Analysis", "h1_model_definitions_bayes.R"))
+  
+  mods.h1.next_year.raw.bayes <- df.country.aid.demean.next_year %>%
+  nest(-m) %>%
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
+                                              "total.oda_log_next_year"),
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
+                                            "total.oda_log_next_year"),
+         mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
+                                          "total.oda_log_next_year"),
+         mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
+                                        "total.oda_log_next_year"),
+         mod.h1.csre = data %>% map(mod.h1.csre.bayes,
+                                    "total.oda_log_next_year"))
+}
+```
+
+### Results
+
+#### Imputed and melded frequentist models
+
+All of these models use imputed data ($m = 5$) with crossed year and country random effects.
+
+The $\sigma$ value for within-country variability here is 0, which is a side effect of controlling for the amount of aid in the current year. When $\sigma = 0$, the between-group variability is too small to fully account for between effects, resulting in a "degenerate model" (see [pages 10–11 here](http://lme4.r-forge.r-project.org/lMMwR/lrgprt.pdf)). Despite how scary that sounds, these kinds of models are allowed; according to Bates (2010), "degenerate models can and do occur in practice." The other coefficents in the model appear to be well-estimated, so we live with the model's degeneracy. 
+
+```{r h1-melded-table-1, results="asis", warning=FALSE}
+stargazer.fake(mods.h1.next_year.melded)
+```
+
+### Predicted ODA
+
+**THIS IS ALL WRONG DISREGARD**
+
+`barriers.total_between` is significant at the 95% level in the first model, and it's substantially so. The grey band below indicates the 90% prediction interval, calculated with 1000 simulated draws from model results (these intervals are waaaay too big for now; they'll be more accurate when running the Bayesian models). One additional anti-NGO law is associated with a 36% increase in ODA in the following year *between* countries in the panel.
+
+```{r h1-visualize, warning=FALSE}
+# model.to.use <- mods.h1.next_year %>%
+#   filter(m == "original", model.name == "mod.h1.barriers.total")
+# 
+# model.to.use <- model.to.use$model[[1]]
+# 
+# new.data <- model.to.use@frame %>%
+#   select(-barriers.total_between) %>%
+#   summarise_all(typical) %>%
+#   mutate(id = 1) %>%
+#   right_join(expand.grid(barriers.total_between = seq(0, 12, 0.1),
+#                          id = 1), by="id")
+# 
+# plot.predict <- merTools::predictInterval(merMod=model.to.use, newdata=new.data, 
+#                                           level=0.90, n.sims=1000,
+#                                           stat="median", type="linear.prediction",
+#                                           include.resid.var=TRUE) %>%
+#   rename(pred = fit, pred.upper = upr, pred.lower = lwr) %>%
+#   bind_cols(augment(model.to.use, newdata=new.data))
+# 
+# ggplot(plot.predict, aes(x=barriers.total_between, y=.fitted)) + 
+#   geom_line() + 
+#   geom_ribbon(aes(ymin=pred.lower, ymax=pred.upper),
+#               alpha=0.3, colour=NA) + 
+#   labs(x="Total barriers (between; average value for each country)", y="Predicted log ODA") +
+#   theme_donors()
+```
+
+Looking at the overall effect of the civil society regulatory environment, though, does yield a significant effect. A one point increase in the CSRE is associated with a 41% increase in ODA in the following year (and vice versa; worsening CSRE leads to a reduction in aid) *within* countries in the panel.
+
+```{r h1-visualize1, warning=FALSE}
+# model.to.use <- mods.h1.next_year %>%
+#   filter(m == "original", model.name == "mod.h1.csre")
+# 
+# model.to.use <- model.to.use$model[[1]]
+# 
+# new.data <- model.to.use@frame %>%
+#   select(-csre_within) %>%
+#   summarise_all(typical) %>%
+#   mutate(id = 1) %>%
+#   right_join(expand.grid(csre_within = seq(-4, 4, 0.1),
+#                          id = 1), by="id")
+# 
+# plot.predict <- merTools::predictInterval(merMod=model.to.use, newdata=new.data, 
+#                                           level=0.90, n.sims=1000,
+#                                           stat="median", type="linear.prediction",
+#                                           include.resid.var=TRUE) %>%
+#   rename(pred = fit, pred.upper = upr, pred.lower = lwr) %>%
+#   bind_cols(augment(model.to.use, newdata=new.data))
+# 
+# ggplot(plot.predict, aes(x=csre_within, y=.fitted)) + 
+#   geom_line() + 
+#   geom_ribbon(aes(ymin=pred.lower, ymax=pred.upper),
+#               alpha=0.3, colour=NA) + 
+#   labs(x="CSRE (within; difference from mean)", y="Predicted log ODA") +
+#   theme_donors()
+```
+
+## Robustness checks
+
+### Imputation
 
 [As discussed over in the data cleaning file](../Data/get_merge_data.html#missingness_and_imputation), we impute data for the few variables that are missing. To show what difference imputation makes, the table below shows three pairs of models from H~1~. The first two models are run on non-imputed data (so missing observations are deleted listwise), the second two models are run on 5 sets of imputed data, and the last two models are run on 10 sets of imputed data. 
 
@@ -433,94 +553,39 @@ mods.robust.check.m.next_year.melded.original <- mods.robust.check.m.next_year %
   filter(m == "original") %>%
   group_by(model.name) %>%
   nest() %>%
-  mutate(tidy.melded = data %>% map(meld.imputed.models),
-         n = data %>% map_int(~ nrow(.$model[[1]]@frame)),
-         m = 0)
+  mutate(tidy.melded = data %>% map(meld.imputed.models))
 
 mods.robust.check.m.next_year.melded.m5 <- mods.robust.check.m.next_year %>%
   filter(m %in% paste0("imp", 1:5)) %>%
   group_by(model.name) %>%
   nest() %>%
-  mutate(tidy.melded = data %>% map(meld.imputed.models),
-         n = data %>% map_int(~ nrow(.$model[[1]]@frame)),
-         m = 5)
+  mutate(tidy.melded = data %>% map(meld.imputed.models))
 
 mods.robust.check.m.next_year.melded.m10 <- mods.robust.check.m.next_year %>%
   filter(m != "original") %>%
   group_by(model.name) %>%
   nest() %>%
-  mutate(tidy.melded = data %>% map(meld.imputed.models),
-         n = data %>% map_int(~ nrow(.$model[[1]]@frame)),
-         m = 10)
+  mutate(tidy.melded = data %>% map(meld.imputed.models))
 
 mods.robust.check.m.next_year.melded.all <- bind_rows(
   mods.robust.check.m.next_year.melded.original,
   mods.robust.check.m.next_year.melded.m5,
   mods.robust.check.m.next_year.melded.m10
 ) %>%
-  mutate(model.name = paste(model.name, m, sep="_"))
+  mutate(imputations = data %>% map_dbl(~ nrow(.)),
+         model.name = paste(model.name, imputations, sep="_"))
 ```
 
 ```{r tbl-show-imputations, results="asis"}
 stargazer.fake(mods.robust.check.m.next_year.melded.all)
 ```
 
+### Longer lags
 
-## H~1~: Donors reduce aid in response to legislation
-
-> **H~1~**: In response to restrictive NGO legislation, bilateral, multilateral, and private donors may reduce their aid to repressive countries.
-
-$$ln( \text{ODA} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
-
-Our dependent variable for this hypothesis is the log of ODA (constant 2011 dollars), leaded by one year so we don't have to lag every other independent variable. We also include models with log ODA leaded by 2 years and 5 years to account the implementation period following the passage of a law.
-
-We look at NGO legislation in a few different ways:
-
-- `barriers.total`: Number of anti-NGO legal barriers in a country-year
-- `barriers.total_new`: Indicator marking if a new anti-NGO barrier was passed in a country year
-- `advocacy + entry + funding`: Number of anti-NGO legal barriers by type of barrier
-- `advocacy_new + entry_new + funding_new`: Indicators marking new type of barrier
-- `csre`: Civil society regulatory environment index (CSRE), ranging from roughly -4 to 4 (higher values = better civil society regulations)
-
-```{r h1-models-1, warning=FALSE, message=FALSE, cache=TRUE}
-# Run models on each of the datasets (original and imputed) and save in a big data frame
-mods.h1.next_year.raw <- df.country.aid.demean.next_year.both %>%
-  nest(-m) %>%
-  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
-                                              "total.oda_log_next_year"),
-         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
-                                            "total.oda_log_next_year"),
-         mod.h1.type.total = data %>% map(mod.h1.type.total,
-                                          "total.oda_log_next_year"),
-         mod.h1.advocacy.total = data %>% map(mod.h1.advocacy.total,
-                                          "total.oda_log_next_year"),
-         mod.h1.entry.total = data %>% map(mod.h1.entry.total,
-                                          "total.oda_log_next_year"),
-         mod.h1.funding.total = data %>% map(mod.h1.funding.total,
-                                          "total.oda_log_next_year"),
-         mod.h1.type.new = data %>% map(mod.h1.type.new,
-                                        "total.oda_log_next_year"),
-         mod.h1.csre = data %>% map(mod.h1.csre,
-                                    "total.oda_log_next_year"))
-
-# Get model details and parameters
-mods.h1.next_year <- mods.h1.next_year.raw %>%
-  gather(model.name, model, -m, -data) %>%
-  mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE),
-         augment = model %>% map(broom::augment))
-
-# Meld the imputed models
-mods.h1.next_year.melded <- mods.h1.next_year %>%
-  filter(m != "original") %>%
-  group_by(model.name) %>%
-  nest() %>%
-  mutate(tidy.melded = data %>% map(meld.imputed.models),
-         n = data %>% map_int(~ nrow(.$model[[1]]@frame)))
-```
+Looking at aid 2 years and 5 years after the change in anti-NGO legislation shows similar trends to 1 year after.
 
 ```{r h1-models-2, warning=FALSE, message=FALSE, cache=TRUE}
-mods.h1.after_2.raw <- df.country.aid.demean.after_2.both %>%
+mods.h1.after_2.raw <- df.country.aid.demean.after_2 %>%
   nest(-m) %>%
   mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
                                               "total.oda_log_next_year"),
@@ -545,12 +610,11 @@ mods.h1.after_2.melded <- mods.h1.after_2 %>%
   filter(m != "original") %>%
   group_by(model.name) %>%
   nest() %>%
-  mutate(tidy.melded = data %>% map(meld.imputed.models),
-         n = data %>% map_int(~ nrow(.$model[[1]]@frame))) 
+  mutate(tidy.melded = data %>% map(meld.imputed.models))
 ```
 
 ```{r h1-models-5, warning=FALSE, message=FALSE, cache=TRUE}
-mods.h1.after_5.raw <- df.country.aid.demean.after_5.both %>%
+mods.h1.after_5.raw <- df.country.aid.demean.after_5 %>%
   nest(-m) %>%
   mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
                                               "total.oda_log_next_year"),
@@ -575,147 +639,17 @@ mods.h1.after_5.melded <- mods.h1.after_5 %>%
   filter(m != "original") %>%
   group_by(model.name) %>%
   nest() %>%
-  mutate(tidy.melded = data %>% map(meld.imputed.models),
-         n = data %>% map_int(~ nrow(.$model[[1]]@frame))) 
+  mutate(tidy.melded = data %>% map(meld.imputed.models))
 ```
 
-```{r h1-models-bayes-1, warning=FALSE, message=FALSE}
-if (run.rstan) {
-  source(file.path(PROJHOME, "Analysis", "h1_model_definitions_bayes.R"))
-  
-  mods.h1.next_year.raw.bayes <- df.country.aid.demean.next_year.both %>%
-  nest(-m) %>%
-  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
-                                              "total.oda_log_next_year"),
-         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
-                                            "total.oda_log_next_year"),
-         mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
-                                          "total.oda_log_next_year"),
-         mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
-                                        "total.oda_log_next_year"),
-         mod.h1.csre = data %>% map(mod.h1.csre.bayes,
-                                    "total.oda_log_next_year"))
-}
-```
-
-```{r h1-models-bayes-2, warning=FALSE, message=FALSE}
-if (run.rstan) {
-  mods.h1.after_2.raw.bayes <- df.country.aid.demean.after_2.both %>%
-  nest(-m) %>%
-  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
-                                              "total.oda_log_next_year"),
-         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
-                                            "total.oda_log_next_year"),
-         mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
-                                          "total.oda_log_next_year"),
-         mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
-                                        "total.oda_log_next_year"),
-         mod.h1.csre = data %>% map(mod.h1.csre.bayes,
-                                    "total.oda_log_next_year"))
-}
-```
-
-```{r h1-models-bayes-5, warning=FALSE, message=FALSE}
-if (run.rstan) {
-  mods.h1.after_5.raw.bayes <- df.country.aid.demean.after_5.both %>%
-  nest(-m) %>%
-  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
-                                              "total.oda_log_next_year"),
-         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
-                                            "total.oda_log_next_year"),
-         mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
-                                          "total.oda_log_next_year"),
-         mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
-                                        "total.oda_log_next_year"),
-         mod.h1.csre = data %>% map(mod.h1.csre.bayes,
-                                    "total.oda_log_next_year"))
-}
-```
-
-### Results
-
-#### Imputed and melded frequentist models
-
-All of these models use imputed data ($m = 5$) with crossed year and country random effects.
-
-**Effect on ODA after 1 year:**
-
-```{r h1-melded-table-1, results="asis", warning=FALSE}
-stargazer.fake(mods.h1.next_year.melded)
-```
-
-**Effect on ODA after 2 years:**
+#### Effect on ODA after 2 years
 
 ```{r h1-melded-table-2, results="asis", warning=FALSE}
 stargazer.fake(mods.h1.after_2.melded)
 ```
 
-**Effect on ODA after 5 years:**
+#### Effect on ODA after 5 years
 
 ```{r h1-melded-table-5, results="asis", warning=FALSE}
 stargazer.fake(mods.h1.after_5.melded)
-```
-
-### Predicted ODA
-
-**THIS IS ALL WRONG DISREGARD**
-
-`barriers.total_between` is significant at the 95% level in the first model, and it's substantially so. The grey band below indicates the 90% prediction interval, calculated with 1000 simulated draws from model results (these intervals are waaaay too big for now; they'll be more accurate when running the Bayesian models). One additional anti-NGO law is associated with a 36% increase in ODA in the following year *between* countries in the panel.
-
-```{r h1-visualize, warning=FALSE}
-model.to.use <- mods.h1.next_year %>%
-  filter(m == "original", model.name == "mod.h1.barriers.total")
-
-model.to.use <- model.to.use$model[[1]]
-
-new.data <- model.to.use@frame %>%
-  select(-barriers.total_between) %>%
-  summarise_all(typical) %>%
-  mutate(id = 1) %>%
-  right_join(expand.grid(barriers.total_between = seq(0, 12, 0.1),
-                         id = 1), by="id")
-
-plot.predict <- merTools::predictInterval(merMod=model.to.use, newdata=new.data, 
-                                          level=0.90, n.sims=1000,
-                                          stat="median", type="linear.prediction",
-                                          include.resid.var=TRUE) %>%
-  rename(pred = fit, pred.upper = upr, pred.lower = lwr) %>%
-  bind_cols(augment(model.to.use, newdata=new.data))
-
-ggplot(plot.predict, aes(x=barriers.total_between, y=.fitted)) + 
-  geom_line() + 
-  geom_ribbon(aes(ymin=pred.lower, ymax=pred.upper),
-              alpha=0.3, colour=NA) + 
-  labs(x="Total barriers (between; average value for each country)", y="Predicted log ODA") +
-  theme_donors()
-```
-
-Looking at the overall effect of the civil society regulatory environment, though, does yield a significant effect. A one point increase in the CSRE is associated with a 41% increase in ODA in the following year (and vice versa; worsening CSRE leads to a reduction in aid) *within* countries in the panel.
-
-```{r h1-visualize1, warning=FALSE}
-model.to.use <- mods.h1.next_year %>%
-  filter(m == "original", model.name == "mod.h1.csre")
-
-model.to.use <- model.to.use$model[[1]]
-
-new.data <- model.to.use@frame %>%
-  select(-csre_within) %>%
-  summarise_all(typical) %>%
-  mutate(id = 1) %>%
-  right_join(expand.grid(csre_within = seq(-4, 4, 0.1),
-                         id = 1), by="id")
-
-plot.predict <- merTools::predictInterval(merMod=model.to.use, newdata=new.data, 
-                                          level=0.90, n.sims=1000,
-                                          stat="median", type="linear.prediction",
-                                          include.resid.var=TRUE) %>%
-  rename(pred = fit, pred.upper = upr, pred.lower = lwr) %>%
-  bind_cols(augment(model.to.use, newdata=new.data))
-
-ggplot(plot.predict, aes(x=csre_within, y=.fitted)) + 
-  geom_line() + 
-  geom_ribbon(aes(ymin=pred.lower, ymax=pred.upper),
-              alpha=0.3, colour=NA) + 
-  labs(x="CSRE (within; difference from mean)", y="Predicted log ODA") +
-  theme_donors()
 ```
