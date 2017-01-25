@@ -585,7 +585,7 @@ stargazer.fake(mods.robust.check.m.next_year.melded.all)
 Looking at aid 2 years and 5 years after the change in anti-NGO legislation shows similar trends to 1 year after.
 
 ```{r h1-models-2, warning=FALSE, message=FALSE, cache=TRUE}
-mods.h1.after_2.raw <- df.country.aid.demean.after_2 %>%
+mods.h1.after_2.raw <- df.country.aid.demean.after_2.impute %>%
   nest(-m) %>%
   mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
                                               "total.oda_log_next_year"),
@@ -614,7 +614,7 @@ mods.h1.after_2.melded <- mods.h1.after_2 %>%
 ```
 
 ```{r h1-models-5, warning=FALSE, message=FALSE, cache=TRUE}
-mods.h1.after_5.raw <- df.country.aid.demean.after_5 %>%
+mods.h1.after_5.raw <- df.country.aid.demean.after_5.impute %>%
   nest(-m) %>%
   mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
                                               "total.oda_log_next_year"),
