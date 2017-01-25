@@ -302,6 +302,13 @@ aiddata.final <- aiddata.clean %>%
          purpose.contentiousness,
          coalesced_purpose_code, coalesced_purpose_name) %>%
   arrange(cowcode, year)
+
+ever.dac.eligible <- read_csv(file.path(PROJHOME, "Data", "data_clean", 
+                                    "oecd_dac_countries.csv")) %>%
+  # Ignore High Income Countries and More Advanced Developing Countries
+  filter(!(dac_abbr %in% c("HIC", "ADC"))) %>%
+  left_join(gw.codes, by="iso3") %>%
+  select(cowcode) %>% unlist() %>% c() %>% unique()
 ```
 
 #### List of donors
@@ -1291,6 +1298,7 @@ donor.level.data <- donor.level.data.raw %>%
 # Country data
 # Use DCJW 1980+ as base data, since we're limited to the countries included there
 country.level.data <- dcjw.full %>%
+  mutate(ever.dac.eligible = cowcode %in% ever.dac.eligible) %>%
   left_join(select(vdem.cso, year, cowcode, csre, 
                    polity = e_fh_ipolity2, 
                    corruption=v2x_corr, 
