@@ -1408,6 +1408,14 @@ country.aid.data.pre.transformation <- country.level.data %>%
   left_join(aid.by.country.purpose, by=c("cowcode", "year")) %>%
   mutate_at(vars(contains("oda")), funs(ifelse(is.na(.), 0, .)))
 
+# Missing Polity values are easy—most are just one-year gaps with the same
+# value before and after, so interpolate the missing values
+polity.imputed <- country.aid.data.pre.transformation %>%
+  select(cowcode, year, polity) %>%
+  group_by(cowcode) %>%
+  mutate(impute.polity = !all(is.na(polity))) %>%
+  mutate(polity = ifelse(impute.polity, na.interpolation(polity), polity)) %>%
+  ungroup() %>% select(-impute.polity)
 # Select the variables to not include in the imputation model. Left join this
 # data frame later with the imputed data
 vars.to.ignore.in.imputation <- country.aid.data.pre.transformation %>%
