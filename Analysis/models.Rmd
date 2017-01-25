@@ -455,6 +455,8 @@ if (run.rstan) {
 
 All of these models use imputed data ($m = 5$) with crossed year and country random effects.
 
+The $\sigma$ value for within-country variability here is 0, which is a side effect of controlling for the amount of aid in the current year. When $\sigma = 0$, the between-group variability is too small to fully account for between effects, resulting in a "degenerate model" (see [pages 10–11 here](http://lme4.r-forge.r-project.org/lMMwR/lrgprt.pdf)). Despite how scary that sounds, these kinds of models are allowed; according to Bates (2010), "degenerate models can and do occur in practice." The other coefficents in the model appear to be well-estimated, so we live with the model's degeneracy. 
+
 ```{r h1-melded-table-1, results="asis", warning=FALSE}
 stargazer.fake(mods.h1.next_year.melded)
 ```
