@@ -1413,9 +1413,14 @@ polity.imputed <- country.aid.data.pre.transformation %>%
   mutate(impute.polity = !all(is.na(polity))) %>%
   mutate(polity = ifelse(impute.polity, na.interpolation(polity), polity)) %>%
   ungroup() %>% select(-impute.polity)
+
+country.aid.data.pre.amelia <- country.aid.data.pre.transformation %>% 
+  select(-polity) %>% 
+  left_join(polity.imputed, by=c("cowcode", "year"))
+
 # Select the variables to not include in the imputation model. Left join this
 # data frame later with the imputed data
-vars.to.ignore.in.imputation <- country.aid.data.pre.transformation %>%
+vars.to.ignore.in.imputation <- country.aid.data.pre.amelia %>%
   select(year, cowcode,
          which(sapply(.,is.character)),
          const_assoc, political_parties, starts_with("ngo"), contains("std"),
@@ -1427,7 +1432,7 @@ vars.to.ignore.sans.ids <- vars.to.ignore.in.imputation %>%
   select(-year, -cowcode) %>% colnames()
 
 # Stripped down dataset for imputation
-country.aid.data.to.impute <- country.aid.data.pre.transformation %>%
+country.aid.data.to.impute <- country.aid.data.pre.amelia %>%
   select(-one_of(vars.to.ignore.sans.ids))
 
 # Imputation model tweaks
@@ -1439,17 +1444,17 @@ vars.to.log <- c("gdp", "population")
 
 # Run imputation model
 set.seed(my.seed)
-country.aid.data.imputed <- amelia(country.aid.data.to.impute,
-                                   m=10, ts="year", cs="cowcode", p2s=0,
-                                   lags=vars.to.lag.lead,
-                                   leads=vars.to.lag.lead,
-                                   logs=vars.to.log)
+country.aid.data.amelia <- amelia(country.aid.data.to.impute,
+                                  m=10, ts="year", cs="cowcode", p2s=0,
+                                  lags=vars.to.lag.lead,
+                                  leads=vars.to.lag.lead,
+                                  logs=vars.to.log)
 
 # Append list of imputed datasets to original in a long data frame and bring
 # back the omitted variables
 country.aid.data.imputed.long <- 
   bind_rows(mutate(country.aid.data.to.impute, m="original"),
-            bind_rows(country.aid.data.imputed$imputations, .id="m")) %>%
+            bind_rows(country.aid.data.amelia$imputations, .id="m")) %>%
   select(m, everything()) %>%
   left_join(vars.to.ignore.in.imputation, by=c("cowcode", "year"))
 ```
