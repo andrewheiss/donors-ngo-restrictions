@@ -642,13 +642,13 @@ mods.h1.after_5.melded <- mods.h1.after_5 %>%
   mutate(tidy.melded = data %>% map(meld.imputed.models))
 ```
 
-**Effect on ODA after 2 years:**
+#### Effect on ODA after 2 years
 
 ```{r h1-melded-table-2, results="asis", warning=FALSE}
 stargazer.fake(mods.h1.after_2.melded)
 ```
 
-**Effect on ODA after 5 years:**
+#### Effect on ODA after 5 years
 
 ```{r h1-melded-table-5, results="asis", warning=FALSE}
 stargazer.fake(mods.h1.after_5.melded)
