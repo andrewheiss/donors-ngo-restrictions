@@ -65,13 +65,16 @@ coef.names <- read_csv(file.path(PROJHOME, "Data", "data_clean",
 
 coef.names.within <- coef.names %>%
   mutate(term = paste0(term, "_within"),
+         term_plot = paste0(term_clean, "\n(within)"),
          term_clean = paste0(term_clean, "~within~"))
 
 coef.names.between <- coef.names %>%
   mutate(term = paste0(term, "_between"),
+         term_plot = paste0(term_clean, "\n(between)"),
          term_clean = paste0(term_clean, "~between~"))
 
-coef.names.all <- bind_rows(coef.names, coef.names.within, coef.names.between)
+coef.names.all <- bind_rows(coef.names, coef.names.within, coef.names.between) %>%
+  mutate(term_plot = ifelse(is.na(term_plot), term_clean, term_plot))
 
 
 # Combine original data and imputed data so calculations can happen at the same time
@@ -518,6 +521,39 @@ if (run.rstan) {
 ### Results
 
 #### Imputed and melded frequentist models
+
+```{r, plot-h1-coefs, fig.width=5, fig.height=4}
+vars.to.plot <- c("barriers.total_within", "barriers.total_between",
+                  "barriers.total_new",
+                  "advocacy_within", "advocacy_between", 
+                  "entry_within", "entry_between", 
+                  "funding_within", "funding_between",
+                  "advocacy_new", "entry_new", "funding_new",
+                  "csre_within", "csre_between")
+
+coefs.raw <- mods.h1.next_year.melded %>%
+  unnest(tidy.melded) %>%
+  filter(term != "(Intercept)",
+         term %in% vars.to.plot) %>%
+  left_join(coef.names.all, by="term") %>%
+  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  arrange(desc(term)) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(coef.type = case_when(
+    str_detect(.$term, "_within") ~ "Within",
+    str_detect(.$term, "_between") ~ "Between",
+    TRUE ~ "Not split"
+  )) %>% 
+  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
+                            ordered=TRUE))
+
+ggplot(coefs.raw, aes(y=term_plot, x=estimate, colour=coef.type)) + 
+  geom_vline(xintercept=0, colour="grey50", size=1) + 
+  geom_pointrangeh(aes(xmin=conf.low, xmax=conf.high), size=.5) + 
+  labs(x="Estimate", y=NULL) +
+  guides(color=guide_legend(title=NULL)) +
+  theme_donors()
+```
 
 ```{r h1-melded-table-1, results="asis", warning=FALSE}
 stargazer.fake(mods.h1.next_year.melded)

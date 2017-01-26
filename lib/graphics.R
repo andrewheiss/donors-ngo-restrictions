@@ -1,4 +1,5 @@
 library(gridExtra)
+library(ggstance)
 
 theme_donors <- function(base_size=9, base_family="Open Sans") {
   update_geom_defaults("bar", list(fill = "grey30"))
