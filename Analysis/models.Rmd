@@ -568,7 +568,7 @@ Country intercepts vary with an SD of 0.295 (etc.), year intercepts vary with an
 
 The total number of anti-NGO legal barriers has a significant negative effect on ODA in the following year—adding a new barrier beyond a country's average number of all time barriers is associated with a 7.4% reduction in aid in the next year (p < 0.1). This difference has substantive significant, as seen in the simulated plot below, which shows 50 model simulations from each of the 5 imputed datasets across a range of differences from the average number of NGO laws in an average country (with all independent variables held at their mean or modal values). (And amazingly, because of math, the slope of the thick line below is essentially the coefficient from the model, 0.7ish.)
 
-```{r h1-visualize, warning=FALSE, fig.width=6}
+```{r h1-simulate-total, warning=FALSE, fig.width=6}
 # Make predictions inside each dataset, then average them. So says Gary King:
 # https://lists.gking.harvard.edu/pipermail/gov2001/2003-May/005327.html
 simulate.predictions.barriers <- function(x) {
