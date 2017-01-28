@@ -559,38 +559,81 @@ ggplot(coefs.raw, aes(y=term_plot, x=estimate, colour=coef.type)) +
 stargazer.fake(mods.h1.next_year.melded)
 ```
 
+### Model diagnostics
+
+Country intercepts vary with an SD of 0.295 (etc.), year intercepts vary with an SD of 0.272 (etc.), and the SD of error not accounted for by either within-country or within-year variability is 3 (etc.)
+
+
 ### Predicted ODA
 
-**THIS IS ALL WRONG DISREGARD**
+The total number of anti-NGO legal barriers has a significant negative effect on ODA in the following year—adding a new barrier beyond a country's average number of all time barriers is associated with a 7.4% reduction in aid in the next year (p < 0.1). This difference has substantive significant, as seen in the simulated plot below, which shows 50 model simulations from each of the 5 imputed datasets across a range of differences from the average number of NGO laws in an average country (with all independent variables held at their mean or modal values). (And amazingly, because of math, the slope of the thick line below is essentially the coefficient from the model, 0.7ish.)
 
-`barriers.total_between` is significant at the 95% level in the first model, and it's substantially so. The grey band below indicates the 90% prediction interval, calculated with 1000 simulated draws from model results (these intervals are waaaay too big for now; they'll be more accurate when running the Bayesian models). One additional anti-NGO law is associated with a 36% increase in ODA in the following year *between* countries in the panel.
+```{r h1-visualize, warning=FALSE, fig.width=6}
+# Make predictions inside each dataset, then average them. So says Gary King:
+# https://lists.gking.harvard.edu/pipermail/gov2001/2003-May/005327.html
+simulate.predictions.barriers <- function(x) {
+  new.data <- x@frame %>%
+    select(-c(barriers.total_within, year, cowcode)) %>%
+    summarise_all(typical) %>%
+    mutate(id = 1,
+           total.oda_log_next_year = NA) %>%
+    right_join(expand.grid(barriers.total_within = seq(-5, 5, 0.5),
+                           cowcode = 1000:1050,
+                           year = 1981:2012,
+                           id = 1), by="id") %>% select(-id)
+  
+  df.simulated.all <- tribble(
+    ~id, ~data,
+    # Uncomment to include predictions of original data
+    # "original", model.to.use@frame,
+    "hypothetical", new.data
+  ) %>%
+    # Use simulate() instead of predict() to use the random effects in the predictions
+    # https://tmalsburg.github.io/blog/predict-vs-simulate-in-lme4/
+    mutate(simulated = data %>% 
+             map(~ simulate(x, nsim=1, seed=1, 
+                            newdata=select(.x, -total.oda_log_next_year), 
+                            re.form=NA, allow.new.levels=TRUE))) %>%
+    unnest()
+  
+  return(df.simulated.all)
+}
 
-```{r h1-visualize, warning=FALSE}
-# model.to.use <- mods.h1.next_year %>%
-#   filter(m == "original", model.name == "mod.h1.barriers.total")
-# 
-# model.to.use <- model.to.use$model[[1]]
-# 
-# new.data <- model.to.use@frame %>%
-#   select(-barriers.total_between) %>%
-#   summarise_all(typical) %>%
-#   mutate(id = 1) %>%
-#   right_join(expand.grid(barriers.total_between = seq(0, 12, 0.1),
-#                          id = 1), by="id")
-# 
-# plot.predict <- merTools::predictInterval(merMod=model.to.use, newdata=new.data, 
-#                                           level=0.90, n.sims=1000,
-#                                           stat="median", type="linear.prediction",
-#                                           include.resid.var=TRUE) %>%
-#   rename(pred = fit, pred.upper = upr, pred.lower = lwr) %>%
-#   bind_cols(augment(model.to.use, newdata=new.data))
-# 
-# ggplot(plot.predict, aes(x=barriers.total_between, y=.fitted)) + 
-#   geom_line() + 
-#   geom_ribbon(aes(ymin=pred.lower, ymax=pred.upper),
-#               alpha=0.3, colour=NA) + 
-#   labs(x="Total barriers (between; average value for each country)", y="Predicted log ODA") +
-#   theme_donors()
+simulated.h1.barriers.total <- mods.h1.next_year.melded %>%
+  filter(model.name == "mod.h1.barriers.total") %>%
+  unnest(data) %>%
+  mutate(simulated = model %>% map(~ simulate.predictions.barriers(.))) %>%
+  unnest(simulated)
+
+d.plot.data <- simulated.h1.barriers.total %>%
+  group_by(id, m, cowcode, barriers.total_within) %>%
+  summarise_at(vars(starts_with("sim")), funs(avg = mean(.))) %>%
+  ungroup() %>%
+  gather(key, value, -c(id, m, cowcode, barriers.total_within))
+
+d.plot.data.mean <- d.plot.data %>%
+  group_by(barriers.total_within) %>%
+  summarise(value = mean(value)) %>%
+  mutate(value.exp = expm1(value)) %>%
+  mutate(cowcode=1)  # Fake country so the line plots
+
+fig.simulated.h1.barriers <- ggplot(d.plot.data, aes(x=barriers.total_within, 
+                                                     y=expm1(value), group=cowcode)) + 
+  geom_vline(xintercept=0, size=0.5) +
+  geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
+  geom_smooth(data=d.plot.data.mean, size=1.5, method="lm", colour="#BD4932") +
+  labs(x="Difference from average number of anti-NGO barriers in country",
+       y="Simulated ODA in the following year") +
+  scale_y_continuous(labels=scales::dollar, trans=scales::log1p_trans()) +
+  theme_donors()
+
+fig.display <- fig.simulated.h1.barriers + 
+  labs(title="Donors reduce aid in response to\nmore-than-average number of anti-NGO laws",
+       subtitle="Simulated foreign aid (ODA) across range of differences from the average number of\nanti-NGO laws in a hypothetical average country; dark line shows average of\n50 simulations across 5 imputated datasets",
+       caption="Chaudhry and Heiss (2017)") + 
+  theme_donors(11)
+
+fig.simulated.h1.barriers
 ```
 
 Looking at the overall effect of the civil society regulatory environment, though, does yield a significant effect. A one point increase in the CSRE is associated with a 41% increase in ODA in the following year (and vice versa; worsening CSRE leads to a reduction in aid) *within* countries in the panel.
