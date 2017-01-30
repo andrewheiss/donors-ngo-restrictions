@@ -80,7 +80,7 @@ coef.names.all <- bind_rows(coef.names, coef.names.within, coef.names.between) %
 # Combine original data and imputed data so calculations can happen at the same time
 df.country.aid.both <- bind_rows(df.country.aid, df.country.aid.impute)
 
-# Combine m=10 imputated data too since we use it in some robustness checks.
+# Combine m=10 imputed data too since we use it in some robustness checks.
 # Imputations 6-10 are later removed
 df.country.aid.all <- bind_rows(df.country.aid, df.country.aid.impute.m10)
 
@@ -322,7 +322,7 @@ stargazer.fake <- function(df) {
     select(model.name, m.new) %>% 
     mutate(m.new = ifelse(m.new == 1, 0, m.new),
            m.new = as.character(m.new)) %>%
-    mutate(term = "Imputated datasets (*m*)") %>%
+    mutate(term = "Imputed datasets (*m*)") %>%
     spread(model.name, m.new)
 
   bottom.details <- bind_rows(n.obs, avg.loglik, n.m)
@@ -755,7 +755,7 @@ fig.simulated.h1.barriers.both <- ggplot(df.plot.data.both,
 
 fig.display.both <- fig.simulated.h1.barriers.both + 
   labs(title="Donors reduce aid more in response to\nadditional advocacy-focused anti-NGO laws",
-       subtitle="Simulated foreign aid (ODA) across range of differences from the average number of\nanti-NGO laws in a hypothetical average country; dark line shows average of\n50 simulations across 5 imputated datasets",
+       subtitle="Simulated foreign aid (ODA) across range of differences from the average number of\nanti-NGO laws in a hypothetical average country; dark line shows average of\n50 simulations across 5 imputed datasets",
        caption="Chaudhry and Heiss (2017)") + 
   theme_donors(11)
 
