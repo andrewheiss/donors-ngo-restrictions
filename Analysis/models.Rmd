@@ -389,7 +389,7 @@ stargazer(mod.test.fe, mod.test.re, mod.test.re.fancy,
 \
 All of the models we run use imputed data ($m = 5$) with crossed year and country random effects. Most explanatory and control variables are included in their meaned and demeaned forms, except for any indicator variables (since you can't really average binary data). Additionally, we include the regular form of the current year's ODA to account for temporal autocorrelation in aid. We do not split current ODA into within and between versions so that mathematically it can be subtracted out of the next year's ODA in the dependent variable. Other mixed models functions like `nlme::lme()` allow you to define autoregressive correlation structures, but `lme4::lmer()` doesn't, so we account for time with this differenced approach instead. It's not perfect, but it works:
 
-```{r, show.acf.lags}
+```{r show.acf.lags}
 mod.test.no.oda <- lmer(total.oda_log_next_year ~ 
                           barriers.total_between + barriers.total_within +
                           polity_between + polity_within + 
@@ -438,7 +438,7 @@ ggplot(acf.plot.data, aes(x=Lag, y=ACF, fill=model)) +
 
 Not splitting current ODA into within and between also fixes another sticky mathematical issue. When the models are run with within and current ODA, the $\sigma$ value for within-country variability becomes 0 for whatever reason (maybe it swallows up too much country level variability?). When $\sigma = 0$, the between-group variability is too small to fully account for between effects, resulting in a "degenerate model" (see [pages 10–11 here](http://lme4.r-forge.r-project.org/lMMwR/lrgprt.pdf)) and influencing the coefficients in weird ways. See below, where Model 1 uses the split current ODA and Model 2 doesn't: $\sigma$ in Model 2 exists and the coefficients are better estimated.
 
-```{r, results="asis"}
+```{r h1-table-results, results="asis"}
 stargazer(mod.test.oda.split, mod.test.oda.nosplit,
           type="html", keep.stat=c("n"))
 
@@ -451,7 +451,7 @@ bind_rows(
   spread(model, sdcor) %>% pandoc.table()
 ```
 
-\
+---
 
 ## H~1~: Donors reduce aid in response to legislation
 
