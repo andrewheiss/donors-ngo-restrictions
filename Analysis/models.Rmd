@@ -764,6 +764,74 @@ fig.display.both <- fig.simulated.h1.barriers.both +
 fig.simulated.h1.barriers.both
 ```
 
+---
+
+## H~2~: Donors shift aid to tamer causes
+
+> **H~2~**: As restrictive laws against NGOs are enacted, donors start increasing funds for 'tamer' causes, and decreasing funds for politically sensitive causes.
+
+$$\text{% contentious aid}_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
+
+
+### Results
+
+
+### Model diagnostics
+
+
+### Predicted ODA
+
+
+---
+
+## H~3~: Donors shift aid to international NGOs
+
+> **H~3~**: As restrictive laws against local NGOs increase, states should be more likely to provide aid to INGOs rather than local NGOs.
+
+$$\text{% aid to INGOs}_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
+
+
+### Results
+
+
+### Model diagnostics
+
+
+### Predicted ODA
+
+
+---
+
+## H~4~: Donors shift aid to neighboring countries
+
+> **H~4~**: As restrictive laws against NGOs in a country are enacted, donors should be more likely to provide aid to neighboring countries.
+
+$$ln( \text{ODA in neighboring countries} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
+
+
+### Results
+
+
+### Model diagnostics
+
+
+### Predicted ODA
+
+
+---
+
+## H~a~: Quality of governance tempers shifts in aid
+
+### Results
+
+
+### Model diagnostics
+
+
+### Predicted ODA
+
+
+---
 
 ## Robustness checks
 
