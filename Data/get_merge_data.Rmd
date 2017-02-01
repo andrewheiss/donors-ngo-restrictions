@@ -1500,13 +1500,14 @@ country.aid.data <- country.aid.data.imputed.long %>%
            (oda.contentious.low + oda.contentious.high)) %>%
   mutate(prop.contentious = ifelse(is.nan(prop.contentious), 
                                    NA, prop.contentious)) %>%
+  mutate(prop.contentious_logit = car::logit(prop.contentious, adjust=.001)) %>%
   mutate_at(vars(total.oda, oda.contentious.high, oda.contentious.low),
             funs(log = log1p(.))) %>%
   mutate(aid.pct.gdp = total.oda / gdp) %>%
   # Lag/lead/diff everything within countries and samples
   group_by(m, cowcode) %>%
   # Get leaded aid variables
-  mutate_at(vars(contains("oda"), prop.contentious),
+  mutate_at(vars(contains("oda"), starts_with("prop.contentious")),
             funs(next_year = lead(.),  # y_{i, t+1}
                  after_2 = lead(., 2),
                  after_5 = lead(., 5))) %>%  
