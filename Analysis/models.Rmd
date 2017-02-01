@@ -162,6 +162,13 @@ fixed.digits <- function(x, n=2) {
   formatC(x, digits=n, format="f")
 }
 
+# Inverse logit, with the ability to account for adjustments
+# via http://stackoverflow.com/a/23845527/120898
+inv.logit <- function(f, a) {
+  a <- (1 - 2 * a)
+  (a * (1 + exp(f)) + (exp(f) - 1)) / (2 * a * (1 + exp(f)))
+}
+
 # Take apart the pieces of a random effects formula and rebuild it
 build.formula <- function(DV, IVs) {
   terms.all <- attr(terms(IVs), "term.labels")
