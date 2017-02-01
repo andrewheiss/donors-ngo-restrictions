@@ -635,6 +635,10 @@ fig.simulated.h1.barriers <- ggplot(df.plot.data, aes(x=barriers.total_within,
 
 The negative effect of anti-NGO barriers appears to be driven primarily by barriers to advocacy, such as laws restricting NGOs from engaging in political activities or government intimidation or dissolution of NGOs involved in politics. Adding a new barrier to advocacy above a country's average number of anti-advocacy laws is associated with a 46% drop in ODA in the following year (p < 0.1). Looking at the imposition of a new law rather than a change in the number of laws also yields a significant effect—a new anti-advocacy law is associated with a 100% drop in ODA in the following year. Notably, adding additional barriers to entry or funding has no noticeable effect on a country's aid in the following year. Additionally, the overall civil society regulatory environment in a country is also not associated with changes in aid. It appears that donors are more responsive to direct political intimidation and restriction than more benign bureaucratic legal barriers.
 
+`TODO`: Consistent colors (PSRI, Honey Pot, or other palette on Adobe Color)
+
+`TODO`: Overall level matters, not just the addition of one new law
+
 `TODO`: Discuss the between coefficients; discuss aid leaded by 2 and 5 years
 
 ```{r h1-simulate-individual, warning=FALSE}
