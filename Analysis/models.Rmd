@@ -783,9 +783,44 @@ fig.simulated.h1.barriers.both
 
 $$\text{% contentious aid}_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
 
+```{r h2-models-1, warning=FALSE, message=FALSE, cache=TRUE}
+# How to interpret logit-linear models:
+# https://acrowinghen.com/2014/04/24/interpreting-coefficients-from-a-logit-linear-model-with-a-proportional-dependent-variable/
+mods.h2.next_year.raw <- df.country.aid.demean.next_year.both %>%
+  nest(-m) %>%
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
+                                              "prop.contentious_logit_next_year"),
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
+                                            "prop.contentious_logit_next_year"),
+         mod.h1.type.total = data %>% map(mod.h1.type.total,
+                                          "prop.contentious_logit_next_year"),
+         mod.h1.type.new = data %>% map(mod.h1.type.new,
+                                        "prop.contentious_logit_next_year"),
+         mod.h1.csre = data %>% map(mod.h1.csre,
+                                    "prop.contentious_logit_next_year"))
+
+# Get model details and parameters
+mods.h2.next_year <- mods.h2.next_year.raw %>%
+  gather(model.name, model, -m, -data) %>%
+  mutate(glance = model %>% map(broom::glance),
+         tidy = model %>% map(broom::tidy, conf.int=TRUE),
+         augment = model %>% map(broom::augment))
+
+# Meld the imputed models
+mods.h2.next_year.melded <- mods.h2.next_year %>%
+  filter(m != "original") %>%
+  group_by(model.name) %>%
+  nest() %>%
+  mutate(tidy.melded = data %>% map(meld.imputed.models))
+```
 
 ### Results
 
+`TODO`: Convert these logit coefficients into [something more interpretable](https://acrowinghen.com/2014/04/24/interpreting-coefficients-from-a-logit-linear-model-with-a-proportional-dependent-variable/)
+
+```{r h2-melded-table-1, results="asis", warning=FALSE}
+stargazer.fake(mods.h2.next_year.melded)
+```
 
 ### Model diagnostics
 
