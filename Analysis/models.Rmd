@@ -180,7 +180,7 @@ build.formula <- function(DV, IVs) {
 }
 
 # Meld a bunch of imputed models
-meld.imputed.models <- function(model.data) {
+meld.imputed.models <- function(model.data, exponentiate=FALSE) {
   models.df <- model.data$glance[[1]]$df.residual
   
   models.tidy <- model.data %>%
@@ -215,14 +215,38 @@ meld.imputed.models <- function(model.data) {
            conf.low = estimate + std.error * qt(0.025, models.df),
            conf.high = estimate + std.error * qt(0.975, models.df),
            p.value = 2 * pt(abs(statistic), models.df, lower.tail=FALSE),
-           stars = stars(p.value))  
+           stars = stars(p.value))
+  
+  if (exponentiate) {
+    # Convert SEs to odds ratios. This isn't entirely 100% accurate, since the
+    # melded coefficient variances (i.e. diag(vcov(.))) are just averaged, not
+    # melded with Amelia's fancy mi.meld(), but ¯\_(ツ)_/¯
+    #
+    # https://www.andrewheiss.com/blog/2016/04/25/convert-logistic-regression-standard-errors-to-odds-ratios-with-r/
+    fixed.coefs.var <- model.data %>%
+      mutate(var.diag = model %>% map(~ diag(vcov(.)))) %>%
+      select(var.diag, model) %>% unnest(var.diag)
+    
+    just.var <- models.tidy %>%
+      filter(group == "fixed") %>%
+      select(imputation, term) %>%
+      bind_cols(fixed.coefs.var) %>%
+      group_by(term) %>%
+      summarise(var.diag = mean(var.diag))
+    
+    melded.tidy <- melded.tidy %>%
+      left_join(just.var, by="term") %>%
+      mutate(or = exp(estimate),
+             or.se = sqrt(or^2 * var.diag))
+  }
+  
   melded.tidy
 }
 
 # Expects a data frame with a column named tidy.melded and a row for model
 # names. Term names are based on the first model in the data column for each
 # row, and are filtered through stargazer to get the correct row order.
-stargazer.fake <- function(df) {
+stargazer.fake <- function(df, exponentiate=FALSE) {
   # Create a blank row with a bolded row name
   header.row <- function(header) {
     data_frame(term = paste0("**", header, "**"), 
@@ -256,12 +280,24 @@ stargazer.fake <- function(df) {
   coef.order <- setdiff(stringr::str_extract(stargazer.coefs, "^[\\w\\.]*"), c(""))
   
   # Fixed parts
-  fixed.coefs <- df %>%
-    unnest(tidy.melded) %>%
-    mutate(fancy = paste0(fixed.digits(estimate, 3),
+  fixed.tidy <- df %>%
+    unnest(tidy.melded)
+  
+  if (exponentiate) {
+    fixed.coefs <- fixed.tidy %>%
+      mutate(fancy = paste0(fixed.digits(or, 3),
+                          stars, "\\ \n(",
+                          fixed.digits(or.se, 3),
+                          ")"))
+  } else {
+    fixed.coefs <- fixed.tidy %>%
+      mutate(fancy = paste0(fixed.digits(estimate, 3),
                           stars, "\\ \n(",
                           fixed.digits(std.error, 3),
-                          ")")) %>%
+                          ")"))
+  }
+  
+  fixed.coefs <- fixed.coefs %>%
     select(model.name, term, fancy) %>%
     spread(model.name, fancy, fill="") %>%
     # Clean up term names
@@ -334,9 +370,17 @@ stargazer.fake <- function(df) {
     spread(model.name, m.new)
 
   bottom.details <- bind_rows(n.obs, avg.loglik, n.m)
+  
+  if (exponentiate) {
+    fixed.title <- "Fixed part (odds ratios)"
+    random.title <- "Random part (original coefficients)"
+  } else {
+    fixed.title <- "Fixed part"
+    random.title <- "Randomr part"
+  }
 
-  nice.top.bottom <- bind_rows(header.row("Fixed part"), fixed.coefs, 
-                               header.row("Random part"), random.coefs,
+  nice.top.bottom <- bind_rows(header.row(fixed.title), fixed.coefs, 
+                               header.row(random.title), random.coefs,
                                header.row("Model details"), bottom.details) %>%
     select_(.dots = c("term", df$model.name))
   
@@ -822,21 +866,37 @@ mods.h2.next_year.melded <- mods.h2.next_year %>%
   filter(m != "original") %>%
   group_by(model.name) %>%
   nest() %>%
-  mutate(tidy.melded = data %>% map(meld.imputed.models))
+  mutate(tidy.melded = data %>% map(~ meld.imputed.models(., exponentiate=TRUE)))
 ```
 
 ### Results
 
-`TODO`: Convert these logit coefficients into [something more interpretable](https://acrowinghen.com/2014/04/24/interpreting-coefficients-from-a-logit-linear-model-with-a-proportional-dependent-variable/)
+Interpreting these coefficients is a little wonky because of how they're mathematically structured. The actual dependent variable is the natural log of the ratio of an in-group (here, contentious aid) to an outgroup (non-contentious aid).[ It's easiest to interpret as a percentage change in the ratio of the in-group to the out-group](https://acrowinghen.com/2014/04/24/interpreting-coefficients-from-a-logit-linear-model-with-a-proportional-dependent-variable/), so the results should be seen as the predicted percentage change in the ratio of contentious to non-contentious aid. So, using this formula…
+
+```{r}
+change.bc.advocacy <- mods.h2.next_year.melded %>%
+  filter(model.name == "mod.h2.type.total") %>%
+  select(tidy.melded) %>%
+  unnest() %>%
+  filter(term == "advocacy_within") %>%
+  select(estimate) %>%
+  mutate(transformed = (exp(estimate) - 1) * 100)
+```
+
+$$\% \Delta (\frac{\text{contentious aid}}{\text{noncontentious aid}}) = (e^{`r change.bc.advocacy$estimate`} - 1) \times 100 = `r change.bc.advocacy$transformed`$$
+
+… we can say that countries that impose an additional barrier on advocacy have, on average, a `r scales::percent(abs(change.bc.advocacy$transformed) / 100)` `r ifelse(sign(change.bc.advocacy$transformed) == -1, "lower", "higher")` ratio of contentious aid to noncontentious aid, all else being equal.
 
 ```{r h2-melded-table-1, results="asis", warning=FALSE}
-stargazer.fake(mods.h2.next_year.melded)
+stargazer.fake(mods.h2.next_year.melded, exponentiate=TRUE)
 ```
 
 ### Model diagnostics
 
+Country intercepts vary with an SD of 0.661 (etc.), year intercepts vary with an SD of 0.704 (etc.), and the SD of error not accounted for by either within-country or within-year variability is 1.4 (etc.)
 
 ### Predicted ODA
+
 
 
 ---
