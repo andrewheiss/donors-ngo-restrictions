@@ -36,6 +36,7 @@ source(file.path(PROJHOME, "lib", "bayes.R"))
 
 source(file.path(PROJHOME, "Analysis", "robustness_models_definitions.R"))
 source(file.path(PROJHOME, "Analysis", "h1_model_definitions.R"))
+source(file.path(PROJHOME, "Analysis", "h2_model_definitions.R"))
 
 my.seed <- 1234
 set.seed(my.seed)
@@ -788,15 +789,15 @@ $$\text{% contentious aid}_{i, t+1} = \text{NGO legislation}_{it} + \text{contro
 # https://acrowinghen.com/2014/04/24/interpreting-coefficients-from-a-logit-linear-model-with-a-proportional-dependent-variable/
 mods.h2.next_year.raw <- df.country.aid.demean.next_year.both %>%
   nest(-m) %>%
-  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
+  mutate(mod.h2.barriers.total = data %>% map(mod.h2.barriers.total,
                                               "prop.contentious_logit_next_year"),
-         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
+         mod.h2.barriers.new = data %>% map(mod.h2.barriers.new,
                                             "prop.contentious_logit_next_year"),
-         mod.h1.type.total = data %>% map(mod.h1.type.total,
+         mod.h2.type.total = data %>% map(mod.h2.type.total,
                                           "prop.contentious_logit_next_year"),
-         mod.h1.type.new = data %>% map(mod.h1.type.new,
+         mod.h2.type.new = data %>% map(mod.h2.type.new,
                                         "prop.contentious_logit_next_year"),
-         mod.h1.csre = data %>% map(mod.h1.csre,
+         mod.h2.csre = data %>% map(mod.h2.csre,
                                     "prop.contentious_logit_next_year"))
 
 # Get model details and parameters
