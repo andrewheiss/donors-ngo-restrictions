@@ -891,9 +891,108 @@ stargazer.fake(mods.h2.next_year.melded, exponentiate=TRUE)
 
 Country intercepts vary with an SD of 0.661 (etc.), year intercepts vary with an SD of 0.704 (etc.), and the SD of error not accounted for by either within-country or within-year variability is 1.4 (etc.)
 
-### Predicted ODA
+### Predicted proportion of contentious aid
 
+```{r h2-simulate-both, warning=FALSE, fig.width=6.5, fig.height=4}
+simulate.predictions.proportion.advocacy <- function(x) {
+  new.data <- x@frame %>%
+    select(-c(advocacy_within, year, cowcode)) %>%
+    summarise_all(typical) %>%
+    mutate(id = 1,
+           prop.contentious_logit_next_year = NA) %>%
+    right_join(expand.grid(advocacy_within = seq(-1, 2, 0.5),
+                           cowcode = 1000:1050,
+                           year = 1981:2012,
+                           id = 1), by="id") %>% select(-id)
+  
+  df.simulated.all <- tribble(
+    ~id, ~data,
+    "hypothetical", new.data
+  ) %>%
+    mutate(simulated = data %>% 
+             map(~ simulate(x, nsim=1, seed=1, 
+                            newdata=select(.x, -prop.contentious_logit_next_year), 
+                            re.form=NA, allow.new.levels=TRUE))) %>%
+    unnest()
+  
+  return(df.simulated.all)
+}
 
+simulate.predictions.proportion.csre <- function(x) {
+  new.data <- x@frame %>%
+    select(-c(csre_within, year, cowcode)) %>%
+    summarise_all(typical) %>%
+    mutate(id = 1,
+           prop.contentious_logit_next_year = NA) %>%
+    right_join(expand.grid(csre_within = seq(-5, 5, 0.5),
+                           cowcode = 1000:1050,
+                           year = 1981:2012,
+                           id = 1), by="id") %>% select(-id)
+  
+  df.simulated.all <- tribble(
+    ~id, ~data,
+    "hypothetical", new.data
+  ) %>%
+    mutate(simulated = data %>% 
+             map(~ simulate(x, nsim=1, seed=1, 
+                            newdata=select(.x, -prop.contentious_logit_next_year), 
+                            re.form=NA, allow.new.levels=TRUE))) %>%
+    unnest()
+  
+  return(df.simulated.all)
+}
+
+x1 <- mods.h2.next_year.melded %>%
+  filter(model.name == "mod.h2.csre") %>%
+  unnest(data)
+x <- x1$model[[1]]
+
+simulated.h2.advocacy <- mods.h2.next_year.melded %>%
+  filter(model.name == "mod.h2.type.total") %>%
+  unnest(data) %>%
+  mutate(simulated = model %>% map(~ simulate.predictions.proportion.advocacy(.))) %>%
+  unnest(simulated) %>%
+  group_by(id, m, cowcode, advocacy_within) %>%
+  summarise_at(vars(starts_with("sim")), funs(avg = mean(.))) %>%
+  ungroup() %>%
+  gather(key, value, -c(id, m, cowcode, advocacy_within)) %>%
+  mutate(value.fixed = inv.logit(value, a=0.001),
+         variable.clean = "Barriers to advocacy") %>%
+  rename(variable = advocacy_within)
+
+simulated.h2.csre <- mods.h2.next_year.melded %>%
+  filter(model.name == "mod.h2.csre") %>%
+  unnest(data) %>%
+  mutate(simulated = model %>% map(~ simulate.predictions.proportion.csre(.))) %>%
+  unnest(simulated) %>%
+  group_by(id, m, cowcode, csre_within) %>%
+  summarise_at(vars(starts_with("sim")), funs(avg = mean(.))) %>%
+  ungroup() %>%
+  gather(key, value, -c(id, m, cowcode, csre_within)) %>%
+  mutate(value.fixed = inv.logit(value, a=0.001),
+         variable.clean = "Civil society regulatory environment") %>%
+  rename(variable = csre_within)
+
+df.plot.data <- bind_rows(simulated.h2.advocacy, simulated.h2.csre)
+
+df.plot.data.mean <- df.plot.data %>%
+  group_by(variable.clean, variable) %>%
+  summarise(value = mean(value)) %>%
+  mutate(value.fixed = inv.logit(value, a=0.001)) %>%
+  mutate(cowcode=1)  # Fake country so the line plots
+
+fig.simulated.h2.barriers <- ggplot(df.plot.data, aes(x=variable, 
+                                                     y=value.fixed, group=cowcode)) + 
+  geom_vline(xintercept=0, size=0.5) +
+  geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
+  geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour="#BD4932") +
+  labs(x="Difference from average level of NGO legislation in country\n(within coefficient)",
+       y="Simulated proportion of contentious aid in the following year") +
+  scale_y_continuous(labels=scales::percent) +
+  facet_wrap(~ variable.clean, scales="free_x") +
+  theme_donors()
+fig.simulated.h2.barriers
+```
 
 ---
 
