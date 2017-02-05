@@ -871,7 +871,7 @@ mods.h2.next_year.melded <- mods.h2.next_year %>%
 
 ### Results
 
-Interpreting these coefficients is a little wonky because of how they're mathematically structured. The actual dependent variable is the natural log of the ratio of an in-group (here, contentious aid) to an outgroup (non-contentious aid).[ It's easiest to interpret as a percentage change in the ratio of the in-group to the out-group](https://acrowinghen.com/2014/04/24/interpreting-coefficients-from-a-logit-linear-model-with-a-proportional-dependent-variable/), so the results should be seen as the predicted percentage change in the ratio of contentious to non-contentious aid. So, using this formula…
+Interpreting these coefficients is a little wonky because of how they're mathematically structured. The actual dependent variable is the natural log of the ratio of an in-group (here, contentious aid) to an outgroup (non-contentious aid). [It's easiest to interpret as a percentage change in the ratio of the in-group to the out-group](https://acrowinghen.com/2014/04/24/interpreting-coefficients-from-a-logit-linear-model-with-a-proportional-dependent-variable/), so the results should be seen as the predicted percentage change in the ratio of contentious to non-contentious aid. So, using this formula…
 
 ```{r}
 change.bc.advocacy <- mods.h2.next_year.melded %>%
