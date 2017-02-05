@@ -720,12 +720,8 @@ simulate.predictions.indiv.barriers <- function(x) {
   
   df.simulated.all <- tribble(
     ~id, ~data,
-    # Uncomment to include predictions of original data
-    # "original", model.to.use@frame,
     "hypothetical", new.data
   ) %>%
-    # Use simulate() instead of predict() to use the random effects in the predictions
-    # https://tmalsburg.github.io/blog/predict-vs-simulate-in-lme4/
     mutate(simulated = data %>% 
              map(~ simulate(x, nsim=1, seed=1, 
                             newdata=select(.x, -total.oda_log_next_year), 
