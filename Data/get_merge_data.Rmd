@@ -1635,4 +1635,8 @@ saveRDS(filter(country.aid.data.m10, m != "original"),
 saveRDS(donor.level.data,
         file=file.path(PROJHOME, "Data", "data_clean",
                        "df_donor.rds"))
+
+saveRDS(donor.level.data.usaid,
+        file=file.path(PROJHOME, "Data", "data_clean",
+                       "df_donor_usaid.rds"))
 ```
