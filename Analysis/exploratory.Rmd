@@ -42,7 +42,7 @@ df.donor <- readRDS(file.path(PROJHOME, "Data", "data_clean",
 df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
                                 "df_country.rds"))
 df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                "df_country_aid.rds"))
+                                "df_country_aid_no_imputation.rds"))
 
 dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
                                            "dcjw_questions.csv"))
