@@ -25,6 +25,7 @@ knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
 library(tidyverse)
 library(stringr)
 library(forcats)
+library(DT)
 
 source(file.path(PROJHOME, "lib", "graphics.R"))
 source(file.path(PROJHOME, "lib", "pandoc.R"))
@@ -39,6 +40,8 @@ df.donor.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
                                       "df_donor_country.rds"))
 df.donor <- readRDS(file.path(PROJHOME, "Data", "data_clean",
                               "df_donor.rds"))
+df.donor.us <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                 "df_donor_usaid.rds"))
 df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
                                 "df_country.rds"))
 df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
@@ -49,6 +52,130 @@ dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
 dcjw.responses.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
                                            "dcjw_responses.csv"))
 ```
+
+## Data summary
+
+```{r data-summary}
+num.countries <- df.country.aid %>% distinct(cowcode) %>% nrow()
+num.years <- df.country.aid %>% distinct(year) %>% nrow()
+year.first <- df.country.aid %>% distinct(year) %>% min()
+year.last <- df.country.aid %>% distinct(year) %>% max()
+```
+
+Our data includes information about `r num.countries` countries across `r num.years` years (from `r year.first`–`r year.last`)
+
+## Aid stuff
+
+### Overall OECD aid
+
+```{r}
+df.country.aid %>%
+  summarise(total = scales::dollar(sum(total.oda)))
+```
+
+```{r}
+plot.aid <- df.country.aid %>%
+  group_by(year) %>%
+  summarise(total = sum(total.oda))
+
+ggplot(plot.aid, aes(x=year, y=(total / 1000000000))) + 
+  geom_line() +
+  labs(x=NULL, y="Total ODA commitments (billions of USD)") +
+  scale_y_continuous(labels=scales::dollar) +
+  theme_donors()
+```
+
+
+### Proportion of contentious vs. noncontentious aid
+
+```{r}
+df.donor %>%
+  filter(year > 1980) %>%
+  group_by(purpose.contentiousness) %>%
+  summarise(total = sum(oda)) %>%
+  mutate(perc = total / sum(total)) %>%
+  datatable() %>%
+  formatCurrency("total", "$", digits=0) %>%
+  formatPercentage("perc", 2)
+```
+
+```{r}
+plot.aid.contentiousness <- df.donor %>%
+  filter(year > 1980) %>%
+  group_by(year, purpose.contentiousness) %>%
+  summarise(total = sum(oda)) %>%
+  mutate(perc = total / sum(total)) %>%
+  filter(purpose.contentiousness == "High")
+
+ggplot(plot.aid.contentiousness, aes(x=year, y=perc)) + 
+  geom_line() +
+  scale_y_continuous(labels=scales::percent) + 
+  labs(x=NULL, y="Percent of contentious aid") +
+  theme_donors()
+```
+
+### USAID aid
+
+```{r}
+df.country.aid %>%
+  summarise(total = scales::dollar(sum(oda.us)))
+```
+
+```{r}
+plot.aid.us <- df.country.aid %>%
+  group_by(year) %>%
+  summarise(total = sum(oda.us))
+
+ggplot(plot.aid.us, aes(x=year, y=(total / 1000000000))) + 
+  geom_line() +
+  labs(x=NULL, y="Total US ODA commitments (billions of USD)") +
+  scale_y_continuous(labels=scales::dollar) +
+  theme_donors()
+```
+
+### Proporition of US aid to types of NGOs
+
+```{r}
+usaid.total <- df.country.aid %>% summarise(total = sum(oda.us)) %>% as.numeric()
+
+df.country.aid %>%
+  gather(channel, total.oda.us, c(oda.us.ngo.dom, oda.us.ngo.int, oda.us.ngo.us)) %>%
+  group_by(channel) %>%
+  summarise(total = sum(total.oda.us)) %>%
+  mutate(perc = total / usaid.total) %>%
+  datatable() %>%
+  formatCurrency("total", "$", digits=0) %>%
+  formatPercentage("perc", 2)
+```
+
+```{r}
+usaid.total.yearly <- df.country.aid %>%
+  group_by(year) %>%
+  summarise(annual.total = sum(oda.us))
+
+channels.nice <- tribble(
+  ~channel, ~channel.clean,
+  "oda.us.ngo.dom", "Domestic NGOs",
+  "oda.us.ngo.int", "International NGOs",
+  "oda.us.ngo.us", "US-based NGOs"
+)
+
+plot.usaid.channel <- df.country.aid %>%
+  gather(channel, total.oda.us, c(oda.us.ngo.dom, oda.us.ngo.int, oda.us.ngo.us)) %>%
+  group_by(year, channel) %>%
+  summarise(total = sum(total.oda.us)) %>%
+  left_join(usaid.total.yearly, by="year") %>%
+  mutate(perc = total / annual.total) %>%
+  left_join(channels.nice, by="channel")
+
+ggplot(plot.usaid.channel, aes(x=year, y=perc, colour=channel.clean)) + 
+  geom_line() +
+  scale_y_continuous(labels=scales::percent) + 
+  labs(x=NULL, y="Percent of US aid given through NGOs") +
+  guides(colour=guide_legend(title=NULL)) +
+  theme_donors()
+```
+
 
 ## Legal restrictions on NGOs
 
