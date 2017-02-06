@@ -337,7 +337,7 @@ aiddata.final %>% glimpse()
 
 ### USAID
 
-USAID provides the complete dataset for its [Foreign Aid Explorer](https://explorer.usaid.gov/aid-dashboard.html) as a [giant CSV file](https://explorer.usaid.gov/data.html). The data includes both economic and military aid, but it's easy to filter out the military aid. Here we only look at obligations, not disbursements, so that the data is comparable to the OECD data from AidData.
+USAID provides the complete dataset for its [Foreign Aid Explorer](https://explorer.usaid.gov/aid-dashboard.html) as a [giant CSV file](https://explorer.usaid.gov/data.html). The data includes both economic and military aid, but it's easy to filter out the military aid. Here we only look at obligations, not disbursements, so that the data is comparable to the OECD data from AidData. The data we downloaded provides constant amounts in 2015 dollars; we rescale that to 2011 to match all other variables. 
 
 ```{r load-usaid, message=FALSE, cache=TRUE}
 usaid.url <- "https://explorer.usaid.gov/prepared/us_foreign_aid_complete.csv"
@@ -409,7 +409,22 @@ usaid.raw <- read_csv(file.path(usaid.path, usaid.name),
 
 usaid.clean <- usaid.raw %>%
   filter(assistance_category_name == "Economic") %>%
-  filter(transaction_type_name == "Obligations")
+  filter(transaction_type_name == "Obligations") %>%
+  mutate(country_code = recode(country_code, `CS-KM` = "XKK")) %>%
+  # Remove regions and World
+  filter(!str_detect(country_name, "Region")) %>%
+  filter(!(country_name %in% c("World"))) %>%
+  left_join(gw.codes, by=c("country_code" = "iso3")) %>%
+  # Get rid of tiny and old states
+  filter(!is.na(cowcode)) %>%
+  select(cowcode, year = numeric_year, 
+         implementing_agency_name, subagency_name, activity_name,
+         channel_category_name, channel_subcategory_name, dac_sector_code,
+         oda.us.current = current_amount, oda.us.2015 = constant_amount) %>%
+  mutate(aid.deflator = oda.us.current / oda.us.2015 * 100) %>%
+  mutate(channel.ngo.us = channel_subcategory_name == "NGO - United States",
+         channel.ngo.int = channel_subcategory_name == "NGO - International",
+         channel.ngo.dom = channel_subcategory_name == "NGO - Non United States")
 
 # Get rid of this because it's huge and taking up lots of memory
 rm(usaid.raw)
@@ -426,7 +441,6 @@ implementing.agencies <- usaid.clean %>%
 
 implementing.agencies %>% datatable()
 ```
-
 
 #### Activities
 
@@ -829,7 +843,7 @@ There are a bunch of reasons why overall aid flows might change over time. We co
 
 The World Bank has a fantastic API for [their statistical indicators](http://data.worldbank.org/) and there's already [a nice R package](https://cran.r-project.org/package=WDI) for accessing it, so downloading indicators is trivial. For the sake of our models, we care about GDP per capita as a proxy for a country's overall development. We also collect a few other relevant variables just for fun.
 
-```{r load-un}
+```{r load-un, message=FALSE}
 # UN country codes
 un.codes <- read_csv(file.path(PROJHOME, "Data",
                                "data_clean", "un_codes.csv")) %>%
@@ -1264,6 +1278,8 @@ disasters.groups %>% glimpse()
 
 With both donor- and country-level data, we have lots of different options for analysis. Since our hypotheses deal with questions of *donor* responses, the data we use to model donor responses uses donor-years as the unit of observation. Not all donors give money to the same countries, so this final data is not a complete panel (i.e. it does not include every combination of donors and years), which will pose some interesting methodological issues when modeling.
 
+In H~3~ we hypothesize that more aid will be allocated to international or US-based NGOs than domestic NGOs in response to harsher anti-NGO restrictions. While AidData unfortunately does not categorize aid by channel (i.e. aid given to international vs. US vs. domestic NGOs), USAID does. For this hypothesis, then we only look at aid given by USAID, not the rest of the OECD. As with the proportion of contentious aid, we create similar variables to measure the proporition of aid given to international NGOs, US-based NGOs, and both international and US-based NGOs.
+
 ```{r combine-donor-country-data}
 # Donor data
 donor.level.data.raw <- aiddata.final %>%
@@ -1290,8 +1306,40 @@ donor.level.data <- donor.level.data.raw %>%
                                       donor.iso3)) %>%
   select(-starts_with("fake"))
 
-# TODO: Aid by scope (domestic NGO vs. international NGO)
-# donor.level.data.us <- usaid.clean
+
+# USAID data
+# USAID's conversion to constant 2015 dollars doesn't seem to take country differences into account—the deflator for each country in 2011 is essentially 96.65. When there are differences, it's because of floating point issues (like, if there are tiny grants of $3, there aren't enough decimal points to get the fraction to 96.65). So we just take the median value of the deflator for all countries and all grants and use that. 
+#
+# Rescale the 2015 data to 2011 to match AidData
+#
+# Deflator = current aid / constant aid * 100
+# Current aid in year_t * (deflator in year_target / deflator in year_t)
+usaid.deflator.2011 <- usaid.clean %>%
+  filter(year == 2011) %>%
+  summarise(deflator.target.year = median(aid.deflator, na.rm=TRUE)) %>%
+  as.numeric()
+
+donor.level.data.usaid <- usaid.clean %>%
+  filter(cowcode %in% dcjw.full$cowcode) %>%
+  filter(year > 1980) %>%
+  filter(oda.us.current > 0) %>%
+  mutate(oda.us.2011 = oda.us.current * (usaid.deflator.2011 / aid.deflator))
+
+usaid.by.country.total <- donor.level.data.usaid %>%
+  group_by(cowcode, year) %>%
+  summarise(oda.us = sum(oda.us.2011, na.rm=TRUE))
+
+usaid.by.country.channel <- donor.level.data.usaid %>%
+  gather(key, value, c(channel.ngo.us, channel.ngo.int, channel.ngo.dom)) %>%
+  group_by(cowcode, year, key, value) %>%
+  summarise(total.oda.us = sum(oda.us.2011, na.rm=TRUE)) %>%
+  ungroup() %>%
+  unite(channel, key, value) %>%
+  filter(str_detect(channel, "TRUE")) %>%
+  mutate(channel = str_replace(channel, "channel", "oda.us"),
+         channel = str_replace(channel, "_TRUE", "")) %>%
+  spread(channel, total.oda.us, fill=0)
+
 
 # TODO: Aid to neighboring countries
 
@@ -1412,6 +1460,8 @@ if (file.exists(imputation.rds)) {
     filter(year < 2014) %>%  # There's no aid data after 2013
     left_join(aid.by.country.total, by=c("cowcode", "year")) %>%
     left_join(aid.by.country.purpose, by=c("cowcode", "year")) %>%
+    left_join(usaid.by.country.total, by=c("cowcode", "year")) %>%
+    left_join(usaid.by.country.channel, by=c("cowcode", "year")) %>%
     mutate_at(vars(contains("oda")), funs(ifelse(is.na(.), 0, .)))
   
   # Missing Polity values are easy—most are just one-year gaps with the same
@@ -1501,13 +1551,22 @@ country.aid.data <- country.aid.data.imputed.long %>%
   mutate(prop.contentious = ifelse(is.nan(prop.contentious), 
                                    NA, prop.contentious)) %>%
   mutate(prop.contentious_logit = car::logit(prop.contentious, adjust=.001)) %>%
-  mutate_at(vars(total.oda, oda.contentious.high, oda.contentious.low),
+  # Calculate prop.ngo* here since there should also be some missing values
+  mutate(prop.ngo.int = oda.us.ngo.int / oda.us,
+         prop.ngo.us = oda.us.ngo.us / oda.us,
+         prop.ngo.dom = oda.us.ngo.dom / oda.us,
+         prop.ngo.not.dom = (prop.ngo.int + prop.ngo.us) / oda.us) %>%
+  mutate_at(vars(starts_with("prop.ngo")),
+            funs(ifelse(is.nan(.), NA, .))) %>%
+  mutate_at(vars(starts_with("prop.ngo")),
+            funs(logit = car::logit(., adjust=.001))) %>%
+  mutate_at(vars(total.oda, oda.contentious.high, oda.contentious.low, oda.us),
             funs(log = log1p(.))) %>%
   mutate(aid.pct.gdp = total.oda / gdp) %>%
   # Lag/lead/diff everything within countries and samples
   group_by(m, cowcode) %>%
   # Get leaded aid variables
-  mutate_at(vars(contains("oda"), starts_with("prop.contentious")),
+  mutate_at(vars(contains("oda"), starts_with("prop.")),
             funs(next_year = lead(.),  # y_{i, t+1}
                  after_2 = lead(., 2),
                  after_5 = lead(., 5))) %>%  
