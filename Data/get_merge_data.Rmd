@@ -1555,7 +1555,7 @@ country.aid.data <- country.aid.data.imputed.long %>%
   mutate(prop.ngo.int = oda.us.ngo.int / oda.us,
          prop.ngo.us = oda.us.ngo.us / oda.us,
          prop.ngo.dom = oda.us.ngo.dom / oda.us,
-         prop.ngo.not.dom = (oda.us.ngo.int + oda.us.ngo.us) / oda.us,
+         prop.ngo.foreign = (oda.us.ngo.int + oda.us.ngo.us) / oda.us,
          prop.ngo.dom.foreign = oda.us.ngo.dom / (oda.us.ngo.int + oda.us.ngo.us)) %>%
   mutate_at(vars(starts_with("prop.ngo")),
             funs(ifelse(is.nan(.), NA, .))) %>%
