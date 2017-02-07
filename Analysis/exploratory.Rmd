@@ -85,7 +85,6 @@ ggplot(plot.aid, aes(x=year, y=(total / 1000000000))) +
   theme_donors()
 ```
 
-
 ### Proportion of contentious vs. noncontentious aid
 
 ```{r}
@@ -135,6 +134,8 @@ ggplot(plot.aid.us, aes(x=year, y=(total / 1000000000))) +
 
 ### Proporition of US aid to types of NGOs
 
+Total amounts over time:
+
 ```{r}
 usaid.total <- df.country.aid %>% summarise(total = sum(oda.us)) %>% as.numeric()
 
@@ -147,6 +148,8 @@ df.country.aid %>%
   formatCurrency("total", "$", digits=0) %>%
   formatPercentage("perc", 2)
 ```
+
+The US clearly favors US-based NGOs or international NGOs over domestic NGOs.
 
 ```{r}
 usaid.total.yearly <- df.country.aid %>%
@@ -172,6 +175,24 @@ ggplot(plot.usaid.channel, aes(x=year, y=perc, colour=channel.clean)) +
   geom_line() +
   scale_y_continuous(labels=scales::percent) + 
   labs(x=NULL, y="Percent of US aid given through NGOs") +
+  guides(colour=guide_legend(title=NULL)) +
+  theme_donors()
+```
+
+The US doesn't allocate anything towards NGOs until 2000. It actually doesn't allocate anything to any other channel until 2000; the US government directly channeled pretty much all aid until then.
+
+```{r}
+plot.usaid.channels.all <- df.donor.us %>%
+  group_by(year, channel_subcategory_name) %>%
+  summarise(total = sum(oda.us.2011)) %>%
+  mutate(perc = total / sum(total)) %>%
+  mutate(channel = ifelse(str_detect(channel_subcategory_name, "NGO"), "NGO", "Other"))
+
+ggplot(plot.usaid.channels.all, 
+       aes(x=year, y=perc, colour=channel_subcategory_name)) + 
+  geom_line() +
+  scale_y_continuous(labels=scales::percent) + 
+  labs(x=NULL, y="Percent of US aid given through different channels") +
   guides(colour=guide_legend(title=NULL)) +
   theme_donors()
 ```
