@@ -481,7 +481,7 @@ In 2013, Darin Christensen and Jeremy Weinstein collected [detailed data](https:
 
 The code below will still work on the original Christensen and Weinstein data, but it will (obviously) not include Chaudhry's expanded data.
 
-```{r load-dcjw, warning=FALSE}
+```{r load-dcjw, warning=FALSE, message=FALSE}
 # Original DCJW data
 dcjw.orig.path <- file.path(PROJHOME, "Data", "data_raw", "DCJW NGO Laws",
                             "DCJW_NGO_Laws.xlsx")
