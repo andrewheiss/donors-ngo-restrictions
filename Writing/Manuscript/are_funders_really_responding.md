@@ -91,22 +91,48 @@ Finally, an alternative strand in the foreign aid literature argues that the dec
 
 
 # Method
-We analyze donors reactions to state crackdown of NGOs by looking at changes in aid across X countries from 1981-2013. 
 
-## Dependent Variables
-Our main dependent variable of interest is changes in aid. We look at all foreign aid flows from OECD countries and multilateral organizations to all DAC-eligible countries. We also look at data from USAID, filtering out military aid and only looking at economic aid.
+We analyze donor reactions to state crackdown of NGOs by looking at how foreign aid has changed in response to anti-NGO legislation. We combine variables from several existing datasets and create a cross-sectional time series panel that includes information about aid and NGO legislation in 147 countries from 1981–2013.
+
+## Dependent variables
+
+We measure foreign aid using the OECD's detailed data on aid commitments, which includes all overseas development assistance (ODA) from OECD member countries and multilateral organizations. We use *commitment* amounts rather than actual *disbursement* amounts since disbursement data moves slowly and does not necessarily reflect responses to the political environment—projects take a long time to fulfill and actual inflows of aid in a year can be tied to commitments made years before. Because we are interested in donor reactions to restrictions on NGOs, any reaction would be visible in the decision to commit money to aid, not in the ultimate disbursement of aid, which is most likely already legally obligated and allocated to the country regardless of restrictions on civil society. For our first hypothesis, we calculate the sum of OECD-based ODA committed to each country each year since 1981 (in constant 2011 US dollars), representing nearly $5.5 trillion in total assistance (see figure XXX). 
+
+Aid data from the OECD includes detailed information about the purposes of each grant or project undertaken, which we use to test our second hypothesis. The OECD assigns projects to one of more than 200 different purpose codes in dozens of broader categories such as health, education, and agriculture. We classify contentious aid as any project focused on government and civil society[^1] or conflict prevention and resolution, peace and security,[^2] which include projects focused on elections, human rights, women's equality, freedom of expression, and other issues that could potentially challenge more recalcitrant governments. Nearly $300 million has been allocated for this more aggressive kind of aid since 1980, accounting for more than 10% of all OECD-based foreign aid since 2009 (see figure XXX). 
+
+In our third hypothesis, we posit that more aid will be allocated to international or US-based NGOs than domestic NGOs in response to harsher anti-NGO restrictions. The OECD unfortunately does not uniformly categorize each aid project by delivery channel, which makes it impossible to systematically determine which kinds of organizations receive money. USAID, on the other hand, does offer more granular data about the channels through which aid is delivered. We generate several variables indicating the proportion of American foreign aid channeled through domestic, international, and US-based NGOs. Notably, however, our tests of this hypothesis are based solely on American aid and thus represent only a subset of OECD donor behavior. We consider the total amount of economic aid from 26 different US government agencies in each country annually, as reported in the agency's Green Book, comprising $519 billion since 1981. As is evident in Figure XXX, almost no aid was allocated to NGOs before 2000—in fact, whether by design or by inaccurate reporting, nearly all aid reported by USAID was delivered solely by the United States government until 2000. As such, we also limit our analysis to 2001–2013, adding additional caveats to the interpretation of this hypothesis.
+
+Finally, in our fourth hypothesis, we propose that donors shift aid to neighboring countries in response to anti-NGO legislation. We calculate the total ODA in each country's neighbors, defined as all states within 900 km of the closest border, which provides a more accurate sense of a country's neighbors than simply looking at shared contiguous borders [@Gleditsch:2002].
 
 ## Explanatory Variables
+
 Our main independent variables of interest are restrictive NGO legislations and changes in the legal framework for civil society organizations. First, we use a number of dichotomous variables on barriers to entry, funding, and advocacy across 148 countries from 1981-2013, based on data from Chaudhry (2016) and @christensen2013. In addition to panel data on the presence or absence of specific NGO regulations, we create several indices for each of the categories of regulation - association, entry, funding, and advocacy, along with the variable Total Barriers which is the sum of all four indices.
 
 An alternative way of measuring civil society restrictions is to look at the overal civil society regulatory environment rather than specific laws, since de jure restrictions do not always map clearly into de facto restrictions (especially in dictatorships where the implementation of laws is more discretionary). Andrew Heiss (2016)  developed a new civil society regulatory environment index (CSRE), which combines two civil society indexes from the Varieties of Democracy project (V-Dem): (1) civil society repression and (2) civil society entry and exit regulations. The CSRE ranges from roughly −6 to 6 (though typically only from −4 to 4), and shows more variation over time since it ostensibly captures changes in the implementation of the regulatory environment rather than the presence or absence of legislation. While the main focus of this paper is donor response to new legislation, we also look at donor response to changes in the overall CSRE as a robustness check.
 
-### Controls
+## Controls
+
 As the previous literature on aid policy finds, various factors shape donor decisions about allocation of aid. We include them as controls to provide a fully specified model. First, we control for Democracy based on the understanding that donors see it is as a factor that limits the ability of recipient governments and democratic institutions to utilize aid flows. We measure this on a 0-10 scale using Polity IV data [@PolityIV]. We also control for wealth based on the understanding that donors are likely to give less aid to richer countries. We measure this in three ways - first, GDP per capita using data from World Development Indicators (WDI); second, trade as a percentage of GDP from WDI; and third, aid dependence from AidData and WDI. 
 
 We also control for Natural Disaster Death and Internal Conflict based on the understanding that a greater number of deaths and grievances may prompt donors to provide aid to non-state actors that are specialized in reconstruction efforts. We use the EM-DAT [@EMDAT] for the former and a binary indicator variable to see if there was a conflict in the current year or past 5 years (?) from UCDP-PRIO [@UCDPPRIO]. 
 
 We also test for alternative hypotheses and control for government capacity based on the understanding that donors are more likely to give more aid to NGOs in countries with weak institutions. We measure this using Corruption from the Varieties of Democracy (V-DEM) dataset [@VDEM] and the World Bank Governance Indicators (WBGI). Finally, we control for Former Colony, as donor countries are known to favor former colonies. 
+
+## Modeling strategy
+
+Random effects with within- and between-coefficients
+
+Previous year's aid to control for serial autocorrelation
+
+Transformation of some variables so they fit on the same scale - log, logit + winsorization
+
+
+# Results and Analysis
+
+
+[^1]:   DAC codes 150 and 151.
+
+[^2]:   DAC code 152.
 
 
 # Results and Analysis
