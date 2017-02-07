@@ -179,7 +179,7 @@ ggplot(plot.usaid.channel, aes(x=year, y=perc, colour=channel.clean)) +
   theme_donors()
 ```
 
-The US doesn't allocate anything towards NGOs until 2000. It actually doesn't allocate anything to any other channel until 2000; the US government directly channeled pretty much all aid until then.
+USAID data categorizes all aid as government-channeled before 2000 because of some quirk in the data.
 
 ```{r}
 plot.usaid.channels.all <- df.donor.us %>%
