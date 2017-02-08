@@ -1,0 +1,17 @@
+Index,Maximum value,Laws
+Barriers to association,2,"- Does the constitution provide citizens the right to freely associate? *(Yes = 0; No = 1)*
+- In law, all citizens have a right to form political parties. *(Yes = 0; No = 1)*"
+Barriers to entry,4,"- Are NGOs required to register with the government? *(Yes = 1; No = 0)*
+- How burdensome is registration? *(Not burdensome = 0; Burdensome = 1)*
+- In law, can an NGO appeal if denied registration? *(Yes = 0; No = 1)*
+- Are barriers to entry different for NGOs receiving foreign funds? *(Less burdensome = -1; Same = 0; More burdensome = 1)*"
+Barriers to funding,6,"- Are NGOs required to disclose their funding sources to the government? *(Yes = 1; No = 0)*
+- Do NGOs need prior approval from the government to receive foreign funding? *(Yes = 1; No = 0)*
+- Are NGOs required to channel foreign funding through state-owned banks or government ministries? *(Yes = 1; No = 0)*
+- Are any additional restrictions on foreign support in place? *(Yes = 1; No = 0)*
+- Are all NGOs prohibited from receiving foreign funds? *(No = 0; Partially = 0.5; Yes = 1)*
+- Are a category of NGOs prohibited from receiving foreign funds? *(No = 0; Partially = 0.5; Yes = 1)*"
+Barriers to advocacy,3,"- Does the law restrict NGOs from engaging in political activities? *(No = 0; Partially = 0.5; Yes = 1)*
+- Has the government used intimidation or dissolution to deter NGOs from engaging in political activities? *(Yes = 1; No = 0)*
+- Are restrictions on political activities different for NGOs receiving foreign funds? *(Less restrictive = -1; Same = 0; More restrictive = 1)*"
+Total barriers,15,—
