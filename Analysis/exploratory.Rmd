@@ -200,6 +200,17 @@ ggplot(plot.usaid.channels.all,
 
 ## Legal restrictions on NGOs
 
+### DCJW indexes
+
+```{r dcjw-index-table, results="asis", message=FALSE}
+dcjw.indexes <- read_csv(file.path(PROJHOME, "Data", 
+                                   "data_clean", "dcjw_index.csv")) %>%
+  mutate(Laws = str_replace_all(Laws, "\n", "\n\n"))
+
+pandoc.table(dcjw.indexes, keep.line.breaks=TRUE, style="grid", justify="lll")
+```
+
+
 ### Number of countries with restrictive laws
 
 ```{r num-countries-laws, fig.width=11, fig.height=7}
