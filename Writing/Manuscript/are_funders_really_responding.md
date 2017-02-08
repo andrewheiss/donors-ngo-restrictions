@@ -141,6 +141,8 @@ While this model specification is at first a little unwieldy, it has multiple be
 
 # Results and Analysis
 
+@TrippKang:2008 and logit linear models
+
 
 [^1]:   Complete details of how we constructed this dataset, as well as annotated R code for reproducing this dataset, are available at [https://stats.andrewheiss.com/donors-ngo-restrictions/Data/get\_merge\_data.html](https://stats.andrewheiss.com/donors-ngo-restrictions/Data/get_merge_data.html).
 
