@@ -1,0 +1,332 @@
+---
+title: "Non-model analysis"
+author: "Suparna Chaudhry and Andrew Heiss"
+date: "`r format(Sys.time(), '%F')`"
+output: 
+  html_document: 
+    code_folding: hide
+    css: ../html/fixes.css
+    fig_height: 3.5
+    fig_width: 5
+    highlight: pygments
+    includes:
+      after_body: ../html/add_home_link.html
+    theme: spacelab
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+---
+
+```{r load-libraries, message=FALSE}
+knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
+                      tidy.opts=list(width.cutoff=120),  # For code
+                      options(width=120))  # For output
+
+library(tidyverse)
+library(stringr)
+library(forcats)
+library(DT)
+
+source(file.path(PROJHOME, "lib", "graphics.R"))
+source(file.path(PROJHOME, "lib", "pandoc.R"))
+source(file.path(PROJHOME, "lib", "bayes.R"))
+
+my.seed <- 1234
+set.seed(my.seed)
+```
+
+```{r load-data, cache=TRUE, message=FALSE}
+df.donor.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                      "df_donor_country.rds"))
+df.donor <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                              "df_donor.rds"))
+df.donor.us <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                 "df_donor_usaid.rds"))
+df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                "df_country.rds"))
+df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                "df_country_aid_no_imputation.rds"))
+
+dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
+                                           "dcjw_questions.csv"))
+dcjw.responses.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
+                                           "dcjw_responses.csv"))
+```
+
+## Data summary
+
+```{r data-summary}
+num.countries <- df.country.aid %>% distinct(cowcode) %>% nrow()
+num.years <- df.country.aid %>% distinct(year) %>% nrow()
+year.first <- df.country.aid %>% distinct(year) %>% min()
+year.last <- df.country.aid %>% distinct(year) %>% max()
+```
+
+Our data includes information about `r num.countries` countries across `r num.years` years (from `r year.first`–`r year.last`)
+
+## Aid stuff
+
+### Overall OECD aid
+
+```{r}
+df.country.aid %>%
+  summarise(total = scales::dollar(sum(total.oda)))
+```
+
+```{r}
+plot.aid <- df.country.aid %>%
+  group_by(year) %>%
+  summarise(total = sum(total.oda))
+
+ggplot(plot.aid, aes(x=year, y=(total / 1000000000))) + 
+  geom_line() +
+  labs(x=NULL, y="Total ODA commitments (billions of USD)") +
+  scale_y_continuous(labels=scales::dollar) +
+  theme_donors()
+```
+
+### Proportion of contentious vs. noncontentious aid
+
+```{r}
+df.donor %>%
+  filter(year > 1980) %>%
+  group_by(purpose.contentiousness) %>%
+  summarise(total = sum(oda)) %>%
+  mutate(perc = total / sum(total)) %>%
+  datatable() %>%
+  formatCurrency("total", "$", digits=0) %>%
+  formatPercentage("perc", 2)
+```
+
+```{r}
+plot.aid.contentiousness <- df.donor %>%
+  filter(year > 1980) %>%
+  group_by(year, purpose.contentiousness) %>%
+  summarise(total = sum(oda)) %>%
+  mutate(perc = total / sum(total)) %>%
+  filter(purpose.contentiousness == "High")
+
+ggplot(plot.aid.contentiousness, aes(x=year, y=perc)) + 
+  geom_line() +
+  scale_y_continuous(labels=scales::percent) + 
+  labs(x=NULL, y="Percent of contentious aid") +
+  theme_donors()
+```
+
+### USAID aid
+
+```{r}
+df.country.aid %>%
+  summarise(total = scales::dollar(sum(oda.us)))
+```
+
+```{r}
+plot.aid.us <- df.country.aid %>%
+  group_by(year) %>%
+  summarise(total = sum(oda.us))
+
+ggplot(plot.aid.us, aes(x=year, y=(total / 1000000000))) + 
+  geom_line() +
+  labs(x=NULL, y="Total US ODA commitments (billions of USD)") +
+  scale_y_continuous(labels=scales::dollar) +
+  theme_donors()
+```
+
+### Proporition of US aid to types of NGOs
+
+Total amounts over time:
+
+```{r}
+usaid.total <- df.country.aid %>% summarise(total = sum(oda.us)) %>% as.numeric()
+
+df.country.aid %>%
+  gather(channel, total.oda.us, c(oda.us.ngo.dom, oda.us.ngo.int, oda.us.ngo.us)) %>%
+  group_by(channel) %>%
+  summarise(total = sum(total.oda.us)) %>%
+  mutate(perc = total / usaid.total) %>%
+  datatable() %>%
+  formatCurrency("total", "$", digits=0) %>%
+  formatPercentage("perc", 2)
+```
+
+The US clearly favors US-based NGOs or international NGOs over domestic NGOs.
+
+```{r}
+usaid.total.yearly <- df.country.aid %>%
+  group_by(year) %>%
+  summarise(annual.total = sum(oda.us))
+
+channels.nice <- tribble(
+  ~channel, ~channel.clean,
+  "oda.us.ngo.dom", "Domestic NGOs",
+  "oda.us.ngo.int", "International NGOs",
+  "oda.us.ngo.us", "US-based NGOs"
+)
+
+plot.usaid.channel <- df.country.aid %>%
+  gather(channel, total.oda.us, c(oda.us.ngo.dom, oda.us.ngo.int, oda.us.ngo.us)) %>%
+  group_by(year, channel) %>%
+  summarise(total = sum(total.oda.us)) %>%
+  left_join(usaid.total.yearly, by="year") %>%
+  mutate(perc = total / annual.total) %>%
+  left_join(channels.nice, by="channel")
+
+ggplot(plot.usaid.channel, aes(x=year, y=perc, colour=channel.clean)) + 
+  geom_line() +
+  scale_y_continuous(labels=scales::percent) + 
+  labs(x=NULL, y="Percent of US aid given through NGOs") +
+  guides(colour=guide_legend(title=NULL)) +
+  theme_donors()
+```
+
+USAID data categorizes all aid as government-channeled before 2000 because of some quirk in the data.
+
+```{r}
+plot.usaid.channels.all <- df.donor.us %>%
+  group_by(year, channel_subcategory_name) %>%
+  summarise(total = sum(oda.us.2011)) %>%
+  mutate(perc = total / sum(total)) %>%
+  mutate(channel = ifelse(str_detect(channel_subcategory_name, "NGO"), "NGO", "Other"))
+
+ggplot(plot.usaid.channels.all, 
+       aes(x=year, y=perc, colour=channel_subcategory_name)) + 
+  geom_line() +
+  scale_y_continuous(labels=scales::percent) + 
+  labs(x=NULL, y="Percent of US aid given through different channels") +
+  guides(colour=guide_legend(title=NULL)) +
+  theme_donors()
+```
+
+
+## Legal restrictions on NGOs
+
+### DCJW indexes
+
+```{r dcjw-index-table, results="asis", message=FALSE}
+dcjw.indexes <- read_csv(file.path(PROJHOME, "Data", 
+                                   "data_clean", "dcjw_index.csv")) %>%
+  mutate(Laws = str_replace_all(Laws, "\n", "\n\n"))
+
+pandoc.table(dcjw.indexes, keep.line.breaks=TRUE, style="grid", justify="lll")
+```
+
+
+### Number of countries with restrictive laws
+
+```{r num-countries-laws, fig.width=11, fig.height=7}
+df.ngo.restrictions.plot <- df.country %>%
+  select(cowcode, year, const_assoc, political_parties, starts_with("ngo_")) %>%
+  gather(restriction, value, -c(cowcode, year)) %>%
+  group_by(year, restriction, value) %>%
+  summarise(n = n()) %>%
+  ungroup() %>%
+  left_join(dcjw.responses.clean, by=c("restriction", "value")) %>%
+  mutate(restriction = factor(restriction,
+                              levels=unique(dcjw.responses.clean$restriction),
+                              ordered=TRUE))
+
+plot.dcjw <- function(df) {
+  df.levels <- dcjw.responses.clean %>%
+    filter(restriction == df$restriction[[1]]) %>%
+    left_join(dcjw.questions.clean, by=c("restriction" = "question_clean"))
+  
+  plot.title <- df.levels$question_display
+  num.countries <- max(df.ngo.restrictions.plot$n)
+  
+  df.leveled <- df %>%
+    mutate(value_clean = factor(value_clean, levels=df.levels$value_clean, 
+                                ordered=TRUE))
+
+  ggplot(df.leveled, aes(x=year, y=n, colour=value_clean)) + 
+    geom_line() + 
+    labs(x=NULL, y=NULL, title=plot.title) +
+    coord_cartesian(ylim=c(0, num.countries)) +
+    scale_y_continuous(sec.axis = sec_axis(~ . / num.countries,
+                                           labels=scales::percent)) +
+    guides(colour=guide_legend(title=NULL)) +
+    theme_donors(8)
+}
+
+plot.all.dcjw.raw <- df.ngo.restrictions.plot %>%
+  split(.$restriction) %>%
+  map(plot.dcjw)
+
+plot.all.dcjw <- arrangeGrob(grobs=plot.all.dcjw.raw, ncol=3)
+grid::grid.draw(plot.all.dcjw)
+```
+
+### NGO restrictions by type
+
+```{r ngo-laws-type}
+df.restrictions.type <- df.country %>%
+  select(year, advocacy, association, entry, funding) %>%
+  gather(barrier, value, -year) %>%
+  group_by(year, barrier) %>%
+  by_slice(~ mean_cl_normal(.x$value)) %>%
+  unnest() %>%
+  mutate(barrier = factor(barrier, 
+                          levels=unique(dcjw.questions.clean$barrier),
+                          labels=unique(dcjw.questions.clean$barrier_display),
+                          ordered=TRUE))
+
+ggplot(df.restrictions.type, aes(x=year, y=y, colour=barrier)) +
+  geom_ribbon(aes(ymin=ymin, ymax=ymax, fill=barrier), alpha=0.3, colour=NA) +
+  geom_line() +
+  labs(y="Average number of restrictive laws", x=NULL) +
+  guides(colour=guide_legend(title="Barriers to"),
+         fill=guide_legend(title="Barriers to")) +
+  theme_donors()
+```
+
+### CSRE over time
+
+```{r plot-csre-time}
+df.csre.plot <- df.country %>%
+  select(year, csre) %>%
+  group_by(year) %>%
+  by_slice(~ mean_cl_normal(.x$csre)) %>%
+  unnest()
+
+ggplot(df.csre.plot, aes(x=year, y=y)) +
+  geom_ribbon(aes(ymin=ymin, ymax=ymax), alpha=0.2) +
+  geom_line() +
+  labs(y="Average civil society regulatory environment", x=NULL) +
+  theme_donors()
+```
+
+
+## Aid
+
+### Aid over time, by donor type
+
+```{r aid-by-donor}
+aid.donor.type.time <- df.donor.country %>%
+  group_by(year, donor.type.collapsed) %>%
+  summarise(total.aid = sum(oda, na.rm=TRUE))
+
+ggplot(aid.donor.type.time, aes(x=year, y=total.aid / 1000000000,
+                                colour=donor.type.collapsed)) +
+  geom_line() +
+  labs(x=NULL, y="Billions of USD",
+       caption="Source: OECD and AidData. 2011 dollars.") +
+  guides(colour=guide_legend(title=NULL)) +
+  scale_y_continuous(labels=scales::dollar) + 
+  theme_donors()
+```
+
+### Aid over time, by contentiousness
+
+```{r aid-by-contention}
+aid.contention.time <- df.donor.country %>%
+  group_by(year, purpose.contentiousness) %>%
+  summarise(total.aid = sum(oda, na.rm=TRUE))
+
+ggplot(aid.contention.time, aes(x=year, y=total.aid / 1000000000,
+                                colour=purpose.contentiousness)) +
+  geom_line() +
+  labs(x=NULL, y="Billions of USD",
+       caption="Source: OECD and AidData. 2011 dollars.") +
+  guides(colour=guide_legend(title=NULL)) +
+  scale_y_continuous(labels=scales::dollar) + 
+  theme_donors()
+```
