@@ -207,8 +207,9 @@ dcjw.indexes <- read_csv(file.path(PROJHOME, "Data",
                                    "data_clean", "dcjw_index.csv")) %>%
   mutate(Laws = str_replace_all(Laws, "\n", "\n\n"))
 
+caption <- "Description of indexes of NGO barriers {#tbl:ngo-barriers-index}"
 dcjw.index.table <- pandoc.table.return(dcjw.indexes, keep.line.breaks=TRUE, 
-                                        style="grid", justify="lll")
+                                        style="grid", justify="lll", caption=caption)
 
 cat(dcjw.index.table)
 cat(dcjw.index.table, file=file.path(PROJHOME, "Output",
