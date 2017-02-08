@@ -260,20 +260,40 @@ grid::grid.draw(plot.all.dcjw)
 ```{r ngo-laws-type}
 df.restrictions.type <- df.country %>%
   select(year, advocacy, association, entry, funding) %>%
-  group_by(year) %>%
-  summarise_all(mean) %>%
   gather(barrier, value, -year) %>%
+  group_by(year, barrier) %>%
+  by_slice(~ mean_cl_normal(.x$value)) %>%
+  unnest() %>%
   mutate(barrier = factor(barrier, 
                           levels=unique(dcjw.questions.clean$barrier),
                           labels=unique(dcjw.questions.clean$barrier_display),
                           ordered=TRUE))
 
-ggplot(df.restrictions.type, aes(x=year, y=value, colour=barrier)) +
+ggplot(df.restrictions.type, aes(x=year, y=y, colour=barrier)) +
+  geom_ribbon(aes(ymin=ymin, ymax=ymax, fill=barrier), alpha=0.3, colour=NA) +
   geom_line() +
   labs(y="Average number of restrictive laws", x=NULL) +
-  guides(colour=guide_legend(title="Barriers to")) +
+  guides(colour=guide_legend(title="Barriers to"),
+         fill=guide_legend(title="Barriers to")) +
   theme_donors()
 ```
+
+### CSRE over time
+
+```{r plot-csre-time}
+df.csre.plot <- df.country %>%
+  select(year, csre) %>%
+  group_by(year) %>%
+  by_slice(~ mean_cl_normal(.x$csre)) %>%
+  unnest()
+
+ggplot(df.csre.plot, aes(x=year, y=y)) +
+  geom_ribbon(aes(ymin=ymin, ymax=ymax), alpha=0.2) +
+  geom_line() +
+  labs(y="Average civil society regulatory environment", x=NULL) +
+  theme_donors()
+```
+
 
 ## Aid
 
