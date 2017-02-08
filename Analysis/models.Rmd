@@ -410,7 +410,11 @@ all.models <- tribble(
 ) %>%
   mutate(`Simplified model` = paste0("$", math, "$"))
 
-pandoc.table(select(all.models, Hypothesis, `Simplified model`), justify="ll")
+all.models.table <- pandoc.table.return(select(all.models, Hypothesis, 
+                                               `Simplified model`), 
+                                        justify="ll")
+cat(all.models.table)
+cat(all.models.table, file=file.path(PROJHOME, "Output", "tbl-all-models.md"))
 ```
 
 
