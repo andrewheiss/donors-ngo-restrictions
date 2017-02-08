@@ -396,6 +396,24 @@ stargazer.fake <- function(df, exponentiate=FALSE) {
 }
 ```
 
+## Dependent variables
+
+As explained in each section below, we have to transform and operationalize the dependent variable (foreign aid) in different ways for each hypothesis. The table belows summarizes each simplified model specification.
+
+```{r dv-data, results="asis"}
+all.models <- tribble(
+  ~h, ~Hypothesis, ~math,
+  1, "H~1~", "ln( \\text{ODA}_{\\text{OECD}} )_{i, t+1} = \\text{NGO legislation}_{it} + \\text{controls}_{it}",
+  2, "H~2~", "ln( \\frac{\\text{contentious ODA}_{\\text{OECD}}}{\\text{noncontentious ODA}_{\\text{OECD}}} )_{i, t+1} = \\text{NGO legislation}_{it} + \\text{controls}_{it}",
+  3, "H~3~", "ln( \\frac{\\text{Aid to domestic NGOs}_{\\text{USAID}}}{\\text{Aid to other channels}_{\\text{USAID}}} )_{i, t+1} = \\text{NGO legislation}_{it} + \\text{controls}_{it}",
+  4, "H~4~", "ln( \\text{ODA in neighboring countries}_{\\text{OECD}} )_{i, t+1} = \\text{NGO legislation}_{it} + \\text{controls}_{it}"
+) %>%
+  mutate(`Simplified model` = paste0("$", math, "$"))
+
+pandoc.table(select(all.models, Hypothesis, `Simplified model`), justify="ll")
+```
+
+
 ## General model specifications and controls
 
 We use a standard set of controls in each model ([explained in more detail here](../Data/get_merge_data.html#other_controls_and_alternative_hypotheses)):
@@ -509,7 +527,7 @@ bind_rows(
 
 > **H~1~**: In response to restrictive NGO legislation, bilateral, multilateral, and private donors may reduce their aid to repressive countries.
 
-$$ln( \text{ODA} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
+$$`r filter(all.models, h==1)$math`$$
 
 Our dependent variable for this hypothesis is the log of ODA (constant 2011 dollars), leaded by one year so we don't have to lag every other independent variable. As a robustness check, we also include models with log ODA leaded by 2 years and 5 years to account the implementation period following the passage of a law.
 
@@ -830,7 +848,7 @@ Working with proportion data, however, poses interesting mathematical and method
 
 We thus use a logit-linear model of the ratio of contentious aid to non-contentious aid:
 
-$$ln(\frac{\text{contentious aid}}{\text{noncontentious aid}})_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
+$$`r filter(all.models, h==2)$math`$$
 
 We look at NGO legislation in the same ways as H~1~ and use the same controls.
 
@@ -1000,7 +1018,7 @@ fig.simulated.h2.barriers
 
 > **H~3~**: As restrictive laws against local NGOs increase, states should be more likely to provide aid to INGOs rather than local NGOs.
 
-$$\text{% aid to INGOs}_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
+$$`r filter(all.models, h==3)$math`$$
 
 
 ### Results
@@ -1018,7 +1036,7 @@ $$\text{% aid to INGOs}_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}
 
 > **H~4~**: As restrictive laws against NGOs in a country are enacted, donors should be more likely to provide aid to neighboring countries.
 
-$$ln( \text{ODA in neighboring countries} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
+$$`r filter(all.models, h==4)$math`$$
 
 
 ### Results
