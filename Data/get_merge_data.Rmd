@@ -811,9 +811,10 @@ read_distances <- function(type, year) {
   return(df.clean)
 }
 
-# Load and combine all distance matrices
-all.distances <- expand.grid(year = 2012,
-                             type = c("capital", "cent", "min"),
+# Load and combine minimum distance matrices for all years (could potentially
+# also do "cent" or "capital")
+all.distances <- expand.grid(year = 1990:2015,
+                             type = "min",
                              stringsAsFactors=FALSE) %>%
   rowwise() %>% do(read_distances(.$type, .$year)) %>% ungroup()
 
@@ -1341,8 +1342,6 @@ usaid.by.country.channel <- donor.level.data.usaid %>%
   spread(channel, total.oda.us, fill=0)
 
 
-# TODO: Aid to neighboring countries
-
 # Country data
 # Use DCJW 1980+ as base data, since we're limited to the countries included there
 country.level.data <- dcjw.full %>%
@@ -1401,6 +1400,25 @@ aid.by.country.purpose <- donor.country.data %>%
   spread(purpose.contentiousness, total.oda, fill=0) %>%
   rename(oda.contentious.high = High, 
          oda.contentious.low = Low)
+
+# Neighbor aid
+# Join total oda to the huge distances dataframe and calculate total and
+# average aid to neighboring countries
+neighbor.oda <- all.distances %>%
+  filter(is.rough.neighbor) %>%
+  left_join(aid.by.country.total, by=c("cowcode.other" = "cowcode",
+                                       "year")) %>%
+  filter(cowcode.self != cowcode.other) %>%
+  group_by(year, cowcode.self) %>%
+  summarise_at(vars(total.oda), 
+               funs(nb_oda.sum = sum(., na.rm=TRUE),
+                    nb_oda.avg = mean(., na.rm=TRUE),
+                    nb_oda.sd = sd(., na.rm=TRUE),
+                    nb_oda.n = n())) %>%
+  rename(cowcode = cowcode.self) %>%
+  filter(year < 2014) %>%
+  mutate_at(vars(starts_with("nb")),
+            funs(ifelse(is.nan(.), 0, .)))
 ```
 
 ### Missingness and imputation
@@ -1460,6 +1478,7 @@ if (file.exists(imputation.rds)) {
     filter(year < 2014) %>%  # There's no aid data after 2013
     left_join(aid.by.country.total, by=c("cowcode", "year")) %>%
     left_join(aid.by.country.purpose, by=c("cowcode", "year")) %>%
+    left_join(neighbor.oda, by=c("cowcode", "year")) %>%
     left_join(usaid.by.country.total, by=c("cowcode", "year")) %>%
     left_join(usaid.by.country.channel, by=c("cowcode", "year")) %>%
     mutate_at(vars(contains("oda")), funs(ifelse(is.na(.), 0, .)))
@@ -1555,13 +1574,14 @@ country.aid.data <- country.aid.data.imputed.long %>%
   mutate(prop.ngo.int = oda.us.ngo.int / oda.us,
          prop.ngo.us = oda.us.ngo.us / oda.us,
          prop.ngo.dom = oda.us.ngo.dom / oda.us,
-         prop.ngo.foreign = (oda.us.ngo.int + oda.us.ngo.us) / oda.us,
-         prop.ngo.dom.foreign = oda.us.ngo.dom / (oda.us.ngo.int + oda.us.ngo.us)) %>%
+         prop.ngo.foreign = (oda.us.ngo.int + oda.us.ngo.us) / oda.us) %>%
+         # prop.ngo.dom.foreign = oda.us.ngo.dom / (oda.us.ngo.int + oda.us.ngo.us)) %>%
   mutate_at(vars(starts_with("prop.ngo")),
             funs(ifelse(is.nan(.), NA, .))) %>%
   mutate_at(vars(starts_with("prop.ngo")),
             funs(logit = car::logit(., adjust=.001))) %>%
-  mutate_at(vars(total.oda, oda.contentious.high, oda.contentious.low, oda.us),
+  mutate_at(vars(total.oda, oda.contentious.high, oda.contentious.low, oda.us,
+                 nb_oda.sum, nb_oda.avg, nb_oda.sd),
             funs(log = log1p(.))) %>%
   mutate(aid.pct.gdp = total.oda / gdp) %>%
   # Lag/lead/diff everything within countries and samples
