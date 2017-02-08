@@ -33,7 +33,7 @@ MEXT = md
 MS_DIR = .
 
 # Location of Pandoc support files.
-PREFIX = /Users/andrew/.pandoc
+PREFIX = ./pandoc
 
 # Word and HTML can choke on PDF images, so those targets use a helper script
 # named replace_pdfs to replace all references to PDFs with PNGs and convert
@@ -46,7 +46,7 @@ PREFIX = /Users/andrew/.pandoc
 
 
 # Location of your working bibliography file
-BIB_FILE = /Users/andrew/Dropbox/Readings/Papers.bib
+BIB_FILE = ../bibliography.bib
 
 # CSL stylesheet (located in the csl folder of the PREFIX directory).
 # Common CSLs:
@@ -94,7 +94,6 @@ SRC = $(wildcard $(MS_DIR)/*.$(MEXT))
 BASE = $(basename $(SRC))
 
 # Targets
-PDF=$(SRC:.md=.pdf)
 HTML=$(SRC:.md=.html)
 TEX=$(SRC:.md=.tex)
 ODT=$(SRC:.md=.odt)
@@ -103,9 +102,8 @@ MS_ODT=$(SRC:.md=-manuscript.odt)
 MS_DOCX=$(SRC:.md=-manuscript.docx)
 BIB=$(SRC:.md=.bib)
 
-all:	clean $(PDF) $(HTML) $(ODT) $(DOCX) $(MS_ODT) $(MS_DOCX) $(TEX) $(BIB)
+all:	clean $(HTML) $(ODT) $(DOCX) $(MS_ODT) $(MS_DOCX) $(TEX) $(BIB)
 
-pdf:	clean $(PDF)
 html:	clean $(HTML)
 odt:	clean $(ODT)
 docx:	clean $(DOCX)
@@ -116,38 +114,21 @@ bib:	$(BIB)
 
 %.html:	%.md
 	@echo "$(WARN_COLOR)Converting Markdown to HTML using standard template...$(NO_COLOR)"
-	replace_includes $< | replace_pdfs $(PNG_CONVERT) | \
+	$(PREFIX)/bin/replace_includes.py $< | $(PREFIX)/bin/replace_pdfs.py $(PNG_CONVERT) | \
 	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block -w html -S \
 		$(CROSSREF) \
 		--default-image-extension=png \
 		--template=$(PREFIX)/templates/html.template \
-		--css=$(PREFIX)/styles/marked/kultiad-serif.css \
+		--css=$(PREFIX)/styles/kultiad-serif.css \
 		--filter pandoc-citeproc \
 		--csl=$(PREFIX)/csl/$(CSL).csl \
 		--bibliography=$(BIB_FILE) \
-	-o $@
-	@echo "$(OK_COLOR)All done!$(NO_COLOR)"
-
-%.pdf:	%.md
-	@echo "$(WARN_COLOR)Converting Markdown to PDF using hikma-article template...$(NO_COLOR)"
-	replace_includes $< | replace_reference_title | \
-	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block -w latex -s -S \
-		$(CROSSREF) \
-		--default-image-extension=pdf \
-		--latex-engine=xelatex \
-		--template=$(PREFIX)/templates/xelatex.template \
-		--filter pandoc-citeproc \
-		--csl=$(PREFIX)/csl/$(CSL).csl \
-		--bibliography=$(BIB_FILE) \
-		-V chapterstyle=hikma-article \
-		-V pagestyle=ath \
-		--base-header-level=2 \
 	-o $@
 	@echo "$(OK_COLOR)All done!$(NO_COLOR)"
 
 %.tex:	%.md
 	@echo "$(WARN_COLOR)Converting Markdown to TeX using hikma-article template...$(NO_COLOR)"
-	replace_includes $< | \
+	./vc; $(PREFIX)/bin/replace_includes.py $< | \
 	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block -w latex -s -S \
 		$(CROSSREF) \
 		--default-image-extension=pdf \
@@ -157,7 +138,8 @@ bib:	$(BIB)
 		-V $(TEX_REF) \
 		--bibliography=$(BIB_FILE) \
 		-V chapterstyle=hikma-article \
-		-V pagestyle=ath \
+		-V pagestyle=athgit \
+		-V vc \
 		--base-header-level=2 \
 	-o $@
 	@echo "$(WARN_COLOR)...converting TeX to PDF with latexmk (prepare for lots of output)...$(NO_COLOR)"
@@ -166,7 +148,7 @@ bib:	$(BIB)
 
 %.odt:	%.md
 	@echo "$(WARN_COLOR)Converting Markdown to .odt using standard template...$(NO_COLOR)"
-	replace_includes $< | replace_pdfs $(PNG_CONVERT) | \
+	$(PREFIX)/bin/replace_includes.py $< | $(PREFIX)/bin/replace_pdfs.py $(PNG_CONVERT) | \
 	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block -w odt -S \
 		$(CROSSREF) \
 		--default-image-extension=png \
@@ -187,7 +169,7 @@ bib:	$(BIB)
 
 %-manuscript.odt: %.md
 	@echo "$(WARN_COLOR)Converting Markdown to .odt using manuscript template...$(NO_COLOR)"
-	replace_includes $< | replace_pdfs $(PNG_CONVERT) | move_figs_tables_to_end | \
+	$(PREFIX)/bin/replace_includes.py $< | $(PREFIX)/bin/replace_pdfs.py $(PNG_CONVERT) | $(PREFIX)/bin/move_figs_tables_to_end.py | \
 	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block -w odt -S \
 		$(CROSSREF) \
 		--default-image-extension=png \

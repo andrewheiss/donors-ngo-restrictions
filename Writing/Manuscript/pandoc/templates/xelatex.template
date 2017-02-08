@@ -1,0 +1,225 @@
+%!TEX program = xelatex
+\documentclass[11pt,article,oneside]{memoir}
+
+% With MacTeX 2015, I get this fun error:
+% ! No room for a new \count .
+% \ch@ck ...\else \errmessage {No room for a new #3}
+% Adding these two lines fixes it, though in theory they shouldn't be necessary
+% http://tex.stackexchange.com/a/38609/11851
+\usepackage{etex}
+\reserveinserts{28}
+
+\usepackage{hikma-preamble-xelatex}
+
+% Bibliography stuff
+$if(biblatex)$
+$if(bibstyle-chicago-notes)$
+\usepackage[notes, backend=biber,
+            autolang=hyphen, bibencoding=inputenc,
+            strict, isbn=false, uniquename=false]{biblatex-chicago} % biblatex setup
+
+%% Fix biblatex's odd preference for using In: by default.
+\renewbibmacro{in:}{%
+  \ifentrytype{article}{}{%
+  \printtext{\bibstring{}\intitlepunct}}}
+
+%% bibnamedash: with Minion Pro the three-emdash lines in the
+%% bibliogrpaphy end up separated from one another, which is very
+%% annoying. Replace them with a line of appropriate size and weight.
+\renewcommand{\bibnamedash}{\rule[3.5pt]{3em}{0.5pt}}
+$endif$
+$if(bibstyle-chicago-authordate)$
+\usepackage[authordate, backend=biber,
+            autolang=hyphen, bibencoding=inputenc,
+            strict, isbn=false, uniquename=false]{biblatex-chicago} % biblatex setup
+
+%% Fix biblatex's odd preference for using In: by default.
+\renewbibmacro{in:}{%
+  \ifentrytype{article}{}{%
+  \printtext{\bibstring{}\intitlepunct}}}
+
+%% bibnamedash: with Minion Pro the three-emdash lines in the
+%% bibliogrpaphy end up separated from one another, which is very
+%% annoying. Replace them with a line of appropriate size and weight.
+\renewcommand{\bibnamedash}{\rule[3.5pt]{3em}{0.5pt}}
+$endif$
+$if(bibstyle-apa)$
+\usepackage[style=apa, backend=biber]{biblatex}
+\DeclareLanguageMapping{american}{american-apa}
+$endif$
+
+\addbibresource{$bibliography$}
+\setlength\bibhang{\parindent}
+$endif$
+
+% Set the format for footnote numbering and length and size of footnote rule
+\footmarkstyle{#1.\,}
+\renewcommand*{\footnoterule}{\kern-3pt\hrule width 0.3\columnwidth\kern 4pt}
+
+$if(vc)$
+\input{vc}
+$if(git-repo)$
+\gdef\GITURL{$git-repo$}
+$endif$
+$endif$
+
+$if(listings)$
+\usepackage{listings}
+$endif$
+$if(lhs)$
+\lstnewenvironment{code}{\lstset{language=r,basicstyle=\small\ttfamily}}{}
+$endif$
+$if(highlighting-macros)$
+$highlighting-macros$
+$endif$
+$if(verbatim-in-note)$
+\usepackage{fancyvrb}
+$endif$
+$if(tables)$
+\usepackage{longtable}
+$endif$
+
+$if(graphics)$
+\usepackage{graphicx}
+% We will generate all images so they have a width \maxwidth. This means
+% that they will get their normal width if they fit onto the page, but
+% are scaled down if they would overflow the margins.
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth
+\else\Gin@nat@width\fi}
+\makeatother
+\let\Oldincludegraphics\includegraphics
+\renewcommand{\includegraphics}[1]{\Oldincludegraphics[width=\maxwidth]{#1}}
+$endif$
+
+
+$if(title)$
+\title{\bigskip \bigskip $title$}
+$endif$ 
+
+$if(blinded)$
+\author{~}
+$else$
+\author{
+  $for(author)$
+    \Large $author.name$\vspace{0.05in} \newline
+    \normalsize\emph{$author.affiliation$} \newline
+    \footnotesize \url{$author.email$}\vspace*{0.2in}\newline 
+    $sep$ \and 
+  $endfor$
+}
+$endif$
+
+\date{}
+
+
+$if(memo)$
+\newcommand{\memoheader}{
+  \begin{tabbing}
+  \hspace*{2cm} \= \kill
+  To:      \> $for(to)$$to$$sep$, $endfor$ \\
+  From:    \> $for(author)$$author.name$$if(author.email)$~(\url{$author.email$})$endif$$sep$, $endfor$ \\
+  Date:    \> $date$ \\
+  Subject: \> \textbf{$title$}
+  \end{tabbing}
+  \vspace*{0.2in}
+}
+$endif$
+
+
+% Add PDF metadata
+$if(blinded)$
+\hypersetup{pdfinfo={
+  Title={},
+  Author={},
+  Creator={Markdown, pandoc, and TeX}
+  % Subject={}
+  % Keywords={things, go, here}
+}}
+$else$
+\hypersetup{pdfinfo={
+  Title={$title$},
+  Author={$for(author)$$author.name$$sep$, $endfor$},
+  Creator={Markdown, pandoc, and TeX}
+  % Subject={},
+  % Keywords={things, go, here}
+}}
+$endif$
+
+
+\begin{document}
+\setkeys{Gin}{width=1\textwidth} 	
+\setromanfont[Mapping=tex-text,Numbers=OldStyle]{Minion Pro} 
+\setsansfont[Mapping=tex-text]{Source Sans Pro} 
+\setmonofont[Mapping=tex-text,Scale=0.8]{Consolas}
+
+$if(chapterstyle)$
+\chapterstyle{$chapterstyle$}
+$else$
+\chapterstyle{hikma-article} 
+$endif$
+
+
+$if(pagestyle)$
+\pagestyle{$pagestyle$}
+$else$
+\pagestyle{ath} 
+$endif$
+
+$if(vc)$
+\copypagestyle{plain}{athgit_first}  % Modified first page with git information
+$endif$
+
+$if(memo)$
+% If this is a memo, use the fancy memo heading; otherwise, use the normal article title
+\memoheader
+$else$
+$if(published)$
+\published{$date$. $published$}
+$else$
+\published{$date$}
+$endif$
+
+$if(title)$
+\maketitle
+$endif$
+
+$if(toc)$
+{
+\hypersetup{linkcolor=black}
+\setcounter{tocdepth}{$toc-depth$}
+\tableofcontents
+}
+$endif$
+
+$if(abstract)$
+\begin{abstract}
+\noindent $abstract$
+\bigskip
+\end{abstract}
+$else$
+\vskip 5em
+$endif$
+$endif$
+
+$if(epigraph)$
+  $for(epigraph)$
+    $if(epigraph.source)$
+    \epigraph{$epigraph.text$}{---$epigraph.source$}
+    $else$
+    \epigraph{$epigraph.text$}
+    $endif$
+  $endfor$
+$endif$
+
+
+$body$
+
+$if(biblatex)$
+\printbibliography[heading=subbibliography$if(reference-section-title)$, title=$reference-section-title$$endif$]
+$endif$
+$for(include-after)$
+$include-after$
+
+$endfor$
+\end{document}

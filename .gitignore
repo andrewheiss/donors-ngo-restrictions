@@ -17,6 +17,7 @@ Writing/**.html
 Writing/**.pdf
 Writing/**.tex
 Writing/Manuscript/tex_out/*
+Writing/Manuscript/vc*
 
 # Other folders
 Sandbox/*
