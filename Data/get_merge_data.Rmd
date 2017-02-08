@@ -779,7 +779,7 @@ The `all.distances` data frame below contains all three distance types between e
 distance.folder <- file.path(PROJHOME, "Data", "data_raw", "Country distances")
 
 read_distances <- function(type, year) {
-  stopifnot(year >= 1990, year <= 2015)
+  stopifnot(year >= 1980, year <= 2015)
   stopifnot(type %in% c("capital", "cent", "min"))
 
   # Read in the RDS file for the type and year
@@ -813,7 +813,7 @@ read_distances <- function(type, year) {
 
 # Load and combine minimum distance matrices for all years (could potentially
 # also do "cent" or "capital")
-all.distances <- expand.grid(year = 1990:2015,
+all.distances <- expand.grid(year = 1980:2015,
                              type = "min",
                              stringsAsFactors=FALSE) %>%
   rowwise() %>% do(read_distances(.$type, .$year)) %>% ungroup()
