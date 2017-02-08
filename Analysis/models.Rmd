@@ -376,7 +376,7 @@ stargazer.fake <- function(df, exponentiate=FALSE) {
     random.title <- "Random part (original coefficients)"
   } else {
     fixed.title <- "Fixed part"
-    random.title <- "Randomr part"
+    random.title <- "Random part"
   }
 
   nice.top.bottom <- bind_rows(header.row(fixed.title), fixed.coefs, 
