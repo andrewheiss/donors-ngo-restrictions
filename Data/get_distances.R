@@ -16,7 +16,12 @@
 #        installed the rocker/tidyverse image, ran this through RStudio in a 
 #        browser, downloaded all the .rds files locally, and then killed the VPS.
 #
-#        Also, I had to install rgeos because of gpclib restrictions
+#        Also, I had to install rgeos because of gpclib restrictions, which 
+#        requries libgeos-dev:
+#
+#            # If using Docker
+#            docker exec -i -t container_name /bin/bash
+#            sudo apt-get install libgeos-dev
 
 library(cshapes)  # Has to come before dplyr because it uses plyr
 library(parallel)
