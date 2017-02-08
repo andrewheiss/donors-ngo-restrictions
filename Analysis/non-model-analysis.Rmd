@@ -207,7 +207,12 @@ dcjw.indexes <- read_csv(file.path(PROJHOME, "Data",
                                    "data_clean", "dcjw_index.csv")) %>%
   mutate(Laws = str_replace_all(Laws, "\n", "\n\n"))
 
-pandoc.table(dcjw.indexes, keep.line.breaks=TRUE, style="grid", justify="lll")
+dcjw.index.table <- pandoc.table.return(dcjw.indexes, keep.line.breaks=TRUE, 
+                                        style="grid", justify="lll")
+
+cat(dcjw.index.table)
+cat(dcjw.index.table, file=file.path(PROJHOME, "Output",
+                                     "tbl-ngo-barriers-index.md"))
 ```
 
 
