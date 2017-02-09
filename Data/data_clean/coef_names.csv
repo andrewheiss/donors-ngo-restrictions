@@ -18,3 +18,6 @@ natural_disaster.occurrence,Natural disaster occurred
 cowcode,Within-country variability ($\sigma$)
 year,Within-year variability ($\sigma$)
 post.1989,After 1989
+prop.contentious_logit,Proportion of contentious aid in present year (logit)
+prop.ngo.dom_logit,Proportion of aid to domestic NGOs in present year (logit)
+prop.ngo.foreign_logit,Proportion of aid to foreign NGOs in present year (logit)

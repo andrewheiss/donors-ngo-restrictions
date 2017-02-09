@@ -37,6 +37,7 @@ source(file.path(PROJHOME, "lib", "bayes.R"))
 source(file.path(PROJHOME, "Analysis", "robustness_models_definitions.R"))
 source(file.path(PROJHOME, "Analysis", "h1_model_definitions.R"))
 source(file.path(PROJHOME, "Analysis", "h2_model_definitions.R"))
+source(file.path(PROJHOME, "Analysis", "h3_model_definitions.R"))
 
 my.seed <- 1234
 set.seed(my.seed)
@@ -102,12 +103,29 @@ df.country.aid.demean.next_year.all <- df.country.aid.all %>%
                  within = . - mean(., na.rm=TRUE))) %>%  # demeaned
   ungroup()
 
+df.country.aid.us.demean.next_year.all <- df.country.aid.all %>%
+  filter(!is.na(prop.ngo.dom_logit_next_year)) %>%
+  filter(year > 1999) %>%
+  group_by(m, cowcode) %>%
+  mutate_at(vars(barriers.total, advocacy, entry, funding, 
+                 polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre,
+                 total.oda_log),
+            funs(between = mean(., na.rm=TRUE),  # meaned
+                 within = . - mean(., na.rm=TRUE))) %>%  # demeaned
+  ungroup()
+
 # Divide demeaned data into separate data frames: original, imputed (m=5), and imputed (m=10)
 df.country.aid.demean.next_year.both <- 
   filter(df.country.aid.demean.next_year.all, !(m %in% paste0("imp", 6:10)))
 
 df.country.aid.demean.next_year <- 
   filter(df.country.aid.demean.next_year.all, m == "original")
+
+df.country.aid.us.demean.next_year.both <- 
+  filter(df.country.aid.us.demean.next_year.all, !(m %in% paste0("imp", 6:10)))
+
+df.country.aid.us.demean.next_year <- 
+  filter(df.country.aid.us.demean.next_year.all, m == "original")
 
 df.country.aid.demean.next_year.impute <- 
   filter(df.country.aid.demean.next_year.all, 
@@ -407,7 +425,7 @@ all.models <- tribble(
   ~h, ~Hypothesis, ~math,
   1, "H~1~", "ln( \\text{ODA}_{\\text{OECD}} )_{i, t+1} = \\text{NGO legislation}_{it} + \\text{controls}_{it}",
   2, "H~2~", "ln( \\frac{\\text{contentious ODA}_{\\text{OECD}}}{\\text{noncontentious ODA}_{\\text{OECD}}} )_{i, t+1} = \\text{NGO legislation}_{it} + \\text{controls}_{it}",
-  3, "H~3~", "ln( \\frac{\\text{Aid to domestic NGOs}_{\\text{USAID}}}{\\text{Aid to other channels}_{\\text{USAID}}} )_{i, t+1} = \\text{NGO legislation}_{it} + \\text{controls}_{it}",
+  3, "H~3~", "ln( \\frac{\\text{Aid to (domestic or foreign) NGOs}_{\\text{USAID}}}{\\text{Aid to other channels}_{\\text{USAID}}} )_{i, t+1} = \\text{NGO legislation}_{it} + \\text{controls}_{it}",
   4, "H~4~", "ln( \\text{ODA in neighboring countries}_{\\text{OECD}} )_{i, t+1} = \\text{NGO legislation}_{it} + \\text{controls}_{it}"
 ) %>%
   mutate(`Simplified model` = paste0("$", math, "$"))
@@ -1059,16 +1077,260 @@ fig.simulated.h2.barriers
 
 > **H~3~**: As restrictive laws against local NGOs increase, states should be more likely to provide aid to INGOs rather than local NGOs.
 
+We use two dependent variables for this hypothesis: the proportion of aid channeled through either (1) domestic or (2) international or US-based (or foreign) NGOs, once again leaded by one year. The OECD and AidData do not track the channels of aid delivery, so we cannot see how aid is distributed on a global scale. USAID, however, does track channels, so we can measure how much aid goes to domestic NGOs (and also US-based and international NGOs). USAID didn't start tracking this until 2001, though, so we have to limit our models to 2001–2013. (Boo.)
+
+It would be cool to model the ratio aid channeled through domestic to foreign NGOs, but doing that causes weird mathematical issues with logit transformations, since the ratios can exceed 1. 
+
+Because the DVs are proportions, we have to make the same assumptions and weird interpretive tricks as H~2~, building a logit-linear model of the ratio of domestic or foreign NGO aid to all other channels:
+
 $$`r filter(all.models, h==3)$math`$$
 
+Again, we use the same NGO legislation variables as H~1~ and H~2~ and use the same controls, except we omit "After 1989" since no observations actually occur after 1989.
+
+```{r h3-models-1-domestic, warning=FALSE, message=FALSE, cache=TRUE}
+mods.h3.dom.next_year.raw <- df.country.aid.us.demean.next_year.both %>%
+  nest(-m) %>%
+  mutate(mod.h3.barriers.total = data %>% map(mod.h3.barriers.total,
+                                              "prop.ngo.dom_logit_next_year"),
+         mod.h3.barriers.new = data %>% map(mod.h3.barriers.new,
+                                            "prop.ngo.dom_logit_next_year"),
+         mod.h3.type.total = data %>% map(mod.h3.type.total,
+                                          "prop.ngo.dom_logit_next_year"),
+         mod.h3.type.new = data %>% map(mod.h3.type.new,
+                                        "prop.ngo.dom_logit_next_year"),
+         mod.h3.csre = data %>% map(mod.h3.csre,
+                                    "prop.ngo.dom_logit_next_year"))
+
+# Get model details and parameters
+mods.h3.dom.next_year <- mods.h3.dom.next_year.raw %>%
+  gather(model.name, model, -m, -data) %>%
+  mutate(glance = model %>% map(broom::glance),
+         tidy = model %>% map(broom::tidy, conf.int=TRUE),
+         augment = model %>% map(broom::augment))
+
+# Meld the imputed models
+mods.h3.dom.next_year.melded <- mods.h3.dom.next_year %>%
+  filter(m != "original") %>%
+  group_by(model.name) %>%
+  nest() %>%
+  mutate(tidy.melded = data %>% map(~ meld.imputed.models(., exponentiate=TRUE)))
+```
+
+```{r h3-models-1-foreign, warning=FALSE, message=FALSE, cache=TRUE}
+mods.h3.foreign.next_year.raw <- df.country.aid.us.demean.next_year.both %>%
+  nest(-m) %>%
+  mutate(mod.h3.barriers.total = data %>% map(mod.h3.foreign.barriers.total,
+                                              "prop.ngo.foreign_logit_next_year"),
+         mod.h3.barriers.new = data %>% map(mod.h3.foreign.barriers.new,
+                                            "prop.ngo.foreign_logit_next_year"),
+         mod.h3.type.total = data %>% map(mod.h3.foreign.type.total,
+                                          "prop.ngo.foreign_logit_next_year"),
+         mod.h3.type.new = data %>% map(mod.h3.foreign.type.new,
+                                        "prop.ngo.foreign_logit_next_year"),
+         mod.h3.csre = data %>% map(mod.h3.foreign.csre,
+                                    "prop.ngo.foreign_logit_next_year"))
+
+# Get model details and parameters
+mods.h3.foreign.next_year <- mods.h3.foreign.next_year.raw %>%
+  gather(model.name, model, -m, -data) %>%
+  mutate(glance = model %>% map(broom::glance),
+         tidy = model %>% map(broom::tidy, conf.int=TRUE),
+         augment = model %>% map(broom::augment))
+
+# Meld the imputed models
+mods.h3.foreign.next_year.melded <- mods.h3.foreign.next_year %>%
+  filter(m != "original") %>%
+  group_by(model.name) %>%
+  nest() %>%
+  mutate(tidy.melded = data %>% map(~ meld.imputed.models(., exponentiate=TRUE)))
+```
 
 ### Results
+
+#### Proportion to domestic NGOs
+
+```{r plot-h3-coefs-domestic, fig.width=7, fig.height=4}
+vars.to.plot <- c("barriers.total_within", "barriers.total_between",
+                  "barriers.total_new",
+                  "advocacy_within", "advocacy_between", 
+                  "entry_within", "entry_between", 
+                  "funding_within", "funding_between",
+                  "advocacy_new", "entry_new", "funding_new",
+                  "csre_within", "csre_between")
+
+coefs.raw.h3.dom <- mods.h3.dom.next_year.melded %>%
+  unnest(tidy.melded) %>%
+  filter(term != "(Intercept)",
+         term %in% vars.to.plot) %>%
+  left_join(coef.names.all, by="term") %>%
+  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  arrange(desc(term)) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(coef.type = case_when(
+    str_detect(.$term, "_within") ~ "Within",
+    str_detect(.$term, "_between") ~ "Between",
+    TRUE ~ "Not split"
+  )) %>% 
+  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
+                            ordered=TRUE)) %>%
+  mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
+```
+
+```{r h3-melded-table-1-domestic, results="asis", warning=FALSE}
+stargazer.fake(mods.h3.dom.next_year.melded, exponentiate=TRUE)
+```
+
+#### Proportion to foreign NGOs
+
+```{r plot-h3-coefs-foreign, fig.width=5, fig.height=4}
+vars.to.plot <- c("barriers.total_within", "barriers.total_between",
+                  "barriers.total_new",
+                  "advocacy_within", "advocacy_between", 
+                  "entry_within", "entry_between", 
+                  "funding_within", "funding_between",
+                  "advocacy_new", "entry_new", "funding_new",
+                  "csre_within", "csre_between")
+
+coefs.raw.h3.foreign <- mods.h3.foreign.next_year.melded %>%
+  unnest(tidy.melded) %>%
+  filter(term != "(Intercept)",
+         term %in% vars.to.plot) %>%
+  left_join(coef.names.all, by="term") %>%
+  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  arrange(desc(term)) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(coef.type = case_when(
+    str_detect(.$term, "_within") ~ "Within",
+    str_detect(.$term, "_between") ~ "Between",
+    TRUE ~ "Not split"
+  )) %>% 
+  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
+                            ordered=TRUE)) %>%
+  mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
+```
+
+```{r h3-melded-table-1-foreign, results="asis", warning=FALSE}
+stargazer.fake(mods.h3.foreign.next_year.melded, exponentiate=TRUE)
+```
+
+```{r plot-h3-coefs-both, fig.width=7, fig.height=4}
+coefs.h3.both <- bind_rows(`Domestic NGOs` = coefs.raw.h3.dom,
+                           `Foreign NGOs` = coefs.raw.h3.foreign,
+                           .id="channel")
+
+ggplot(coefs.h3.both, aes(y=term_plot, x=or, colour=interaction(model.name, channel))) + 
+  geom_vline(xintercept=1, colour="grey50", size=1) + 
+  geom_pointrangeh(aes(xmin=or.lower, xmax=or.upper, shape=channel), size=0.5,
+                   position=position_dodgev(height=0.5)) + 
+  labs(x="Odds ratio", y=NULL) +
+  scale_colour_manual(values=c(model.colors, model.colors)) +
+  guides(color=FALSE, shape=guide_legend(title=NULL)) +
+  theme_donors() +
+  facet_wrap(~ coef.type, scales="free")
+```
 
 
 ### Model diagnostics
 
 
-### Predicted ODA
+### Predicted proprtion of aid channeled to domestic or foreign NGOs
+
+```{r h3-simulate-both, warning=FALSE, fig.width=6.5, fig.height=4}
+simulate.predictions.prop.foreign.ngo.funding <- function(x) {
+  new.data <- x@frame %>%
+    select(-c(funding_within, year, cowcode)) %>%
+    summarise_all(typical) %>%
+    mutate(id = 1,
+           prop.ngo.foreign_logit_next_year = NA) %>%
+    right_join(expand.grid(funding_within = seq(-2, 4, 0.5),
+                           cowcode = 1000:1050,
+                           year = 2000:2012,
+                           id = 1), by="id") %>% select(-id)
+  
+  df.simulated.all <- tribble(
+    ~id, ~data,
+    "hypothetical", new.data
+  ) %>%
+    mutate(simulated = data %>% 
+             map(~ simulate(x, nsim=1, seed=1, 
+                            newdata=select(.x, -prop.ngo.foreign_logit_next_year), 
+                            re.form=NA, allow.new.levels=TRUE))) %>%
+    unnest()
+  
+  return(df.simulated.all)
+}
+
+simulate.predictions.prop.domestic.ngo.funding <- function(x) {
+  new.data <- x@frame %>%
+    select(-c(funding_within, year, cowcode)) %>%
+    summarise_all(typical) %>%
+    mutate(id = 1,
+           prop.ngo.dom_logit_next_year = NA) %>%
+    right_join(expand.grid(funding_within = seq(-2, 4, 0.5),
+                           cowcode = 1000:1050,
+                           year = 2000:2012,
+                           id = 1), by="id") %>% select(-id)
+  
+  df.simulated.all <- tribble(
+    ~id, ~data,
+    "hypothetical", new.data
+  ) %>%
+    mutate(simulated = data %>% 
+             map(~ simulate(x, nsim=1, seed=1, 
+                            newdata=select(.x, -prop.ngo.dom_logit_next_year), 
+                            re.form=NA, allow.new.levels=TRUE))) %>%
+    unnest()
+  
+  return(df.simulated.all)
+}
+
+simulated.h3.foreign.funding <- mods.h3.foreign.next_year.melded %>%
+  filter(model.name == "mod.h3.type.total") %>%
+  unnest(data) %>%
+  mutate(simulated = model %>% map(~ simulate.predictions.prop.foreign.ngo.funding(.))) %>%
+  unnest(simulated) %>%
+  group_by(id, m, cowcode, funding_within) %>%
+  summarise_at(vars(starts_with("sim")), funs(avg = mean(.))) %>%
+  ungroup() %>%
+  gather(key, value, -c(id, m, cowcode, funding_within)) %>%
+  mutate(value.fixed = inv.logit(value, a=0.001),
+         variable.clean = "Aid through foreign NGOs") %>%
+  rename(variable = funding_within)
+
+simulated.h3.domestic.funding <- mods.h3.dom.next_year.melded %>%
+  filter(model.name == "mod.h3.type.total") %>%
+  unnest(data) %>%
+  mutate(simulated = model %>% map(~ simulate.predictions.prop.domestic.ngo.funding(.))) %>%
+  unnest(simulated) %>%
+  group_by(id, m, cowcode, funding_within) %>%
+  summarise_at(vars(starts_with("sim")), funs(avg = mean(.))) %>%
+  ungroup() %>%
+  gather(key, value, -c(id, m, cowcode, funding_within)) %>%
+  mutate(value.fixed = inv.logit(value, a=0.001),
+         variable.clean = "Aid through domestic NGOs") %>%
+  rename(variable = funding_within)
+
+df.plot.data <- bind_rows(simulated.h3.foreign.funding,
+                          simulated.h3.domestic.funding)
+
+df.plot.data.mean <- df.plot.data %>%
+  group_by(variable.clean, variable) %>%
+  summarise(value = mean(value)) %>%
+  mutate(value.fixed = inv.logit(value, a=0.001)) %>%
+  mutate(cowcode=1)  # Fake country so the line plots
+
+fig.simulated.h3.barriers <- ggplot(df.plot.data, aes(x=variable, 
+                                                      y=value.fixed, group=cowcode)) + 
+  geom_vline(xintercept=0, size=0.5) +
+  geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
+  geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour="#BD4932") +
+  labs(x="Difference from average number of barriers to funding\n(within effect)",
+       y="Simulated proportion of aid to type of NGO in the following year") +
+  scale_y_continuous(labels=scales::percent) +
+  facet_wrap(~ variable.clean, scales="free_x") +
+  theme_donors()
+fig.simulated.h3.barriers
+```
 
 
 ---
