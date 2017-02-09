@@ -604,7 +604,7 @@ vars.to.plot <- c("barriers.total_within", "barriers.total_between",
                   "advocacy_new", "entry_new", "funding_new",
                   "csre_within", "csre_between")
 
-coefs.raw <- mods.h1.next_year.melded %>%
+coefs.raw.h1 <- mods.h1.next_year.melded %>%
   unnest(tidy.melded) %>%
   filter(term != "(Intercept)",
          term %in% vars.to.plot) %>%
@@ -620,7 +620,7 @@ coefs.raw <- mods.h1.next_year.melded %>%
   mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
                             ordered=TRUE))
 
-ggplot(coefs.raw, aes(y=term_plot, x=estimate, colour=coef.type)) + 
+ggplot(coefs.raw.h1, aes(y=term_plot, x=estimate, colour=coef.type)) + 
   geom_vline(xintercept=0, colour="grey50", size=1) + 
   geom_pointrangeh(aes(xmin=conf.low, xmax=conf.high), size=.5) + 
   labs(x="Estimate", y=NULL) +
@@ -905,6 +905,39 @@ change.bc.advocacy <- mods.h2.next_year.melded %>%
 $$\% \Delta (\frac{\text{contentious aid}}{\text{noncontentious aid}}) = (e^{`r change.bc.advocacy$estimate`} - 1) \times 100 = `r change.bc.advocacy$transformed`$$
 
 … we can say that countries that impose an additional barrier on advocacy have, on average, a `r scales::percent(abs(change.bc.advocacy$transformed) / 100)` `r ifelse(sign(change.bc.advocacy$transformed) == -1, "lower", "higher")` ratio of contentious aid to noncontentious aid, all else being equal.
+
+```{r plot-h2-coefs, fig.width=5, fig.height=4}
+vars.to.plot <- c("barriers.total_within", "barriers.total_between",
+                  "barriers.total_new",
+                  "advocacy_within", "advocacy_between", 
+                  "entry_within", "entry_between", 
+                  "funding_within", "funding_between",
+                  "advocacy_new", "entry_new", "funding_new",
+                  "csre_within", "csre_between")
+
+coefs.raw.h2 <- mods.h2.next_year.melded %>%
+  unnest(tidy.melded) %>%
+  filter(term != "(Intercept)",
+         term %in% vars.to.plot) %>%
+  left_join(coef.names.all, by="term") %>%
+  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  arrange(desc(term)) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(coef.type = case_when(
+    str_detect(.$term, "_within") ~ "Within",
+    str_detect(.$term, "_between") ~ "Between",
+    TRUE ~ "Not split"
+  )) %>% 
+  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
+                            ordered=TRUE))
+
+ggplot(coefs.raw.h2, aes(y=term_plot, x=estimate, colour=coef.type)) + 
+  geom_vline(xintercept=0, colour="grey50", size=1) + 
+  geom_pointrangeh(aes(xmin=conf.low, xmax=conf.high), size=.5) + 
+  labs(x="Estimate", y=NULL) +
+  guides(color=guide_legend(title=NULL)) +
+  theme_donors()
+```
 
 ```{r h2-melded-table-1, results="asis", warning=FALSE}
 stargazer.fake(mods.h2.next_year.melded, exponentiate=TRUE)
