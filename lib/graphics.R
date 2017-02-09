@@ -1,6 +1,12 @@
 library(gridExtra)
 library(ggstance)
 
+model.colors <- c("#1f78b4",  # Dark blue
+                  "#a6cee3",  # Light blue
+                  "#33a02c",  # Dark green
+                  "#b2df8a",  # Light green
+                  "#ff7f00")  # Dark orange
+
 theme_donors <- function(base_size=9, base_family="Open Sans") {
   update_geom_defaults("bar", list(fill = "grey30"))
   update_geom_defaults("line", list(colour = "grey30"))
