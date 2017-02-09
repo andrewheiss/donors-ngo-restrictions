@@ -115,7 +115,7 @@ bib:	$(BIB)
 %.html:	%.md
 	@echo "$(WARN_COLOR)Converting Markdown to HTML using standard template...$(NO_COLOR)"
 	$(PREFIX)/bin/replace_includes.py $< | $(PREFIX)/bin/replace_pdfs.py $(PNG_CONVERT) | \
-	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block -w html -S \
+	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block --mathjax -w html -S \
 		$(CROSSREF) \
 		--default-image-extension=png \
 		--template=$(PREFIX)/templates/html.template \
