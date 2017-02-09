@@ -237,7 +237,9 @@ meld.imputed.models <- function(model.data, exponentiate=FALSE) {
     melded.tidy <- melded.tidy %>%
       left_join(just.var, by="term") %>%
       mutate(or = exp(estimate),
-             or.se = sqrt(or^2 * var.diag))
+             or.se = sqrt(or^2 * var.diag),
+             or.upper = or + (qnorm(0.975) * or.se),
+             or.lower = or + (qnorm(0.025) * or.se))
   }
   
   melded.tidy
@@ -931,10 +933,10 @@ coefs.raw.h2 <- mods.h2.next_year.melded %>%
   mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
                             ordered=TRUE))
 
-ggplot(coefs.raw.h2, aes(y=term_plot, x=estimate, colour=coef.type)) + 
-  geom_vline(xintercept=0, colour="grey50", size=1) + 
-  geom_pointrangeh(aes(xmin=conf.low, xmax=conf.high), size=.5) + 
-  labs(x="Estimate", y=NULL) +
+ggplot(coefs.raw.h2, aes(y=term_plot, x=or, colour=coef.type)) + 
+  geom_vline(xintercept=1, colour="grey50", size=1) + 
+  geom_pointrangeh(aes(xmin=or.lower, xmax=or.upper), size=0.5) + 
+  labs(x="Odds ratio", y=NULL) +
   guides(color=guide_legend(title=NULL)) +
   theme_donors()
 ```
@@ -997,11 +999,6 @@ simulate.predictions.proportion.csre <- function(x) {
   
   return(df.simulated.all)
 }
-
-x1 <- mods.h2.next_year.melded %>%
-  filter(model.name == "mod.h2.csre") %>%
-  unnest(data)
-x <- x1$model[[1]]
 
 simulated.h2.advocacy <- mods.h2.next_year.melded %>%
   filter(model.name == "mod.h2.type.total") %>%
