@@ -132,7 +132,7 @@ ggplot(plot.aid.us, aes(x=year, y=(total / 1000000000))) +
   theme_donors()
 ```
 
-### Proporition of US aid to types of NGOs
+### Proportion of US aid to types of NGOs
 
 Total amounts over time:
 
