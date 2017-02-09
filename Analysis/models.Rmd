@@ -1353,19 +1353,6 @@ $$`r filter(all.models, h==4)$math`$$
 
 ---
 
-## H~a~: Quality of governance tempers shifts in aid
-
-### Results
-
-
-### Model diagnostics
-
-
-### Predicted ODA
-
-
----
-
 ## Robustness checks
 
 ### Imputation
