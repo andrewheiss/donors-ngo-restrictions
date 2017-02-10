@@ -267,7 +267,7 @@ meld.imputed.models <- function(model.data, exponentiate=FALSE) {
 # Expects a data frame with a column named tidy.melded and a row for model
 # names. Term names are based on the first model in the data column for each
 # row, and are filtered through stargazer to get the correct row order.
-stargazer.fake <- function(df, exponentiate=FALSE) {
+stargazer.fake <- function(df, caption=NULL, note=NULL, exponentiate=FALSE) {
   # Create a blank row with a bolded row name
   header.row <- function(header) {
     data_frame(term = paste0("**", header, "**"), 
@@ -275,6 +275,14 @@ stargazer.fake <- function(df, exponentiate=FALSE) {
     spread(models, value)
   }
   
+  note.row <- function(note) {
+    crossing(term = note,
+             models = df$model.name, value = "") %>%
+      spread(models, value) %>%
+      # Sort based on original note order
+      slice(match(note, term))
+  }
+
   coef.order.models <- df %>%
     # Select just the first row of each model
     unnest(data) %>%
@@ -400,9 +408,16 @@ stargazer.fake <- function(df, exponentiate=FALSE) {
     random.title <- "Random part"
   }
 
+  if (!is.null(note)) {
+    notes <- bind_rows(header.row("Notes"), note.row(note))
+  } else {
+    notes <- NULL
+  }
+  
   nice.top.bottom <- bind_rows(header.row(fixed.title), fixed.coefs, 
                                header.row(random.title), random.coefs,
-                               header.row("Model details"), bottom.details) %>%
+                               header.row("Model details"), bottom.details,
+                               notes) %>%
     select_(.dots = c("term", df$model.name))
   
   # Make column names (1), (2), etc.
@@ -413,7 +428,8 @@ stargazer.fake <- function(df, exponentiate=FALSE) {
   # TODO: MAYBE: Let this be user configurable
   table.align <- paste0(c("l", rep("c", length(df$model.name))), collapse="")
   
-  pandoc.table(nice.top.bottom, keep.line.breaks=TRUE, justify=table.align)
+  pandoc.table.return(nice.top.bottom, keep.line.breaks=TRUE,
+                      justify=table.align, caption=caption)
 }
 ```
 
