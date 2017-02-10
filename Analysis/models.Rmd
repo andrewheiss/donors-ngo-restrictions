@@ -1340,7 +1340,11 @@ fig.simulated.h3.barriers
 
 > **H~4~**: As restrictive laws against NGOs in a country are enacted, donors should be more likely to provide aid to neighboring countries.
 
+Our dependent variable for this hypothesis is the total amount of ODA given to countries within 900 km of a country's border, capturing aid given to the overall neighborhood. The model is structured similarly to H~1~, using just the log of aid rather than any proportional measure, which makes interpreting the coefficients a lot easier (yay!): 
+
 $$`r filter(all.models, h==4)$math`$$
+
+With the dependent variable specified like this, it makes less sense to use country-level random effects, since the unit of analysis is essentially the entire neighborhood, not a single country. We're looking at the effect of one country's regulations, wealth, democracy, corruption, and bad stuff on the overall neighborhood's aid. 
 
 ```{r h4-models-1, warning=FALSE, message=FALSE, cache=TRUE}
 # Run models on each of the datasets (original and imputed) and save in a big data frame
@@ -1361,8 +1365,7 @@ mods.h4.next_year.raw <- df.country.aid.demean.next_year.both %>%
 mods.h4.next_year <- mods.h4.next_year.raw %>%
   gather(model.name, model, -m, -data) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE),
-         augment = model %>% map(broom::augment))
+         tidy = model %>% map(broom::tidy, conf.int=TRUE))
 
 # Meld the imputed models
 mods.h4.next_year.melded <- mods.h4.next_year %>%
@@ -1374,14 +1377,11 @@ mods.h4.next_year.melded <- mods.h4.next_year %>%
 
 ### Results
 
-```{r plot-h4-coefs, fig.width=7, fig.height=4}
-vars.to.plot <- c("barriers.total_within", "barriers.total_between",
-                  "barriers.total_new",
-                  "advocacy_within", "advocacy_between", 
-                  "entry_within", "entry_between", 
-                  "funding_within", "funding_between",
+```{r plot-h4-coefs, fig.width=5, fig.height=4}
+vars.to.plot <- c("barriers.total", "barriers.total_new",
+                  "advocacy", "entry", "funding",
                   "advocacy_new", "entry_new", "funding_new",
-                  "csre_within", "csre_between")
+                  "csre")
 
 coefs.raw.h4 <- mods.h4.next_year.melded %>%
   unnest(tidy.melded) %>%
@@ -1391,13 +1391,6 @@ coefs.raw.h4 <- mods.h4.next_year.melded %>%
   mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
   arrange(desc(term)) %>%
   mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
-  mutate(coef.type = case_when(
-    str_detect(.$term, "_within") ~ "Within",
-    str_detect(.$term, "_between") ~ "Between",
-    TRUE ~ "Not split"
-  )) %>% 
-  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
-                            ordered=TRUE)) %>%
   mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
 
 ggplot(coefs.raw.h4, aes(y=term_plot, x=estimate, colour=model.name)) + 
@@ -1406,8 +1399,7 @@ ggplot(coefs.raw.h4, aes(y=term_plot, x=estimate, colour=model.name)) +
   labs(x="Estimate", y=NULL) +
   scale_colour_manual(values=model.colors) +
   guides(color=FALSE) +
-  theme_donors() + 
-  facet_wrap(~ coef.type, scales="free")
+  theme_donors()
 ```
 
 ```{r h4-melded-table-1, results="asis", warning=FALSE}
@@ -1422,12 +1414,11 @@ stargazer.fake(mods.h4.next_year.melded)
 ```{r h4-simulate-total, warning=FALSE, fig.width=6}
 simulate.predictions.barriers <- function(x) {
   new.data <- x@frame %>%
-    select(-c(barriers.total_within, year, cowcode)) %>%
+    select(-c(barriers.total, year)) %>%
     summarise_all(typical) %>%
     mutate(id = 1,
            nb_oda.sum_log_next_year = NA) %>%
-    right_join(expand.grid(barriers.total_within = seq(-5, 5, 0.5),
-                           cowcode = 1000:1050,
+    right_join(expand.grid(barriers.total = seq(0, 12, 0.5),
                            year = 1981:2012,
                            id = 1), by="id") %>% select(-id)
   
@@ -1455,32 +1446,18 @@ simulated.h4.barriers.total <- mods.h4.next_year.melded %>%
   unnest(simulated)
 
 df.plot.data <- simulated.h4.barriers.total %>%
-  group_by(id, m, cowcode, barriers.total_within) %>%
+  group_by(id, m, barriers.total) %>%
   summarise_at(vars(starts_with("sim")), funs(avg = mean(.))) %>%
   ungroup() %>%
-  gather(key, value, -c(id, m, cowcode, barriers.total_within))
-
-df.plot.data.mean <- df.plot.data %>%
-  group_by(barriers.total_within) %>%
-  summarise(value = mean(value)) %>%
-  mutate(value.exp = expm1(value)) %>%
-  mutate(cowcode=1)  # Fake country so the line plots
-
-fig.simulated.h4.barriers <- ggplot(df.plot.data, aes(x=barriers.total_within, 
-                                                     y=expm1(value), group=cowcode)) + 
-  geom_vline(xintercept=0, size=0.5) +
-  geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
-  geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour="#BD4932") +
-  labs(x="Difference from average number of anti-NGO barriers in country\n(within effect)",
-       y="Simulated neighborhood ODA in the following year") +
-  scale_y_continuous(labels=scales::dollar, trans=scales::log1p_trans()) +
-  theme_donors()
+  gather(key, value, -c(id, m, barriers.total)) %>%
+  group_by(barriers.total) %>%
+  summarise(value = mean(value))
 ```
 
 ```{r h4-simulate-individual, warning=FALSE}
 simulate.predictions.indiv.barriers <- function(x) {
   hypothetical.bounds <- x@frame %>%
-    select(advocacy_within, entry_within, funding_within) %>%
+    select(advocacy, entry, funding) %>%
     summarise_all(funs(min, max)) %>%
     gather(key, value) %>%
     mutate(value = round(value, 0)) %>%
@@ -1493,17 +1470,16 @@ simulate.predictions.indiv.barriers <- function(x) {
     nest(-term) %>%
     mutate(newdata = map2(.x=data, .y=term,
                           ~ expand.grid(term = seq(.x$min, .x$max, by=0.5),
-                                        cowcode = 1000:1050,
                                         year = 1981:2012,
                                         id = 1) %>%
                             # Rename the term column to the actual term name
                             magrittr::set_colnames(c(.y, colnames(.)[-1]))))
   
   new.data.hypothetical <- as_tibble(bind_rows(new.data.hypothetical.nested$newdata)) %>%
-    mutate_at(vars(contains("within")), funs(ifelse(is.na(.), 0, .)))
+    mutate_at(vars(advocacy, entry, funding), funs(ifelse(is.na(.), 0, .)))
   
   new.data <- x@frame %>%
-    select(-c(advocacy_within, entry_within, funding_within, year, cowcode)) %>%
+    select(-c(advocacy, entry, funding, year)) %>%
     summarise_all(typical) %>%
     mutate(id = 1,
            nb_oda.sum_log_next_year = NA) %>%
@@ -1524,9 +1500,9 @@ simulate.predictions.indiv.barriers <- function(x) {
 
 barriers.indiv.clean.names <- tribble(
   ~barrier, ~barrier.clean,
-  "advocacy_within", "Barriers to advocacy",
-  "entry_within", "Barriers to entry",
-  "funding_within", "Barriers to funding"
+  "advocacy", "Barriers to advocacy",
+  "entry", "Barriers to entry",
+  "funding", "Barriers to funding"
 )
 
 simulated.h4.barriers.indiv <- mods.h4.next_year.melded %>%
@@ -1534,54 +1510,41 @@ simulated.h4.barriers.indiv <- mods.h4.next_year.melded %>%
   unnest(data) %>%
   mutate(simulated = model %>% map(~ simulate.predictions.indiv.barriers(.))) %>%
   unnest(simulated) %>%
-  gather(barrier, barrier.value, c(advocacy_within, entry_within, funding_within))
+  gather(barrier, barrier.value, c(advocacy, entry, funding))
 
 df.plot.data.indiv <- simulated.h4.barriers.indiv %>%
-  group_by(id, m, cowcode, barrier, barrier.value) %>%
+  group_by(id, m, barrier, barrier.value) %>%
   summarise_at(vars(starts_with("sim")), funs(avg = mean(.))) %>%
   ungroup() %>%
-  gather(key, value, -c(id, m, cowcode, barrier, barrier.value)) %>%
-  left_join(barriers.indiv.clean.names, by="barrier")
-
-df.plot.data.mean.indiv <- df.plot.data.indiv %>%
+  gather(key, value, -c(id, m, barrier, barrier.value)) %>%
   group_by(barrier, barrier.value) %>%
   summarise(value = mean(value)) %>%
-  mutate(value.exp = expm1(value)) %>%
-  mutate(cowcode=1) %>%  # Fake country so the line plots
   left_join(barriers.indiv.clean.names, by="barrier")
 ```
 
 ```{r h4-simulate-both, warning=FALSE, fig.width=6.5, fig.height=4}
 # Combine the two plot data frames
 df.plot.data.both <- df.plot.data %>%
-  mutate(barrier = "barriers.total_within", barrier.clean = "Total barriers") %>%
-  rename(barrier.value = barriers.total_within) %>%
+  mutate(barrier = "barriers.total", barrier.clean = "Total barriers") %>%
+  rename(barrier.value = barriers.total) %>%
   bind_rows(df.plot.data.indiv) %>%
   mutate(barrier.clean = ordered(fct_inorder(barrier.clean)),
          highlight = ifelse(barrier.clean == "Total barriers", TRUE, FALSE))
-
-df.plot.data.mean.both <- df.plot.data.mean %>%
-  mutate(barrier = "barriers.total_within", barrier.clean = "Total barriers") %>%
-  rename(barrier.value = barriers.total_within) %>%
-  bind_rows(df.plot.data.mean.indiv) %>%
-  mutate(barrier.clean = ordered(fct_inorder(barrier.clean)))
 
 # Create data frame for highlighting the total panel
 df.panel.highlight <- df.plot.data.both %>%
   distinct(barrier.clean, highlight)
 
 fig.simulated.h4.barriers.both <- ggplot(df.plot.data.both, 
-                                         aes(x=barrier.value, y=expm1(value), 
-                                             group=cowcode)) + 
+                                         aes(x=barrier.value, y=expm1(value))) + 
   geom_rect(data=df.panel.highlight, 
             aes(fill=highlight, x=NULL, y=NULL, group=NULL),
             xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf, alpha=0.15) +
-  geom_vline(xintercept=0, size=0.5) +
-  geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
-  geom_smooth(data=df.plot.data.mean.both, size=1.5, method="lm", colour="#BD4932") +
-  labs(x="Difference from average number of anti-NGO barriers in country\n(within effects)",
+  geom_smooth(size=1.5, method="lm", colour="#BD4932") +
+  labs(x="Hypothetical anti-NGO legal barriers",
        y="Simulated neighborhood ODA in the following year") +
   scale_y_continuous(labels=scales::dollar, trans=scales::log1p_trans()) +
+  scale_x_continuous(breaks=integer_breaks()) +
   scale_fill_manual(values=c(NA, "grey50"), guide=FALSE) +
   facet_wrap(~ barrier.clean, scales="free_x") +
   theme_donors()

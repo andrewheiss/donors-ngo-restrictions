@@ -1,13 +1,13 @@
 mod.h4.barriers.total <- function(df, outcome) {
   indep.vars <- ~ 
-    barriers.total_within + barriers.total_between +
-    polity_within + polity_between +
-    gdp.capita_log_within + gdp.capita_log_between +
-    trade.pct.gdp_within + trade.pct.gdp_between +
-    corruption_within + corruption_between +
+    barriers.total +
+    polity +
+    gdp.capita_log +
+    trade.pct.gdp +
+    corruption +
     nb_oda.sum_log +
     internal.conflict.past.5 + natural_disaster.occurrence + post.1989 +
-    (1 | cowcode) + (1 | year)
+    (1 | year)
   
   lmer(build.formula(outcome, indep.vars), data=df)
 }
@@ -15,29 +15,29 @@ mod.h4.barriers.total <- function(df, outcome) {
 mod.h4.barriers.new <- function(df, outcome) {
   indep.vars <- ~ 
     barriers.total_new +
-    polity_within + polity_between + 
-    gdp.capita_log_within + gdp.capita_log_between +
-    trade.pct.gdp_within + trade.pct.gdp_between +
-    corruption_within + corruption_between +
+    polity +
+    gdp.capita_log +
+    trade.pct.gdp +
+    corruption +
     nb_oda.sum_log +
     internal.conflict.past.5 + natural_disaster.occurrence + post.1989 +
-    (1 | cowcode) + (1 | year)
+    (1 | year)
   
   lmer(build.formula(outcome, indep.vars), data=df)
 }
 
 mod.h4.type.total <- function(df, outcome) {
   indep.vars <- ~ 
-    advocacy_within + advocacy_between +
-    entry_within + entry_between +
-    funding_within + funding_between +
-    polity_within + polity_between + 
-    gdp.capita_log_within + gdp.capita_log_between +
-    trade.pct.gdp_within + trade.pct.gdp_between +
-    corruption_within + corruption_between +
+    advocacy +
+    entry +
+    funding +
+    polity +
+    gdp.capita_log +
+    trade.pct.gdp +
+    corruption +
     nb_oda.sum_log +
     internal.conflict.past.5 + natural_disaster.occurrence + post.1989 +
-    (1 | cowcode) + (1 | year)
+    (1 | year)
   
   lmer(build.formula(outcome, indep.vars), data=df)
 }
@@ -45,27 +45,27 @@ mod.h4.type.total <- function(df, outcome) {
 mod.h4.type.new <- function(df, outcome) {
   indep.vars <- ~ 
     advocacy_new + entry_new + funding_new +
-    polity_within + polity_between + 
-    gdp.capita_log_within + gdp.capita_log_between +
-    trade.pct.gdp_within + trade.pct.gdp_between +
-    corruption_within + corruption_between +
+    polity +
+    gdp.capita_log +
+    trade.pct.gdp +
+    corruption +
     nb_oda.sum_log +
     internal.conflict.past.5 + natural_disaster.occurrence + post.1989 +
-    (1 | cowcode) + (1 | year)
+    (1 | year)
   
   lmer(build.formula(outcome, indep.vars), data=df)
 }
 
 mod.h4.csre <- function(df, outcome) {
   indep.vars <- ~ 
-    csre_within + csre_between +
-    polity_within + polity_between + 
-    gdp.capita_log_within + gdp.capita_log_between +
-    trade.pct.gdp_within + trade.pct.gdp_between +
-    corruption_within + corruption_between +
+    csre +
+    polity +
+    gdp.capita_log +
+    trade.pct.gdp +
+    corruption +
     nb_oda.sum_log +
     internal.conflict.past.5 + natural_disaster.occurrence + post.1989 +
-    (1 | cowcode) + (1 | year)
+    (1 | year)
   
   lmer(build.formula(outcome, indep.vars), data=df)
 }

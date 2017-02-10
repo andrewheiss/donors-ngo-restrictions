@@ -70,3 +70,16 @@ plot.percent.missing <- function(df, n.cols=2) {
     facet_wrap(~ column, nrow=1, scales="free_y") +
     theme_donors() + theme(strip.text=element_blank())
 }
+
+
+# Specifying different scale_*_* for individual facets is tricky/impossible,
+# but this integer_breaks function will force all scales to be integers, at
+# least.
+# (via http://stackoverflow.com/a/10559838/120898)
+integer_breaks <- function(n = 5, ...) {
+  breaker <- scales::pretty_breaks(n, ...)
+  function(x) {
+    breaks <- breaker(x)
+    breaks[breaks == floor(breaks)]
+  }
+}
