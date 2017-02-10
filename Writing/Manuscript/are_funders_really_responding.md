@@ -106,13 +106,17 @@ Finally, in our fourth hypothesis, we propose that donors shift aid to neighbori
 
 To capture the lagged effect of each explanatory variable on amount of aid in a given year, we lead our different measures of foreign aid by one year. As a robustness check we also include models with aid leaded by two years and five years and find similar results. For the sake of modeling, we transform our measures of aid differently for each hypothesis: when looking at total aid amounts, we take the natural log of aid; when looking at proportions of aid, we use a logit transformation and add or subtract 0.001 from values that are exactly 0 or 1. @tbl:all-models-dvs lists the simplified functional forms for each hypothesis.
 
+\small
 !INCLUDE "../../Output/tbl-all-models-dvs.md"
+\normalsize
 
 ## Explanatory variables
 
 We are primarily interested in donor reactions to restrictive NGO legislation, which we measure in a few different ways. First, we use data from @chaudhry2016 and @christensen2013, who track the presence or absence of fifteen different NGO-related laws across 148 countries. These laws are categorized by purpose and encompass barriers to association, entry, funding, and advocacy. We create summative indices for the laws in each of these categories (see @tbl:ngo-barriers-index), as well as binary variables that indicate if a new law in a category was passed in a given year. The NGO legislation data indicates only the year of initial appearance of a legal barrier, so we carry the inverse of the first known value backwards (e.g. because Albania did not require NGO registration until 2001, it is coded as 0 until that year). As can be seen in Figure XXX, on average countries have eliminated barriers to association through constitutional and legal reforms, but have steadily increased the number of barriers to entry, funding, and advocacy. In particular, the average number of barriers to funding has increased more rapidly than other barriers since 2000. 
 
+\small
 !INCLUDE "../../Output/tbl-ngo-barriers-index.md"
+\normalsize
 
 An alternative method for measuring civil society restrictions is to look at the overall civil society regulatory environment instead of specific laws, since *de jure* legislation does not always reflect the *de facto* restrictions, especially in autocracies where the implementation of laws is far more discretionary. @Heiss:2016a developed a new civil society regulatory environment index (CSRE), which combines two civil society indexes from the Varieties of Democracy project [@VDEM]: (1) civil society repression and (2) civil society entry and exit regulations. The CSRE index ranges from roughly −6 to 6 (though typically only from −4 to 4), and shows more variation over time since it ostensibly captures changes in the implementation of the regulatory environment rather than the presence or absence of legislation. Figure XXX shows how the average global CSRE index has changed over time, and the trends tend to match changes in legislation—the CSRE reflects the decline in barriers to association in the 1990s. At the same time, since the CSRE captures the effects of the implementation of laws, it shows a marked drop in 2012 and 2013 which is not reflected in the overall count of NGO legislation, possibly because of discretionary enforcement. While the main focus of this paper is donor response to new legislation, we also look at donor response to changes in the overall CSRE as a robustness check.
 
@@ -161,3 +165,38 @@ Our findings have strong implications not just for donors, but for the operation
 While we have outlined some of the broad strategies that donors have undertaken in response to restrictive NGO legislation, these are by no means an exhaustive list of strategies. Funders may also undertake a number of other approaches such as increasing availability of emergency funds for grantees in troubles and exploring new partnerships with international business actors [@Carothers:2015] - strategies that are not testable in a cross-national approach. However, future qualitative work looking at these approaches can both examine a wider range of such strategies, as well as adjudicate between their effectiveness. 
 
 
+\clearpage
+
+# Appendix
+
+## Full model results
+
+\small
+!INCLUDE "../../Output/tbl-h1-coefs.md"
+\normalsize
+
+\clearpage
+
+\small
+!INCLUDE "../../Output/tbl-h2-coefs.md"
+\normalsize
+
+\clearpage
+
+\small
+!INCLUDE "../../Output/tbl-h3-domestic-coefs.md"
+\normalsize
+
+\clearpage
+
+\small
+!INCLUDE "../../Output/tbl-h3-foreign-coefs.md"
+\normalsize
+
+\clearpage
+
+\small
+!INCLUDE "../../Output/tbl-h4-coefs.md"
+\normalsize
+
+\clearpage
