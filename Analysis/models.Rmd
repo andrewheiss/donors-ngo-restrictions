@@ -38,6 +38,7 @@ source(file.path(PROJHOME, "Analysis", "robustness_models_definitions.R"))
 source(file.path(PROJHOME, "Analysis", "h1_model_definitions.R"))
 source(file.path(PROJHOME, "Analysis", "h2_model_definitions.R"))
 source(file.path(PROJHOME, "Analysis", "h3_model_definitions.R"))
+source(file.path(PROJHOME, "Analysis", "h4_model_definitions.R"))
 
 my.seed <- 1234
 set.seed(my.seed)
@@ -1341,15 +1342,252 @@ fig.simulated.h3.barriers
 
 $$`r filter(all.models, h==4)$math`$$
 
+```{r h4-models-1, warning=FALSE, message=FALSE, cache=TRUE}
+# Run models on each of the datasets (original and imputed) and save in a big data frame
+mods.h4.next_year.raw <- df.country.aid.demean.next_year.both %>%
+  nest(-m) %>%
+  mutate(mod.h4.barriers.total = data %>% map(mod.h4.barriers.total,
+                                              "nb_oda.sum_log_next_year"),
+         mod.h4.barriers.new = data %>% map(mod.h4.barriers.new,
+                                            "nb_oda.sum_log_next_year"),
+         mod.h4.type.total = data %>% map(mod.h4.type.total,
+                                          "nb_oda.sum_log_next_year"),
+         mod.h4.type.new = data %>% map(mod.h4.type.new,
+                                        "nb_oda.sum_log_next_year"),
+         mod.h4.csre = data %>% map(mod.h4.csre,
+                                    "nb_oda.sum_log_next_year"))
+
+# Get model details and parameters
+mods.h4.next_year <- mods.h4.next_year.raw %>%
+  gather(model.name, model, -m, -data) %>%
+  mutate(glance = model %>% map(broom::glance),
+         tidy = model %>% map(broom::tidy, conf.int=TRUE),
+         augment = model %>% map(broom::augment))
+
+# Meld the imputed models
+mods.h4.next_year.melded <- mods.h4.next_year %>%
+  filter(m != "original") %>%
+  group_by(model.name) %>%
+  nest() %>%
+  mutate(tidy.melded = data %>% map(meld.imputed.models))
+```
 
 ### Results
 
+```{r plot-h4-coefs, fig.width=7, fig.height=4}
+vars.to.plot <- c("barriers.total_within", "barriers.total_between",
+                  "barriers.total_new",
+                  "advocacy_within", "advocacy_between", 
+                  "entry_within", "entry_between", 
+                  "funding_within", "funding_between",
+                  "advocacy_new", "entry_new", "funding_new",
+                  "csre_within", "csre_between")
+
+coefs.raw.h4 <- mods.h4.next_year.melded %>%
+  unnest(tidy.melded) %>%
+  filter(term != "(Intercept)",
+         term %in% vars.to.plot) %>%
+  left_join(coef.names.all, by="term") %>%
+  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  arrange(desc(term)) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(coef.type = case_when(
+    str_detect(.$term, "_within") ~ "Within",
+    str_detect(.$term, "_between") ~ "Between",
+    TRUE ~ "Not split"
+  )) %>% 
+  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
+                            ordered=TRUE)) %>%
+  mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
+
+ggplot(coefs.raw.h4, aes(y=term_plot, x=estimate, colour=model.name)) + 
+  geom_vline(xintercept=0, colour="grey50", size=0.5) + 
+  geom_pointrangeh(aes(xmin=conf.low, xmax=conf.high), size=.5) + 
+  labs(x="Estimate", y=NULL) +
+  scale_colour_manual(values=model.colors) +
+  guides(color=FALSE) +
+  theme_donors() + 
+  facet_wrap(~ coef.type, scales="free")
+```
+
+```{r h4-melded-table-1, results="asis", warning=FALSE}
+stargazer.fake(mods.h4.next_year.melded)
+```
 
 ### Model diagnostics
 
 
-### Predicted ODA
+### Predicted ODA to all neighbors
 
+```{r h4-simulate-total, warning=FALSE, fig.width=6}
+simulate.predictions.barriers <- function(x) {
+  new.data <- x@frame %>%
+    select(-c(barriers.total_within, year, cowcode)) %>%
+    summarise_all(typical) %>%
+    mutate(id = 1,
+           nb_oda.sum_log_next_year = NA) %>%
+    right_join(expand.grid(barriers.total_within = seq(-5, 5, 0.5),
+                           cowcode = 1000:1050,
+                           year = 1981:2012,
+                           id = 1), by="id") %>% select(-id)
+  
+  df.simulated.all <- tribble(
+    ~id, ~data,
+    # Uncomment to include predictions of original data
+    # "original", model.to.use@frame,
+    "hypothetical", new.data
+  ) %>%
+    # Use simulate() instead of predict() to use the random effects in the predictions
+    # https://tmalsburg.github.io/blog/predict-vs-simulate-in-lme4/
+    mutate(simulated = data %>% 
+             map(~ simulate(x, nsim=1, seed=1, 
+                            newdata=select(.x, -nb_oda.sum_log_next_year), 
+                            re.form=NA, allow.new.levels=TRUE))) %>%
+    unnest()
+  
+  return(df.simulated.all)
+}
+
+simulated.h4.barriers.total <- mods.h4.next_year.melded %>%
+  filter(model.name == "mod.h4.barriers.total") %>%
+  unnest(data) %>%
+  mutate(simulated = model %>% map(~ simulate.predictions.barriers(.))) %>%
+  unnest(simulated)
+
+df.plot.data <- simulated.h4.barriers.total %>%
+  group_by(id, m, cowcode, barriers.total_within) %>%
+  summarise_at(vars(starts_with("sim")), funs(avg = mean(.))) %>%
+  ungroup() %>%
+  gather(key, value, -c(id, m, cowcode, barriers.total_within))
+
+df.plot.data.mean <- df.plot.data %>%
+  group_by(barriers.total_within) %>%
+  summarise(value = mean(value)) %>%
+  mutate(value.exp = expm1(value)) %>%
+  mutate(cowcode=1)  # Fake country so the line plots
+
+fig.simulated.h4.barriers <- ggplot(df.plot.data, aes(x=barriers.total_within, 
+                                                     y=expm1(value), group=cowcode)) + 
+  geom_vline(xintercept=0, size=0.5) +
+  geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
+  geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour="#BD4932") +
+  labs(x="Difference from average number of anti-NGO barriers in country\n(within effect)",
+       y="Simulated neighborhood ODA in the following year") +
+  scale_y_continuous(labels=scales::dollar, trans=scales::log1p_trans()) +
+  theme_donors()
+```
+
+```{r h4-simulate-individual, warning=FALSE}
+simulate.predictions.indiv.barriers <- function(x) {
+  hypothetical.bounds <- x@frame %>%
+    select(advocacy_within, entry_within, funding_within) %>%
+    summarise_all(funs(min, max)) %>%
+    gather(key, value) %>%
+    mutate(value = round(value, 0)) %>%
+    # Have to separate on _m because of multiple _s, then re-add the m
+    separate(key, into=c("term", "variable"), sep="_m") %>%
+    mutate(variable = paste0("m", variable)) %>%
+    spread(variable, value)
+  
+  new.data.hypothetical.nested <- hypothetical.bounds %>%
+    nest(-term) %>%
+    mutate(newdata = map2(.x=data, .y=term,
+                          ~ expand.grid(term = seq(.x$min, .x$max, by=0.5),
+                                        cowcode = 1000:1050,
+                                        year = 1981:2012,
+                                        id = 1) %>%
+                            # Rename the term column to the actual term name
+                            magrittr::set_colnames(c(.y, colnames(.)[-1]))))
+  
+  new.data.hypothetical <- as_tibble(bind_rows(new.data.hypothetical.nested$newdata)) %>%
+    mutate_at(vars(contains("within")), funs(ifelse(is.na(.), 0, .)))
+  
+  new.data <- x@frame %>%
+    select(-c(advocacy_within, entry_within, funding_within, year, cowcode)) %>%
+    summarise_all(typical) %>%
+    mutate(id = 1,
+           nb_oda.sum_log_next_year = NA) %>%
+    right_join(new.data.hypothetical, by="id") %>% select(-id)
+  
+  df.simulated.all <- tribble(
+    ~id, ~data,
+    "hypothetical", new.data
+  ) %>%
+    mutate(simulated = data %>% 
+             map(~ simulate(x, nsim=1, seed=1, 
+                            newdata=select(.x, -nb_oda.sum_log_next_year), 
+                            re.form=NA, allow.new.levels=TRUE))) %>%
+    unnest()
+  
+  return(df.simulated.all)
+}
+
+barriers.indiv.clean.names <- tribble(
+  ~barrier, ~barrier.clean,
+  "advocacy_within", "Barriers to advocacy",
+  "entry_within", "Barriers to entry",
+  "funding_within", "Barriers to funding"
+)
+
+simulated.h4.barriers.indiv <- mods.h4.next_year.melded %>%
+  filter(model.name == "mod.h4.type.total") %>%
+  unnest(data) %>%
+  mutate(simulated = model %>% map(~ simulate.predictions.indiv.barriers(.))) %>%
+  unnest(simulated) %>%
+  gather(barrier, barrier.value, c(advocacy_within, entry_within, funding_within))
+
+df.plot.data.indiv <- simulated.h4.barriers.indiv %>%
+  group_by(id, m, cowcode, barrier, barrier.value) %>%
+  summarise_at(vars(starts_with("sim")), funs(avg = mean(.))) %>%
+  ungroup() %>%
+  gather(key, value, -c(id, m, cowcode, barrier, barrier.value)) %>%
+  left_join(barriers.indiv.clean.names, by="barrier")
+
+df.plot.data.mean.indiv <- df.plot.data.indiv %>%
+  group_by(barrier, barrier.value) %>%
+  summarise(value = mean(value)) %>%
+  mutate(value.exp = expm1(value)) %>%
+  mutate(cowcode=1) %>%  # Fake country so the line plots
+  left_join(barriers.indiv.clean.names, by="barrier")
+```
+
+```{r h4-simulate-both, warning=FALSE, fig.width=6.5, fig.height=4}
+# Combine the two plot data frames
+df.plot.data.both <- df.plot.data %>%
+  mutate(barrier = "barriers.total_within", barrier.clean = "Total barriers") %>%
+  rename(barrier.value = barriers.total_within) %>%
+  bind_rows(df.plot.data.indiv) %>%
+  mutate(barrier.clean = ordered(fct_inorder(barrier.clean)),
+         highlight = ifelse(barrier.clean == "Total barriers", TRUE, FALSE))
+
+df.plot.data.mean.both <- df.plot.data.mean %>%
+  mutate(barrier = "barriers.total_within", barrier.clean = "Total barriers") %>%
+  rename(barrier.value = barriers.total_within) %>%
+  bind_rows(df.plot.data.mean.indiv) %>%
+  mutate(barrier.clean = ordered(fct_inorder(barrier.clean)))
+
+# Create data frame for highlighting the total panel
+df.panel.highlight <- df.plot.data.both %>%
+  distinct(barrier.clean, highlight)
+
+fig.simulated.h4.barriers.both <- ggplot(df.plot.data.both, 
+                                         aes(x=barrier.value, y=expm1(value), 
+                                             group=cowcode)) + 
+  geom_rect(data=df.panel.highlight, 
+            aes(fill=highlight, x=NULL, y=NULL, group=NULL),
+            xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf, alpha=0.15) +
+  geom_vline(xintercept=0, size=0.5) +
+  geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
+  geom_smooth(data=df.plot.data.mean.both, size=1.5, method="lm", colour="#BD4932") +
+  labs(x="Difference from average number of anti-NGO barriers in country\n(within effects)",
+       y="Simulated neighborhood ODA in the following year") +
+  scale_y_continuous(labels=scales::dollar, trans=scales::log1p_trans()) +
+  scale_fill_manual(values=c(NA, "grey50"), guide=FALSE) +
+  facet_wrap(~ barrier.clean, scales="free_x") +
+  theme_donors()
+
+fig.simulated.h4.barriers.both
+```
 
 ---
 
