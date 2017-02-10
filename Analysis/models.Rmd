@@ -668,7 +668,15 @@ ggplot(coefs.raw.h1, aes(y=term_plot, x=estimate, colour=model.name)) +
 ```
 
 ```{r h1-melded-table-1, results="asis", warning=FALSE}
-stargazer.fake(mods.h1.next_year.melded)
+caption <- "The effect of anti-NGO legislation on OECD overseas development assistance (ODA) in the following year (H~1~), full models {#tbl:h1-coefs}"
+note <- c("\\* *p* < 0.10; \\*\\* *p* < 0.05; \\*\\*\\* *p* < 0.01",
+          "Dependent variable log transformed.",
+          "Coefficients and standard errors\\ \naveraged across all imputations.")
+table.h1 <- stargazer.fake(mods.h1.next_year.melded, caption=caption, note=note)
+
+cat(table.h1)
+cat(table.h1, file=file.path(PROJHOME, "Output",
+                             "tbl-h1-coefs.md"))
 ```
 
 ### Model diagnostics
@@ -981,7 +989,16 @@ ggplot(coefs.raw.h2, aes(y=term_plot, x=or, colour=model.name)) +
 ```
 
 ```{r h2-melded-table-1, results="asis", warning=FALSE}
-stargazer.fake(mods.h2.next_year.melded, exponentiate=TRUE)
+caption <- "The effect of anti-NGO legislation on the proportion of OECD overseas development assistance (ODA) committed to contentious purposes in the following year (H~2~), full models {#tbl:h2-coefs}"
+note <- c("\\* *p* < 0.10; \\*\\* *p* < 0.05; \\*\\*\\* *p* < 0.01",
+          "Logit-linear models. Odds ratios reported.",
+          "Coefficients and standard errors\\ \naveraged across all imputations.")
+table.h2 <- stargazer.fake(mods.h2.next_year.melded, exponentiate=TRUE, 
+                           caption=caption, note=note)
+
+cat(table.h2)
+cat(table.h2, file=file.path(PROJHOME, "Output",
+                             "tbl-h2-coefs.md"))
 ```
 
 ### Model diagnostics
@@ -1190,7 +1207,16 @@ coefs.raw.h3.dom <- mods.h3.dom.next_year.melded %>%
 ```
 
 ```{r h3-melded-table-1-domestic, results="asis", warning=FALSE}
-stargazer.fake(mods.h3.dom.next_year.melded, exponentiate=TRUE)
+caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *domestic* NGOs in the following year (H~3~), full models {#tbl:h3-domestic-coefs}"
+note <- c("\\* *p* < 0.10; \\*\\* *p* < 0.05; \\*\\*\\* *p* < 0.01",
+          "Logit-linear models. Odds ratios reported.",
+          "Coefficients and standard errors\\ \naveraged across all imputations.")
+table.h3.domestic <- stargazer.fake(mods.h3.dom.next_year.melded, exponentiate=TRUE, 
+                                    caption=caption, note=note)
+
+cat(table.h3.domestic)
+cat(table.h3.domestic, file=file.path(PROJHOME, "Output",
+                                      "tbl-h3-domestic-coefs.md"))
 ```
 
 #### Proportion to foreign NGOs
@@ -1223,7 +1249,16 @@ coefs.raw.h3.foreign <- mods.h3.foreign.next_year.melded %>%
 ```
 
 ```{r h3-melded-table-1-foreign, results="asis", warning=FALSE}
-stargazer.fake(mods.h3.foreign.next_year.melded, exponentiate=TRUE)
+caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *US-based and international* NGOs in the following year (H~3~), full models {#tbl:h3-foreign-coefs}"
+note <- c("\\* *p* < 0.10; \\*\\* *p* < 0.05; \\*\\*\\* *p* < 0.01",
+          "Logit-linear models. Odds ratios reported.",
+          "Coefficients and standard errors\\ \naveraged across all imputations.")
+table.h3.foreign <- stargazer.fake(mods.h3.foreign.next_year.melded, exponentiate=TRUE, 
+                                   caption=caption, note=note)
+
+cat(table.h3.foreign)
+cat(table.h3.foreign, file=file.path(PROJHOME, "Output",
+                                     "tbl-h3-foreign-coefs.md"))
 ```
 
 ```{r plot-h3-coefs-both, fig.width=7, fig.height=4}
@@ -1415,7 +1450,17 @@ ggplot(coefs.raw.h4, aes(y=term_plot, x=estimate, colour=model.name)) +
 ```
 
 ```{r h4-melded-table-1, results="asis", warning=FALSE}
-stargazer.fake(mods.h4.next_year.melded)
+caption <- "The effect of anti-NGO legislation on OECD overseas development assistance (ODA) in countries within 900 km radius in the following year (H~4~), full models {#tbl:h4-coefs}"
+note <- c("\\* *p* < 0.10; \\*\\* *p* < 0.05; \\*\\*\\* *p* < 0.01",
+          "Dependent variable log transformed.",
+          "Coefficients and standard errors\\ \naveraged across all imputations.")
+
+table.h4 <- stargazer.fake(mods.h4.next_year.melded, 
+                           caption=caption, note=note)
+
+cat(table.h4)
+cat(table.h4, file=file.path(PROJHOME, "Output",
+                             "tbl-h4-coefs.md"))
 ```
 
 ### Model diagnostics
@@ -1617,7 +1662,7 @@ mods.robust.check.m.next_year.melded.all <- bind_rows(
 ```
 
 ```{r tbl-show-imputations, results="asis"}
-stargazer.fake(mods.robust.check.m.next_year.melded.all)
+stargazer.fake(mods.robust.check.m.next_year.melded.all) %>% cat()
 ```
 
 ### Longer lags
@@ -1683,11 +1728,11 @@ mods.h1.after_5.melded <- mods.h1.after_5 %>%
 #### Effect on ODA after 2 years
 
 ```{r h1-melded-table-2, results="asis", warning=FALSE}
-stargazer.fake(mods.h1.after_2.melded)
+stargazer.fake(mods.h1.after_2.melded) %>% cat()
 ```
 
 #### Effect on ODA after 5 years
 
 ```{r h1-melded-table-5, results="asis", warning=FALSE}
-stargazer.fake(mods.h1.after_5.melded)
+stargazer.fake(mods.h1.after_5.melded) %>% cat()
 ```
