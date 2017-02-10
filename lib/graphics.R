@@ -11,6 +11,11 @@ channel.colors <- c("#fdbf6f",  # Light orange
                     "#1f78b4",  # Dark blue
                     "#e31a1c")  # Red
 
+barrier.colors <- c("#1b9e77",  # Turquoise
+                    "#d95f02",  # Orange
+                    "#7570b3",  # Purple
+                    "#e7298a")  # Pink
+
 plot.blank <- ggplot() + geom_blank(aes(1, 1)) + theme_void()
 
 # Extract legend from plot into a separate grob

@@ -309,13 +309,16 @@ df.restrictions.type <- df.country %>%
                           labels=unique(dcjw.questions.clean$barrier_display),
                           ordered=TRUE))
 
-ggplot(df.restrictions.type, aes(x=year, y=y, colour=barrier)) +
+fig.ngo.barriers <- ggplot(df.restrictions.type, aes(x=year, y=y, colour=barrier)) +
   geom_ribbon(aes(ymin=ymin, ymax=ymax, fill=barrier), alpha=0.3, colour=NA) +
   geom_line() +
-  labs(y="Average number of restrictive laws", x=NULL) +
-  guides(colour=guide_legend(title="Barriers to"),
-         fill=guide_legend(title="Barriers to")) +
+  labs(y="Average number of barriers", x=NULL) +
+  scale_colour_manual(values=barrier.colors) +
+  scale_fill_manual(values=barrier.colors) +
+  guides(colour=guide_legend(title=NULL),
+         fill=guide_legend(title=NULL)) +
   theme_donors()
+fig.ngo.barriers
 ```
 
 ### CSRE over time
@@ -327,11 +330,28 @@ df.csre.plot <- df.country %>%
   by_slice(~ mean_cl_normal(.x$csre)) %>%
   unnest()
 
-ggplot(df.csre.plot, aes(x=year, y=y)) +
+fig.csre <- ggplot(df.csre.plot, aes(x=year, y=y)) +
   geom_ribbon(aes(ymin=ymin, ymax=ymax), alpha=0.2) +
   geom_line() +
   labs(y="Average civil society regulatory environment", x=NULL) +
   theme_donors()
+fig.csre
+```
+
+### NGO barriers combined (for paper)
+
+```{r}
+fig.barriers <- arrangeGrob(fig.ngo.barriers + theme(legend.position="none"), 
+                            fig.csre, 
+                            extract_legend(fig.ngo.barriers), plot.blank,  
+                            ncol=2,
+                            heights=c(2, 0.2))
+
+grid::grid.newpage()
+grid::grid.draw(fig.barriers)
+
+fig.save.cairo(fig.barriers, filename="fig-barriers",
+               width=6, height=3)
 ```
 
 
