@@ -422,7 +422,7 @@ stargazer.fake <- function(df, caption=NULL, note=NULL, exponentiate=FALSE) {
   
   # Make column names (1), (2), etc.
   # TODO: Allow for custom column names
-  colnames(nice.top.bottom) <- c("", paste0("(", 1:length(df$model.name), ")"))
+  colnames(nice.top.bottom) <- c(" ", paste0("(", 1:length(df$model.name), ")"))
   
   # All columns are centered except the first
   # TODO: MAYBE: Let this be user configurable
