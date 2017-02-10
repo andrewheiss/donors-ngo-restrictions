@@ -78,11 +78,12 @@ plot.aid <- df.country.aid %>%
   group_by(year) %>%
   summarise(total = sum(total.oda))
 
-ggplot(plot.aid, aes(x=year, y=(total / 1000000000))) + 
+fig.oecd.aid <- ggplot(plot.aid, aes(x=year, y=(total / 1000000000))) + 
   geom_line() +
-  labs(x=NULL, y="Total ODA commitments (billions of USD)") +
+  labs(x=NULL, y="Total ODA commitments\n(billions of USD)") +
   scale_y_continuous(labels=scales::dollar) +
   theme_donors()
+fig.oecd.aid
 ```
 
 ### Proportion of contentious vs. noncontentious aid
@@ -106,11 +107,12 @@ plot.aid.contentiousness <- df.donor %>%
   mutate(perc = total / sum(total)) %>%
   filter(purpose.contentiousness == "High")
 
-ggplot(plot.aid.contentiousness, aes(x=year, y=perc)) + 
+fig.oecd.contention <- ggplot(plot.aid.contentiousness, aes(x=year, y=perc)) + 
   geom_line() +
   scale_y_continuous(labels=scales::percent) + 
   labs(x=NULL, y="Percent of contentious aid") +
   theme_donors()
+fig.oecd.contention
 ```
 
 ### USAID aid
@@ -125,11 +127,12 @@ plot.aid.us <- df.country.aid %>%
   group_by(year) %>%
   summarise(total = sum(oda.us))
 
-ggplot(plot.aid.us, aes(x=year, y=(total / 1000000000))) + 
+fig.us.aid <- ggplot(plot.aid.us, aes(x=year, y=(total / 1000000000))) + 
   geom_line() +
-  labs(x=NULL, y="Total US ODA commitments (billions of USD)") +
+  labs(x=NULL, y="Total US ODA commitments\n(billions of USD)") +
   scale_y_continuous(labels=scales::dollar) +
   theme_donors()
+fig.us.aid
 ```
 
 ### Proportion of US aid to types of NGOs
@@ -171,12 +174,15 @@ plot.usaid.channel <- df.country.aid %>%
   mutate(perc = total / annual.total) %>%
   left_join(channels.nice, by="channel")
 
-ggplot(plot.usaid.channel, aes(x=year, y=perc, colour=channel.clean)) + 
+fig.usaid.channel <- ggplot(plot.usaid.channel, 
+                            aes(x=year, y=perc, colour=channel.clean)) + 
   geom_line() +
   scale_y_continuous(labels=scales::percent) + 
+  scale_colour_manual(values=channel.colors) +
   labs(x=NULL, y="Percent of US aid given through NGOs") +
-  guides(colour=guide_legend(title=NULL)) +
+  guides(colour=guide_legend(title=NULL, reverse=TRUE)) +
   theme_donors()
+fig.usaid.channel
 ```
 
 USAID data categorizes all aid as government-channeled before 2000 because of some quirk in the data.
@@ -195,6 +201,34 @@ ggplot(plot.usaid.channels.all,
   labs(x=NULL, y="Percent of US aid given through different channels") +
   guides(colour=guide_legend(title=NULL)) +
   theme_donors()
+```
+
+So we just look at aid after 2000.
+
+```{r}
+fig.usaid.channel.trimmed <- fig.usaid.channel +
+  coord_cartesian(xlim=c(2000, 2013))
+fig.usaid.channel.trimmed
+```
+
+
+### All DV figures combined (for paper)
+
+```{r}
+# Extract legend and put it in its own grob
+# http://www.sthda.com/english/wiki/ggplot2-easy-way-to-mix-multiple-graphs-on-the-same-page-r-software-and-data-visualization#change-legend-position
+fig.dvs <- arrangeGrob(fig.oecd.aid, fig.oecd.contention, 
+                       fig.us.aid, fig.usaid.channel.trimmed + 
+                         theme(legend.position="none"),
+                       plot.blank, extract_legend(fig.usaid.channel.trimmed), 
+                       ncol=2,
+                       heights=c(1, 1, 0.2))
+
+grid::grid.newpage()
+grid::grid.draw(fig.dvs)
+
+fig.save.cairo(fig.dvs, filename="fig-dvs",
+               width=6, height=5)
 ```
 
 

@@ -7,6 +7,30 @@ model.colors <- c("#1f78b4",  # Dark blue
                   "#b2df8a",  # Light green
                   "#ff7f00")  # Dark orange
 
+channel.colors <- c("#fdbf6f",  # Light orange
+                    "#1f78b4",  # Dark blue
+                    "#e31a1c")  # Red
+
+plot.blank <- ggplot() + geom_blank(aes(1, 1)) + theme_void()
+
+# Extract legend from plot into a separate grob
+# http://stackoverflow.com/a/13650878/120898
+extract_legend <- function(a.gplot) {
+  tmp <- ggplot_gtable(ggplot_build(a.gplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
+
+# Save Cairo PDF and PNG at the same time
+fig.save.cairo <- function(fig, filepath=file.path(PROJHOME, "Output"), 
+                           filename, width, height, units="in", ...) {
+  ggsave(fig, filename=file.path(filepath, paste0(filename, ".pdf")),
+         width=width, height=height, units=units, device=cairo_pdf, ...)
+  ggsave(fig, filename=file.path(filepath, paste0(filename, ".png")),
+         width=width, height=height, units=units, type="cairo", dpi=300, ...)
+}
+
 theme_donors <- function(base_size=9, base_family="Open Sans") {
   update_geom_defaults("bar", list(fill = "grey30"))
   update_geom_defaults("line", list(colour = "grey30"))
