@@ -584,8 +584,7 @@ mods.h1.next_year.raw <- df.country.aid.demean.next_year.both %>%
 mods.h1.next_year <- mods.h1.next_year.raw %>%
   gather(model.name, model, -m, -data) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE),
-         augment = model %>% map(broom::augment))
+         tidy = model %>% map(broom::tidy, conf.int=TRUE))
 
 # Meld the imputed models
 mods.h1.next_year.melded <- mods.h1.next_year %>%
@@ -901,8 +900,7 @@ mods.h2.next_year.raw <- df.country.aid.demean.next_year.both %>%
 mods.h2.next_year <- mods.h2.next_year.raw %>%
   gather(model.name, model, -m, -data) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE),
-         augment = model %>% map(broom::augment))
+         tidy = model %>% map(broom::tidy, conf.int=TRUE))
 
 # Meld the imputed models
 mods.h2.next_year.melded <- mods.h2.next_year %>%
@@ -1106,8 +1104,7 @@ mods.h3.dom.next_year.raw <- df.country.aid.us.demean.next_year.both %>%
 mods.h3.dom.next_year <- mods.h3.dom.next_year.raw %>%
   gather(model.name, model, -m, -data) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE),
-         augment = model %>% map(broom::augment))
+         tidy = model %>% map(broom::tidy, conf.int=TRUE))
 
 # Meld the imputed models
 mods.h3.dom.next_year.melded <- mods.h3.dom.next_year %>%
@@ -1135,8 +1132,7 @@ mods.h3.foreign.next_year.raw <- df.country.aid.us.demean.next_year.both %>%
 mods.h3.foreign.next_year <- mods.h3.foreign.next_year.raw %>%
   gather(model.name, model, -m, -data) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE),
-         augment = model %>% map(broom::augment))
+         tidy = model %>% map(broom::tidy, conf.int=TRUE))
 
 # Meld the imputed models
 mods.h3.foreign.next_year.melded <- mods.h3.foreign.next_year %>%
@@ -1574,8 +1570,7 @@ mods.robust.check.m.next_year.raw <- df.country.aid.demean.next_year.all %>%
 mods.robust.check.m.next_year <- mods.robust.check.m.next_year.raw %>%
   gather(model.name, model, -m, -data) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE),
-         augment = model %>% map(broom::augment))
+         tidy = model %>% map(broom::tidy, conf.int=TRUE))
 
 # Meld the imputed models
 mods.robust.check.m.next_year.melded.original <- mods.robust.check.m.next_year %>%
@@ -1631,8 +1626,7 @@ mods.h1.after_2.raw <- df.country.aid.demean.after_2.impute %>%
 mods.h1.after_2 <- mods.h1.after_2.raw %>%
   gather(model.name, model, -m, -data) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE),
-         augment = model %>% map(broom::augment))
+         tidy = model %>% map(broom::tidy, conf.int=TRUE))
 
 # Meld the imputed models
 mods.h1.after_2.melded <- mods.h1.after_2 %>%
@@ -1660,8 +1654,7 @@ mods.h1.after_5.raw <- df.country.aid.demean.after_5.impute %>%
 mods.h1.after_5 <- mods.h1.after_5.raw %>%
   gather(model.name, model, -m, -data) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE),
-         augment = model %>% map(broom::augment))
+         tidy = model %>% map(broom::tidy, conf.int=TRUE))
 
 # Meld the imputed models
 mods.h1.after_5.melded <- mods.h1.after_5 %>%
