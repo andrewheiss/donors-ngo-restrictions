@@ -876,6 +876,9 @@ fig.display.both <- fig.simulated.h1.barriers.both +
   theme_donors(11)
 
 fig.simulated.h1.barriers.both
+
+fig.save.cairo(fig.simulated.h1.barriers.both, filename="fig-simulated-h1",
+               width=6.5, height=4)
 ```
 
 ---

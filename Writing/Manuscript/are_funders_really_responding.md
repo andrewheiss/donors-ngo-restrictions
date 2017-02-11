@@ -156,7 +156,24 @@ While this model specification is at first a little unwieldy, it has multiple be
 We use models with split *within* and *between* covariates and crossed country and year random effects for our first three hypotheses. The unit of analysis in our fourth hypothesis is slightly different, however, since it is the sum of all a country's neighbors and correspondingly double counts the variation of countries (e.g. the variable for both Rwanda and Burundi includes aid to Uganda). As such, we omit country-level random effects and include random effects only for year.
 
 
-# Results and Analysis
+# Results and analysis
+
+We present the estimates of our different models in coefficient plots below. Since there are many control variables, and most are doubled up with *within* and *between* effects, we only include variables related to the NGO regulatory environment in each plot. The full results of all models are included in the appendix. 
+
+
+## Changes in overall aid
+
+We first look at how anti-NGO legal barriers affect ODA in the following year (see @fig:coefs-h1). The total number of legal barriers has a significant negative effect on foreign aid—adding a new barrier or law beyond a country's average level of laws is associated with a 7% reduction in aid in the next year (p \< 0.1). It appears that the overall number of barriers matters more than simply increasing legal restrictions, since the binary indicator for adding a new legal barrier has no significant influence on aid. When we disaggregate the effect of different types of restrictions, we find that donors seem to respond primarily to barriers to advocacy. Increasing limitations on advocacy beyond a country's average level is associated with a 46% drop in aid the following year, on average (p \< 0.05). Barriers to entry and barriers to funding do not significantly influence aid, however. This relationship holds when looking at the binary addition of laws—aid decreases by 100% in the year following the passage of a new barrier to advocacy (p \< 0.1), but does not change when adding other legal restrictions. Finally, the overall civil society regulatory environment does not have any effect on foreign aid in the following year. Almost none of the between effects are statistically significant, with one exception: countries with more legal barriers to entry tend to have higher levels of aid (p \< 0.1).
+
+![Determinants of OECD ODA in the following year. Points indicate mean estimates from five imputed models; error bars indicate 95% confidence interval](../../Output/fig-coefs-h1){#fig:coefs-h1}
+
+The substantive impact of these coefficients can be seen in @fig:simulated-h1, which shows the predicted level of foreign aid from 50 model simulations from each of the 5 imputed datasets across a range of differences from the average number of NGO barriers in an average country (with all independent variables held at their mean or modal values). Adding an additional barrier to advocacy beyond a country's average can reduce foreign aid commitments by nearly $200 million in the following year. Though this amount is minuscule compared to the total amount of global foreign aid, measured in hundreds of billions of dollars (see the top left panel of @fig:dvs), it is sizable. 
+
+![Simulated ODA across a range of differences from average number of anti-NGO laws in an average country; dark line shows the average of 50 simulations across 5 imputed datasets](../../Output/fig-simulated-h1){#fig:simulated-h1}
+
+Why might barriers to advocacy have such an impact while other legal restrictions do not? Barriers to advocacy represent the harshest, most direct restrictions on NGO activity and include government intimidation or dissolution of organizations it finds undesirable. Donors are more responsive to these more direct kinds of restrictions, either in an effort to punish recalcitrant countries or because the restricted legal environment makes it more difficult to operate in the country. It appears that donors are influenced more by direct political intimidation and restriction than by more benign bureaucratic legal barriers against funding or registration.
+
+## Changes in aid purpose
 
 @TrippKang:2008 and logit linear models
 
