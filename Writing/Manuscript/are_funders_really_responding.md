@@ -129,14 +129,7 @@ We are primarily interested in donor reactions to restrictive NGO legislation, w
 !INCLUDE "../../Output/tbl-ngo-barriers-index.md"
 \normalsize
 
-An alternative method for measuring civil society restrictions is to look at the overall civil society regulatory environment instead of specific laws, 
-
-- This
-- is
-- a
-- test
-
-since *de jure* legislation does not always reflect the *de facto* restrictions, especially in autocracies where the implementation of laws is far more discretionary. @Heiss:2016a developed a new civil society regulatory environment index (CSRE), which combines two civil society indexes from the Varieties of Democracy project [@VDEM]: (1) civil society repression and (2) civil society entry and exit regulations. The CSRE index ranges from roughly −6 to 6 (though typically only from −4 to 4), and shows more variation over time since it ostensibly captures changes in the implementation of the regulatory environment rather than the presence or absence of legislation. The right panel of @fig:barriers shows how the average global CSRE index has changed over time, and the trends tend to match changes in legislation—the CSRE reflects the decline in barriers to association in the 1990s. At the same time, since the CSRE captures the effects of the implementation of laws, it shows a marked drop in 2012 and 2013 which is not reflected in the overall count of NGO legislation, possibly because of discretionary enforcement. While the main focus of this paper is donor response to new legislation, we also look at donor response to changes in the overall CSRE as a robustness check.
+An alternative method for measuring civil society restrictions is to look at the overall civil society regulatory environment instead of specific laws, since *de jure* legislation does not always reflect the *de facto* restrictions, especially in autocracies where the implementation of laws is far more discretionary. @Heiss:2016a developed a new civil society regulatory environment index (CSRE), which combines two civil society indexes from the Varieties of Democracy project [@VDEM]: (1) civil society repression and (2) civil society entry and exit regulations. The CSRE index ranges from roughly −6 to 6 (though typically only from −4 to 4), and shows more variation over time since it ostensibly captures changes in the implementation of the regulatory environment rather than the presence or absence of legislation. The right panel of @fig:barriers shows how the average global CSRE index has changed over time, and the trends tend to match changes in legislation—the CSRE reflects the decline in barriers to association in the 1990s. At the same time, since the CSRE captures the effects of the implementation of laws, it shows a marked drop in 2012 and 2013 which is not reflected in the overall count of NGO legislation, possibly because of discretionary enforcement. While the main focus of this paper is donor response to new legislation, we also look at donor response to changes in the overall CSRE as a robustness check.
 
 ## Controls
 
