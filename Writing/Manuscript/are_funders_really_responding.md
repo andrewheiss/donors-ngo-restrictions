@@ -11,7 +11,7 @@ date: February 8, 2017
 reference-section-title: References
 git-repo: https://github.com/andrewheiss/donors-ngo-restrictions
 abstract: >-
-    The last two decades have seen a proliferation of laws restricting NGOs throughout the world, resulting in an increasingly closed space for civil society. This crackdown on NGOs has been particularly acute in the Global South where states have imposed ever stricter regulations on foreign and domestic organizations. What is the effect of civil society restrictions on overall amounts of foreign aid, the targets of aid, and the nature of issues being funded? Looking at 147 countries from 1981-2013, we find …
+    The last two decades have seen a proliferation of laws restricting NGOs throughout the world, resulting in an increasingly closed space for civil society. This crackdown on NGOs has been particularly acute in the Global South where states have imposed ever stricter regulations on foreign and domestic organizations. What is the effect of civil society restrictions on overall amounts of foreign aid, the targets of aid, and the nature of issues being funded? Looking at 148 countries from 1981-2013, we find …
 thanks: >-
     We thank Elizabeth Bloodgood, Christopher Pallas, and the participants of the "Beyond the Boomerang" workshop held before the 2017 annual International Studies Association conference for their helpful comments. We also acknowledge John Holbein, Robbie Richards, and Simon Weschle for their invaluable help with interpreting the statistical models. 
 ...
@@ -29,7 +29,7 @@ Without access to these funds, organizations in the Global South focusing on rig
 
 In this article, we argue that states and donors agencies can respond to the crackdown on NGOs, first, by scaling back their operations. However, complete withdrawal due to the absence of non-governmental mechanisms for channeling aid or leaving civil society actors to fend for themselves may not be an ideal long-term response. Therefore, we argue that in other cases, donors can respond to the global pushback by decreasing funds for politically sensitive causes, instead providing more aid for tamer causes. Further, they can also provide more aid to INGOs instead of NGOs, as well as aid to neighboring countries, enabling targets in the repressive state to function out of those territories instead. INSERT FINDINGS
 
-Below, we first look at existing literature on the determinants of different varieties of foreign aid, especially to NGOs. While this literature focuses extensively on the politics of donor countries, the politics of recipient countries, especially with regard to their civil society legislations, remains unexplored. We then elaborate on our theory regarding the effects of restrictive NGO legislation on bilateral and multilateral donors, how it impacts the nature of funds disbursed, and the kinds of targets that receive these funds. We test our hypotheses through a large-N statistical analysis by looking at changes in aid across 147 countries from 1981-2013. We conclude by analyzing the implications of our findings, particularly for domestic NGOs in the Global South.
+Below, we first look at existing literature on the determinants of different varieties of foreign aid, especially to NGOs. While this literature focuses extensively on the politics of donor countries, the politics of recipient countries, especially with regard to their civil society legislations, remains unexplored. We then elaborate on our theory regarding the effects of restrictive NGO legislation on bilateral and multilateral donors, how it impacts the nature of funds disbursed, and the kinds of targets that receive these funds. We test our hypotheses through a large-N statistical analysis by looking at changes in aid across 148 countries from 1981-2013. We conclude by analyzing the implications of our findings, particularly for domestic NGOs in the Global South.
 
 
 # Foreign Aid and Civil Society
@@ -92,7 +92,7 @@ Finally, an alternative strand in the foreign aid literature argues that the dec
 
 # Methods
 
-We analyze donor reactions to state crackdown of NGOs by looking at how foreign aid has changed in response to anti-NGO legislation. We combine variables from several existing datasets and create a cross-sectional time series panel that includes information about aid and NGO legislation in 147 countries from 1981–2013.[^1]
+We analyze donor reactions to state crackdown of NGOs by looking at how foreign aid has changed in response to anti-NGO legislation. We combine variables from several existing datasets and create a cross-sectional time series panel that includes information about aid and NGO legislation in 148 countries from 1981–2013.[^1]
 
 ## Dependent variables
 
