@@ -437,24 +437,14 @@ stargazer.fake <- function(df, caption=NULL, note=NULL, exponentiate=FALSE) {
 
 As explained in each section below, we have to transform and operationalize the dependent variable (foreign aid) in different ways for each hypothesis. The table belows summarizes each simplified model specification.
 
-```{r dv-data, results="asis"}
-all.models <- tribble(
-  ~h, ~Hypothesis, ~math,
-  1, "H~1~", "ln( \\text{ODA}_{\\text{OECD}} )_{i, t+1} = \\text{NGO legislation}_{it} + \\text{controls}_{it}",
-  2, "H~2~", "ln( \\frac{\\text{contentious ODA}_{\\text{OECD}}}{\\text{noncontentious ODA}_{\\text{OECD}}} )_{i, t+1} = \\text{NGO legislation}_{it} + \\text{controls}_{it}",
-  3, "H~3~", "ln( \\frac{\\text{Aid to (domestic or foreign) NGOs}_{\\text{USAID}}}{\\text{Aid to other channels}_{\\text{USAID}}} )_{i, t+1} = \\text{NGO legislation}_{it} + \\text{controls}_{it}",
-  4, "H~4~", "ln( \\text{ODA in neighboring countries}_{\\text{OECD}} )_{i, t+1} = \\text{NGO legislation}_{it} + \\text{controls}_{it}"
-) %>%
-  mutate(`Simplified model` = paste0("$", math, "$"))
-
-caption <- "Transformations and operationalizations of aid in each hypothesis {#tbl:all-models-dvs}"
-all.models.table <- pandoc.table.return(select(all.models, Hypothesis, 
-                                               `Simplified model`), 
-                                        justify="ll", caption=caption)
-cat(all.models.table)
-cat(all.models.table, file=file.path(PROJHOME, "Output", "tbl-all-models-dvs.md"))
-```
-
+$$
+\begin{aligned}
+\boldsymbol{H_1}&: ln( \text{ODA}_{\text{OECD}} )_{i, t+1} &= \text{NGO legislation}_{it} + \text{controls}_{it} \\
+\boldsymbol{H_2}&: ln( \frac{\text{contentious ODA}_{\text{OECD}}}{\text{noncontentious ODA}_{\text{OECD}}} )_{i, t+1} &= \text{NGO legislation}_{it} + \text{controls}_{it} \\
+\boldsymbol{H_3}&: ln( \frac{\text{Aid to (domestic or foreign) NGOs}_{\text{USAID}}}{\text{Aid to other channels}_{\text{USAID}}} )_{i, t+1} &= \text{NGO legislation}_{it} + \text{controls}_{it} \\
+\boldsymbol{H_4}&: ln( \text{ODA in neighboring countries}_{\text{OECD}} )_{i, t+1} &= \text{NGO legislation}_{it} + \text{controls}_{it}
+\end{aligned}
+$$ {#eq:all-models-dvs}
 
 ## General model specifications and controls
 
@@ -569,7 +559,7 @@ bind_rows(
 
 > **H~1~**: In response to restrictive NGO legislation, bilateral, multilateral, and private donors may reduce their aid to repressive countries.
 
-$$`r filter(all.models, h==1)$math`$$
+$$ln( \text{ODA}_{\text{OECD}} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
 
 Our dependent variable for this hypothesis is the log of ODA (constant 2011 dollars), leaded by one year so we don't have to lag every other independent variable. As a robustness check, we also include models with log ODA leaded by 2 years and 5 years to account the implementation period following the passage of a law.
 
@@ -898,7 +888,7 @@ Working with proportion data, however, poses interesting mathematical and method
 
 We thus use a logit-linear model of the ratio of contentious aid to non-contentious aid:
 
-$$`r filter(all.models, h==2)$math`$$
+$$ln( \frac{\text{contentious ODA}_{\text{OECD}}}{\text{noncontentious ODA}_{\text{OECD}}} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
 
 We look at NGO legislation in the same ways as H~1~ and use the same controls.
 
@@ -1113,7 +1103,7 @@ It would be cool to model the ratio aid channeled through domestic to foreign NG
 
 Because the DVs are proportions, we have to make the same assumptions and weird interpretive tricks as H~2~, building a logit-linear model of the ratio of domestic or foreign NGO aid to all other channels:
 
-$$`r filter(all.models, h==3)$math`$$
+$$ln( \frac{\text{Aid to (domestic or foreign) NGOs}_{\text{USAID}}}{\text{Aid to other channels}_{\text{USAID}}} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
 
 Again, we use the same NGO legislation variables as H~1~ and H~2~ and use the same controls, except we omit "After 1989" since no observations actually occur after 1989.
 
@@ -1387,7 +1377,7 @@ fig.simulated.h3.barriers
 
 Our dependent variable for this hypothesis is the total amount of ODA given to countries within 900 km of a country's border, capturing aid given to the overall neighborhood. The model is structured similarly to H~1~, using just the log of aid rather than any proportional measure, which makes interpreting the coefficients a lot easier (yay!): 
 
-$$`r filter(all.models, h==4)$math`$$
+$$ln( \text{ODA in neighboring countries}_{\text{OECD}} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
 
 With the dependent variable specified like this, it makes less sense to use country-level random effects, since the unit of analysis is essentially the entire neighborhood, not a single country. We're looking at the effect of one country's regulations, wealth, democracy, corruption, and bad stuff on the overall neighborhood's aid. 
 
