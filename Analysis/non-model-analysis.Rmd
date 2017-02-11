@@ -68,12 +68,15 @@ Our data includes information about `r num.countries` countries across `r num.ye
 
 ### Overall OECD aid
 
-```{r}
+```{r summarize-oecd-aid}
 df.country.aid %>%
-  summarise(total = scales::dollar(sum(total.oda)))
+  summarise(total = scales::dollar(sum(total.oda))) %>% 
+  c() -> total.oecd.aid
 ```
 
-```{r}
+OECD members donated `r total.oecd.aid` between 1981 and 2013.
+
+```{r plot-oecd-aid}
 plot.aid <- df.country.aid %>%
   group_by(year) %>%
   summarise(total = sum(total.oda))
@@ -88,7 +91,7 @@ fig.oecd.aid
 
 ### Proportion of contentious vs. noncontentious aid
 
-```{r}
+```{r summarize-contentious-aid}
 df.donor %>%
   filter(year > 1980) %>%
   group_by(purpose.contentiousness) %>%
@@ -99,7 +102,7 @@ df.donor %>%
   formatPercentage("perc", 2)
 ```
 
-```{r}
+```{r plot-contentious-aid}
 plot.aid.contentiousness <- df.donor %>%
   filter(year > 1980) %>%
   group_by(year, purpose.contentiousness) %>%
@@ -117,12 +120,20 @@ fig.oecd.contention
 
 ### USAID aid
 
-```{r}
+```{r summarize-us-aid}
 df.country.aid %>%
-  summarise(total = scales::dollar(sum(oda.us)))
+  summarise(total = scales::dollar(sum(oda.us))) %>% 
+  c() -> total.us.aid
+
+df.country.aid %>%
+  filter(year > 1999) %>%
+  summarise(total = scales::dollar(sum(oda.us))) %>% 
+  c() -> total.us.aid.post.2000
 ```
 
-```{r}
+The US donated `r total.us.aid` between 1981 and 2013 and `r total.us.aid.post.2000` between 2000 and 2013.
+
+```{r plot-us-aid}
 plot.aid.us <- df.country.aid %>%
   group_by(year) %>%
   summarise(total = sum(oda.us))
@@ -139,7 +150,7 @@ fig.us.aid
 
 Total amounts over time:
 
-```{r}
+```{r summarize-aid-channels}
 usaid.total <- df.country.aid %>% summarise(total = sum(oda.us)) %>% as.numeric()
 
 df.country.aid %>%
@@ -154,7 +165,7 @@ df.country.aid %>%
 
 The US clearly favors US-based NGOs or international NGOs over domestic NGOs.
 
-```{r}
+```{r plot-aid-channels}
 usaid.total.yearly <- df.country.aid %>%
   group_by(year) %>%
   summarise(annual.total = sum(oda.us))
@@ -187,7 +198,7 @@ fig.usaid.channel
 
 USAID data categorizes all aid as government-channeled before 2000 because of some quirk in the data.
 
-```{r}
+```{r plot-all-channels}
 plot.usaid.channels.all <- df.donor.us %>%
   group_by(year, channel_subcategory_name) %>%
   summarise(total = sum(oda.us.2011)) %>%
@@ -205,7 +216,7 @@ ggplot(plot.usaid.channels.all,
 
 So we just look at aid after 2000.
 
-```{r}
+```{r plot-channels-post-2000}
 fig.usaid.channel.trimmed <- fig.usaid.channel +
   coord_cartesian(xlim=c(2000, 2013))
 fig.usaid.channel.trimmed
@@ -214,7 +225,7 @@ fig.usaid.channel.trimmed
 
 ### All DV figures combined (for paper)
 
-```{r}
+```{r plot-all-dvs, fig.width=6, fig.height=5}
 # Extract legend and put it in its own grob
 # http://www.sthda.com/english/wiki/ggplot2-easy-way-to-mix-multiple-graphs-on-the-same-page-r-software-and-data-visualization#change-legend-position
 fig.dvs <- arrangeGrob(fig.oecd.aid, fig.oecd.contention, 
@@ -340,7 +351,7 @@ fig.csre
 
 ### NGO barriers combined (for paper)
 
-```{r}
+```{r plot-all-ngo-barriers, fig.width=6}
 fig.barriers <- arrangeGrob(fig.ngo.barriers + theme(legend.position="none"), 
                             fig.csre, 
                             extract_legend(fig.ngo.barriers), plot.blank,  
