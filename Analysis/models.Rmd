@@ -647,7 +647,7 @@ coefs.raw.h1 <- mods.h1.next_year.melded %>%
                             ordered=TRUE)) %>%
   mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
 
-ggplot(coefs.raw.h1, aes(y=term_plot, x=estimate, colour=model.name)) + 
+fig.coefs.h1 <- ggplot(coefs.raw.h1, aes(y=term_plot, x=estimate, colour=model.name)) + 
   geom_vline(xintercept=0, colour="grey50", size=0.5) + 
   geom_pointrangeh(aes(xmin=conf.low, xmax=conf.high), size=.5) + 
   labs(x="Estimate", y=NULL) +
@@ -655,6 +655,10 @@ ggplot(coefs.raw.h1, aes(y=term_plot, x=estimate, colour=model.name)) +
   guides(color=FALSE) +
   theme_donors() + 
   facet_wrap(~ coef.type, scales="free")
+fig.coefs.h1
+
+fig.save.cairo(fig.coefs.h1, filename="fig-coefs-h1",
+               width=7, height=2.5)
 ```
 
 ```{r h1-melded-table-1, results="asis", warning=FALSE}
@@ -966,14 +970,18 @@ coefs.raw.h2 <- mods.h2.next_year.melded %>%
                             ordered=TRUE)) %>%
   mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
 
-ggplot(coefs.raw.h2, aes(y=term_plot, x=or, colour=model.name)) + 
-  geom_vline(xintercept=1, colour="grey50", size=1) + 
+fig.coefs.h2 <- ggplot(coefs.raw.h2, aes(y=term_plot, x=or, colour=model.name)) + 
+  geom_vline(xintercept=1, colour="grey50", size=0.5) + 
   geom_pointrangeh(aes(xmin=or.lower, xmax=or.upper), size=0.5) + 
   labs(x="Odds ratio", y=NULL) +
   scale_colour_manual(values=model.colors) +
   guides(color=FALSE) +
   theme_donors() + 
   facet_wrap(~ coef.type, scales="free")
+fig.coefs.h2
+
+fig.save.cairo(fig.coefs.h2, filename="fig-coefs-h2",
+               width=7, height=2.5)
 ```
 
 ```{r h2-melded-table-1, results="asis", warning=FALSE}
@@ -1254,15 +1262,20 @@ coefs.h3.both <- bind_rows(`Domestic NGOs` = coefs.raw.h3.dom,
                            `Foreign NGOs` = coefs.raw.h3.foreign,
                            .id="channel")
 
-ggplot(coefs.h3.both, aes(y=term_plot, x=or, colour=interaction(model.name, channel))) + 
+fig.coefs.h3 <- ggplot(coefs.h3.both, aes(y=term_plot, x=or, 
+                                          colour=interaction(model.name, channel))) + 
   geom_vline(xintercept=1, colour="grey50", size=1) + 
   geom_pointrangeh(aes(xmin=or.lower, xmax=or.upper, shape=channel), size=0.5,
                    position=position_dodgev(height=0.5)) + 
   labs(x="Odds ratio", y=NULL) +
   scale_colour_manual(values=c(model.colors, model.colors)) +
-  guides(color=FALSE, shape=guide_legend(title=NULL)) +
+  guides(color=FALSE, shape=guide_legend(title=NULL, reverse=TRUE)) +
   theme_donors() +
   facet_wrap(~ coef.type, scales="free")
+fig.coefs.h3
+
+fig.save.cairo(fig.coefs.h3, filename="fig-coefs-h3",
+               width=7, height=3)
 ```
 
 
@@ -1428,13 +1441,16 @@ coefs.raw.h4 <- mods.h4.next_year.melded %>%
   mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
   mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
 
-ggplot(coefs.raw.h4, aes(y=term_plot, x=estimate, colour=model.name)) + 
+fig.coefs.h4 <- ggplot(coefs.raw.h4, aes(y=term_plot, x=estimate, colour=model.name)) + 
   geom_vline(xintercept=0, colour="grey50", size=0.5) + 
   geom_pointrangeh(aes(xmin=conf.low, xmax=conf.high), size=.5) + 
   labs(x="Estimate", y=NULL) +
   scale_colour_manual(values=model.colors) +
   guides(color=FALSE) +
   theme_donors()
+
+fig.save.cairo(fig.coefs.h4, filename="fig-coefs-h4",
+               width=4, height=2.5)
 ```
 
 ```{r h4-melded-table-1, results="asis", warning=FALSE}
