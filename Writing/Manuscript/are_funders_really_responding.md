@@ -139,7 +139,7 @@ We control for the level of *democracy* in a country based on the understanding 
 
 Given research finding the effect (and absence of effect) of *government capacity*, we include the political corruption index from the V-Dem project [@McMannPemsteinSeim:2016], which accounts for public sector, executive, legislative, and judicial corruption, and ranges from 0–10, with 10 being most corrupt. Finally, we include two measures of *unexpected shocks*, based on the idea that more deaths and damages from natural disasters or internal armed conflict may prompt donors to provide aid for humanitarian assistance and reconstruction. We measure the occurrence of natural disasters with a binary indicator from the International Disaster Database (EM-DAT) [@EMDAT], marking whether or not a disaster occurred in a given year, and we use data from the UCDP/PRIO Armed Conflict dataset [@gleditsch2002] to indicate the presence of an internal conflict in the past five years.
 
-Foreign aid exhibits significant serial correlation, since the current year's level of aid is dependent on previous commitments. To account for this, we include the amount of aid in the previous year as a final control.
+Foreign aid exhibits significant serial correlation, since the current year's level of aid is dependent on previous commitments. To account for this, we include the value of the dependent variable (i.e. aid, proportion of contentious aid, etc.) in the previous year as a final control.
 
 ## Missing values
 
@@ -152,6 +152,9 @@ In addition to the various control variables, we account for country and year ef
 $$ y_{i, t + 1} = \beta_0 + \beta_1 (x_{it} - \bar{x}_i) + \beta_2 \bar{x}_i + \ldots $$ {#eq:re-within-between}
 
 While this model specification is at first a little unwieldy, it has multiple benefits. The coefficients for demeaned (or *within*) variables in this kind of random effects model are  roughly equivalent to their corresponding coefficients in a fixed effects model, and are thus generally the coefficients of interest. These coefficients can be interpreted like standard regression coefficients: on average, accounting for differences over time, a unit change in $x_t$ in a given country corresponds to a $\beta_1$ change in $y_{t+1}$. The *between* effects, on the other hand, reflect the cross-sectional variance and do not indicate changes in variable values. Instead, these coefficients show how the average level of each explanatory variable is related to the dependent variable: on average, countries with higher (or lower) $x$ tend to have higher (or lower) $y$. Fixed effects models assume that these between coefficients are zero, which leads to Bell and Jones's primary criticism of fixed effects regression—too much between-unit variance is swallowed up by fixed effects and helpful information is lost. A random effects model specified in this manner clearly separates the within from the between effects.
+
+We use models with split *within* and *between* covariates and crossed country and year random effects for our first three hypotheses. The unit of analysis in our fourth hypothesis is slightly different, however, since it is the sum of all a country's neighbors and correspondingly double counts the variation of countries (e.g. the variable for both Rwanda and Burundi includes aid to Uganda). As such, we omit country-level random effects and include random effects only for year.
+
 
 # Results and Analysis
 
