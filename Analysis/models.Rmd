@@ -1380,11 +1380,14 @@ fig.simulated.h3.barriers <- ggplot(df.plot.data, aes(x=variable,
   geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
   geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour="#BD4932") +
   labs(x="Difference from average number of barriers to funding\n(within effect)",
-       y="Simulated proportion of aid to type of NGO in the following year") +
+       y="Simulated proportion of aid to\ntype of NGO in the following year") +
   scale_y_continuous(labels=scales::percent) +
   facet_wrap(~ variable.clean, scales="free_x") +
   theme_donors()
 fig.simulated.h3.barriers
+
+fig.save.cairo(fig.simulated.h3.barriers, filename="fig-simulated-h3",
+               width=6.5, height=2.5)
 ```
 
 
