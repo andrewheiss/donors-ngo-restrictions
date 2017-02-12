@@ -227,6 +227,12 @@ We do not find much evidence to support this hypothesis and believe that the one
 
 In this article, we analyzed the impact of increasingly restrictive NGO legislation on state and private donors. We found LALALA
 
+We include a summary of our findings in @tbl:findings-summary.
+
+\small
+!INCLUDE "../../Output/tbl-findings-summary.md"
+\normalsize
+
 Our findings have strong implications not just for donors, but for the operation of domestic NGOs across the Global South and the sustainability of the civil society sector in these regions as well. In order to overcome problems associated with the lack of external funding, local NGOs may now need to locate their headquarters outside their repressive states. Many organizations have also started mobilizing local resources – besides decreasing reliance on international donors, access to a sustainable stream of local resources may also allow organizations to be more responsive to community needs. Indeed, the muted response from the international community may decrease local NGO trust in the donor community. For instance, after Ethiopia's 2009 Charities and Societies Proclamation which shut down nearly all of the country's human rights sector [@DPR2015], the international response has been cautious. Official statements from the US and the European Union have been heavily critized as "timid" and "unpricipled" [@HRW2009]. However, if restrictive regulatory environments make it too hard for Northern groups and states to fund organizations in the Global South, will local philanthropy grow to fill the gap?
 
 While we have outlined some of the broad strategies that donors have undertaken in response to restrictive NGO legislation, these are by no means an exhaustive list of strategies. Funders may also undertake a number of other approaches such as increasing availability of emergency funds for grantees in troubles and exploring new partnerships with international business actors [@Carothers:2015] - strategies that are not testable in a cross-national approach. However, future qualitative work looking at these approaches can both examine a wider range of such strategies, as well as adjudicate between their effectiveness. 
