@@ -201,6 +201,18 @@ Importantly, this same model does not find that anti-NGO laws, in any specificat
 
 Does this mean there's no effect of anti-NGO laws on how donors use NGOs to channel their aid? Perhaps. In some circumstances, foreign funding laws can lead to more funding for domestic NGOs, contrary to our hypothesis. Donors may find it easier to continue to give to domestic partners (despite heightened regulations) rather than foreign organizations that could be subject to more legal scrutiny. However, given the limits of the data and the weakness of the findings, this hypothesis is inconclusive.
 
+## Changes in aid to neighboring countries
+
+Finally, do donors react to anti-NGO laws by shifting money to neighboring countries? Our dependent variable for this hypothesis is the natural log of total aid from OECD donors given to all countries within 900 km of a country. As explained previously, we do not use country random effects or coefficients split by their *within* and *between* effects in this model specification because of the cross-national nature of our dependent variable. 
+
+![Determinants of the proportion of OECD ODA given to all countries within 900 km of a given country in the following year. Points indicate mean estimates from five imputed models; error bars indicate 95% confidence interval](../../Output/fig-coefs-h4){#fig:coefs-h4}
+
+@fig:coefs-h4 presents the estimates from these final models. Contrary to our hypothesis, the addition of a new legal barrier in a given year seems to decrease the amount of aid given to neighboring countries by 13% (p \< 0.05). However, when decomposed, no specific type of barrier—advocacy, entry, or funding—drives this effect. Additionally, the overall civil society regulatory environment has no effect on the amount of aid given to neighbors. This absence of effect can also be seen in the predicted amount of neighbor aid (see @fig:simulated-h4). While the amount of aid given to the rest of a country's neighborhood decreases as the total number of anti-NGO barriers increases, no specific type of barrier really explains that effect.
+
+![Simulated amount of OECD ODA given to neighboring countries across a range of hypothetical anti-NGO barriers in an average country; dark line shows the average of 50 simulations across 5 imputed datasets](../../Output/fig-simulated-h4){#fig:simulated-h4}
+
+We do not find much evidence to support this hypothesis and believe that the one significant variable is likely spurious. We need to find a better approach to test this hypothesis.
+
 
 [^1]:   Complete details of how we constructed this dataset, as well as annotated R code for reproducing this dataset, are available at [https://stats.andrewheiss.com/donors-ngo-restrictions/Data/get\_merge\_data.html](https://stats.andrewheiss.com/donors-ngo-restrictions/Data/get_merge_data.html).
 

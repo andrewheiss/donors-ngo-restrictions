@@ -1620,6 +1620,9 @@ fig.simulated.h4.barriers.both <- ggplot(df.plot.data.both,
   theme_donors()
 
 fig.simulated.h4.barriers.both
+
+fig.save.cairo(fig.simulated.h4.barriers.both, filename="fig-simulated-h4",
+               width=6.5, height=4)
 ```
 
 ---
