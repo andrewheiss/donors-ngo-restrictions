@@ -1095,7 +1095,7 @@ fig.simulated.h2.barriers <- ggplot(df.plot.data, aes(x=variable,
   geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
   geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour="#BD4932") +
   labs(x="Difference from average level of NGO legislation in country\n(within effect)",
-       y="Simulated proportion of contentious aid in the following year") +
+       y="Simulated proportion of\ncontentious aid in the following year") +
   scale_y_continuous(labels=scales::percent) +
   facet_wrap(~ variable.clean, scales="free_x") +
   theme_donors()
