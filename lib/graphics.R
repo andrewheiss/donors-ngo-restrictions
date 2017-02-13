@@ -16,6 +16,9 @@ barrier.colors <- c("#1b9e77",  # Turquoise
                     "#7570b3",  # Purple
                     "#e7298a")  # Pink
 
+burden.colors <- c("#ff7f00",  # Dark orange
+                   "#1f78b4")  # Dark blue
+
 plot.blank <- ggplot() + geom_blank(aes(1, 1)) + theme_void()
 
 # Extract legend from plot into a separate grob

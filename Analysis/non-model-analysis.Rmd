@@ -245,6 +245,34 @@ fig.save.cairo(fig.dvs, filename="fig-dvs",
 
 ## Legal restrictions on NGOs
 
+### Compulsory vs. burdensome registration
+
+Laws requiring NGO registration aren't necessarily a sign of oppression—even the US requires that nonprofits that earn above a certain threshold register as 501(c)(3) organizations. Though the figure below shows that compulsory regulation have increased over time, actual restriction has occurred too. Burdensome registration is not just another standard layer of bureaucracy.
+
+```{r compulsory-vs-burdensome, fig.width=4.5, fig.height=2.5}
+df.regulation <- df.country %>%
+  select(cowcode, year, ngo_register, ngo_register_burden) %>%
+  group_by(year) %>%
+  summarise(`Registration required` = sum(ngo_register) / n(),
+            `Registration burdensome` = sum(ngo_register_burden) / n()) %>%
+  gather(type.of.law, value, -year) %>%
+  mutate(type.of.law = factor(type.of.law, levels=))
+
+fig.regulation.burden <- ggplot(df.regulation, 
+                                aes(x=year, y=value, colour=type.of.law)) +
+  geom_line() + 
+  scale_y_continuous(labels=scales::percent, limits=c(0, 0.6)) +
+  scale_colour_manual(values=burden.colors) +
+  guides(colour=guide_legend(reverse=TRUE, title=NULL)) +
+  labs(x=NULL, y="Proportion of countries\nwith regulation") +
+  theme_donors()
+
+fig.regulation.burden
+fig.save.cairo(fig.regulation.burden, filename="fig-regulation-burden",
+               width=4.5, height=2.5)
+```
+
+
 ### DCJW indexes
 
 ```{r dcjw-index-table, results="asis", message=FALSE}
