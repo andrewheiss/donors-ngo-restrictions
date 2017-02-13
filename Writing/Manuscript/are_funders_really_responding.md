@@ -8,6 +8,7 @@ author:
   affiliation: Duke University
   email: andrew.heiss@duke.edu
 date: February 13, 2017
+publised: Draft for ISA 2017. Please do not cite without permission.
 reference-section-title: References
 git-repo: https://github.com/andrewheiss/donors-ngo-restrictions
 abstract: >-
