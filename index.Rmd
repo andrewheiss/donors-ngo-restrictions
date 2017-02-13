@@ -24,13 +24,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Analysis
 
-- [Exploratory data analysis](Analysis/exploratory.html)
 - [Non-model analysis](Analysis/non-model-analysis.html)
 - [Models](Analysis/models.html)
-
-## Manuscript
-
-- [Preliminary hypotheses](Writing/hypotheses.html)
 
 ## Code
 
