@@ -653,7 +653,7 @@ fig.coefs.h1 <- ggplot(coefs.raw.h1, aes(y=term_plot, x=estimate, colour=model.n
   labs(x="Estimate", y=NULL) +
   scale_colour_manual(values=model.colors) +
   guides(color=FALSE) +
-  theme_donors() + 
+  theme_donors() + theme(axis.text.x=element_text(angle=45, hjust=1)) +
   facet_wrap(~ coef.type, scales="free")
 fig.coefs.h1
 
