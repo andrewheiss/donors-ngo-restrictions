@@ -89,7 +89,7 @@ Indeed, previous research by @BBCM2014 has found that cross-border activism can 
 > **H~4~**: As restrictive legislation against NGOs in a country are enacted, donors are more likely to provide aid to neighboring countries
 
 
-# Methods
+# Data and methods
 
 We analyze donor reactions to state crackdown of NGOs by looking at how foreign aid has changed in response to anti-NGO legislation. We combine variables from several existing datasets and create a cross-sectional time series panel that includes information about aid and NGO legislation in 148 countries from 1981–2013.[^1]
 
@@ -157,7 +157,11 @@ We use models with split *within* and *between* covariates and crossed country a
 
 # Results and analysis
 
-We present the estimates of our different models in coefficient plots below. Since there are many control variables, and most are doubled up with *within* and *between* effects, we only include variables related to the NGO regulatory environment in each plot. The full results of all models are included in the appendix. 
+We present the estimates of our different models in coefficient plots below. Since there are many control variables, and most are doubled up with *within* and *between* effects, we only include variables related to the NGO regulatory environment in each plot. The full results of all models are included in the appendix, and @tbl:findings-summary summarizes the main findings for each hypothesis.
+
+\small
+!INCLUDE "../../Output/tbl-findings-summary.md"
+\normalsize
 
 
 ## Changes in overall aid
@@ -215,11 +219,7 @@ We do not find much evidence to support this hypothesis and believe that the one
 
 # Conclusion
 
-In this article, we analyzed the impact of increasingly restrictive NGO legislation and restrictive regulatory environments on the amount of aid channeled to countries, the targets of aid, and the purpose of aid based on its contentious nature (see @tbl:findings-summary). Looking at 148 countries from 1981–2013, we find, as hypothesized by our theory, that increasing anti-NGO legal barriers, in particular, barriers to advocacy, significantly decreases the amount of ODA channeled to that country. Adding new restrictions on advocacy also tends to reduce the amount of contentious aid that donors allocate to those countries. In general, as the legal environment for NGOs improves, donors are more likely to engage in contentious programming focusing on elections, human rights, security, conflict resolution and prevention. These findings support recent literature that donors, in particular, democracy assistance agencies, tame their programming when confronting dictators. 
-
-\small
-!INCLUDE "../../Output/tbl-findings-summary.md"
-\normalsize
+In this article, we analyzed the impact of increasingly restrictive NGO legislation and restrictive regulatory environments on the amount of aid channeled to countries, the targets of aid, and the purpose of aid based on its contentious nature. Looking at 148 countries from 1981–2013, we find, as hypothesized by our theory, that increasing anti-NGO legal barriers, in particular, barriers to advocacy, significantly decreases the amount of ODA channeled to that country. Adding new restrictions on advocacy also tends to reduce the amount of contentious aid that donors allocate to those countries. In general, as the legal environment for NGOs improves, donors are more likely to engage in contentious programming focusing on elections, human rights, security, conflict resolution and prevention. These findings support recent literature that donors, in particular, democracy assistance agencies, tame their programming when confronting dictators. 
 
 Results regarding increasing aid to foreign NGOs (rather than domestic NGOs) in the face of legal restrictions remain inconclusive. In some cases, barriers to funding actually increase aid to domestic NGOs. However, this finding is based on limited data by USAID for a little over a decade. This finding also reflects USAID's perception that increasing assistance to respected local NGOs can help the regulatory environment from worsening, as these local NGOs can help both diplomatic and lobbying efforts, as well as spark domestic outrage against restrictive legislation. Finally, we hypothesized that in response to restrictive environments for NGOs, donors may channel more funds to neighboring countries so that besieged groups can run operations from those territories. However, our results for this remain inconclusive. 
 
