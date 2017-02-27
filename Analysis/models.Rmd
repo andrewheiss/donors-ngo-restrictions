@@ -42,8 +42,6 @@ source(file.path(PROJHOME, "Analysis", "h4_model_definitions.R"))
 
 my.seed <- 1234
 set.seed(my.seed)
-
-run.rstan <- FALSE
 ```
 
 ```{r load-data, cache=TRUE, message=FALSE}
@@ -598,25 +596,6 @@ mods.h1.next_year.melded <- mods.h1.next_year %>%
   group_by(model.name) %>%
   nest() %>%
   mutate(tidy.melded = data %>% map(meld.imputed.models))
-```
-
-```{r h1-models-bayes-1, warning=FALSE, message=FALSE}
-if (run.rstan) {
-  source(file.path(PROJHOME, "Analysis", "h1_model_definitions_bayes.R"))
-  
-  mods.h1.next_year.raw.bayes <- df.country.aid.demean.next_year %>%
-  nest(-m) %>%
-  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
-                                              "total.oda_log_next_year"),
-         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
-                                            "total.oda_log_next_year"),
-         mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
-                                          "total.oda_log_next_year"),
-         mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
-                                        "total.oda_log_next_year"),
-         mod.h1.csre = data %>% map(mod.h1.csre.bayes,
-                                    "total.oda_log_next_year"))
-}
 ```
 
 ### Results

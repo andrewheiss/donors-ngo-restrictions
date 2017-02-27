@@ -10,6 +10,7 @@ options(s3mpi.path = "s3://ath-data-processing/donors-ngos-restrictions")
 # Get data
 df.country.aid <- s3read("df_country_aid_no_imputation")
 df.country.aid.impute <- s3read("df_country_aid_imputation")
+df.country.aid.impute.m10 <- s3read("df_country_aid_imputation_m10")
 
 # Save locally (on remote)
 saveRDS(df.country.aid, 
@@ -19,6 +20,10 @@ saveRDS(df.country.aid,
 saveRDS(df.country.aid.impute, 
         file.path(PROJHOME, "Data", "data_clean",
                   "df_country_aid_imputation.rds"))
+
+saveRDS(df.country.aid.impute.10, 
+        file.path(PROJHOME, "Data", "data_clean",
+                  "df_country_aid_imputation_m10.rds"))
 
 # Save models in S3
 s3store(mod.h1.barriers.total.bayes)
@@ -34,6 +39,7 @@ s3store(mod.h1.csre.bayes)
 # Save data
 s3store(df.country.aid, "df_country_aid_no_imputation")
 s3store(df.country.aid.impute, "df_country_aid_imputation")
+s3store(df.country.aid.impute.m10, "df_country_aid_imputation_m10")
 
 # Load models
 mods.h1.next_year.raw.bayes <- s3read("mods.h1.next_year.raw.bayes")

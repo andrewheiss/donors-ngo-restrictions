@@ -1,0 +1,284 @@
+---
+title: "Bayesian models"
+author: "Suparna Chaudhry and Andrew Heiss"
+date: "`r format(Sys.time(), '%F')`"
+output: 
+  html_document: 
+    code_folding: hide
+    css: ../html/fixes.css
+    fig_height: 3.5
+    fig_width: 5
+    highlight: pygments
+    includes:
+      after_body: ../html/add_home_link.html
+    theme: spacelab
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+---
+
+```{r load-libraries, message=FALSE}
+knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
+                      tidy.opts=list(width.cutoff=120),  # For code
+                      options(width=120))  # For output
+
+library(tidyverse)
+library(stringr)
+library(forcats)
+library(stargazer)
+library(lme4)
+library(modelr)
+library(broom)
+
+source(file.path(PROJHOME, "lib", "graphics.R"))
+source(file.path(PROJHOME, "lib", "pandoc.R"))
+
+source(file.path(PROJHOME, "Analysis", "h1_model_definitions_bayes.R"))
+source(file.path(PROJHOME, "Analysis", "h2_model_definitions_bayes.R"))
+source(file.path(PROJHOME, "Analysis", "h3_model_definitions_bayes.R"))
+source(file.path(PROJHOME, "Analysis", "h4_model_definitions_bayes.R"))
+source(file.path(PROJHOME, "Analysis", "robustness_models_definitions_bayes.R"))
+
+my.seed <- 1234
+set.seed(my.seed)
+```
+
+```{r helpful-functions}
+# Take apart the pieces of a random effects formula and rebuild it
+build.formula <- function(DV, IVs) {
+  terms.all <- attr(terms(IVs), "term.labels")
+  terms.fixed <- terms.all[!stringr::str_detect(terms.all, "\\|")]
+  terms.rand <- sapply(findbars(formula(IVs)),function(x) paste0("(", deparse(x), ")"))
+  
+  reformulate(c(terms.fixed, terms.rand), response=DV)
+}
+```
+
+
+```{r load-data, cache=TRUE, message=FALSE}
+df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                "df_country_aid_no_imputation.rds"))
+
+df.country.aid.impute <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                           "df_country_aid_imputation.rds"))
+
+df.country.aid.impute.m10 <- readRDS(file.path(PROJHOME, "Data", "data_clean",
+                                               "df_country_aid_imputation_m10.rds"))
+
+# Combine original data and imputed data so calculations can happen at the same time
+df.country.aid.both <- bind_rows(df.country.aid, df.country.aid.impute)
+
+# Combine m=10 imputed data too since we use it in some robustness checks.
+# Imputations 6-10 are later removed
+df.country.aid.all <- bind_rows(df.country.aid, df.country.aid.impute.m10)
+
+# All the missing values have been taken care of, but final years for leaded
+# variables *are* still missing (i.e. there's no aid data for 2014, so
+# total.oda_log_next_year will be NA in 2013). For this fancy random effects
+# regression to work, the demeaned variables have to be based on the means of
+# all rows included in the regression, so they can't include rows that are
+# dropped because of missingness. This means we have to make separate demeaned
+# datasets for *_after_2 and *_after_5, but ¯\_(ツ)_/¯
+df.country.aid.demean.next_year.all <- df.country.aid.all %>%
+  filter(!is.na(total.oda_log_next_year)) %>%
+  group_by(m, cowcode) %>%
+  mutate_at(vars(barriers.total, advocacy, entry, funding, 
+                 polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre,
+                 total.oda_log),
+            funs(between = mean(., na.rm=TRUE),  # meaned
+                 within = . - mean(., na.rm=TRUE))) %>%  # demeaned
+  ungroup()
+
+df.country.aid.us.demean.next_year.all <- df.country.aid.all %>%
+  filter(!is.na(prop.ngo.dom_logit_next_year)) %>%
+  filter(year > 1999) %>%
+  group_by(m, cowcode) %>%
+  mutate_at(vars(barriers.total, advocacy, entry, funding, 
+                 polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre,
+                 total.oda_log),
+            funs(between = mean(., na.rm=TRUE),  # meaned
+                 within = . - mean(., na.rm=TRUE))) %>%  # demeaned
+  ungroup()
+
+# Divide demeaned data into separate data frames: original, imputed (m=5), and imputed (m=10)
+df.country.aid.demean.next_year.both <- 
+  filter(df.country.aid.demean.next_year.all, !(m %in% paste0("imp", 6:10)))
+
+df.country.aid.demean.next_year <- 
+  filter(df.country.aid.demean.next_year.all, m == "original")
+
+df.country.aid.us.demean.next_year.both <- 
+  filter(df.country.aid.us.demean.next_year.all, !(m %in% paste0("imp", 6:10)))
+
+df.country.aid.us.demean.next_year <- 
+  filter(df.country.aid.us.demean.next_year.all, m == "original")
+
+df.country.aid.demean.next_year.impute <- 
+  filter(df.country.aid.demean.next_year.all, 
+         m != "original", !(m %in% paste0("imp", 6:10)))
+
+df.country.aid.demean.next_year.impute.m10 <- 
+  filter(df.country.aid.demean.next_year.all, m != "original")
+
+# Demean data with total.oda_log leaded by 2 years and 5 years
+# After 2 years
+df.country.aid.demean.after_2.both <- df.country.aid.both %>%
+  filter(!is.na(total.oda_log_after_2)) %>%
+  group_by(m, cowcode) %>%
+  mutate_at(vars(barriers.total, advocacy, entry, funding, 
+                 polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre,
+                 total.oda_log),
+            funs(between = mean(., na.rm=TRUE),  # meaned
+                 within = . - mean(., na.rm=TRUE))) %>%  # demeaned
+  ungroup()
+
+df.country.aid.demean.after_2 <- 
+  filter(df.country.aid.demean.after_2.both, m == "original")
+
+df.country.aid.demean.after_2.impute <- 
+  filter(df.country.aid.demean.after_2.both, m != "original")
+
+# After 5 years
+df.country.aid.demean.after_5.both <- df.country.aid.both %>%
+  filter(!is.na(total.oda_log_after_5)) %>%
+  group_by(m, cowcode) %>%
+  mutate_at(vars(barriers.total, advocacy, entry, funding, 
+                 polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre,
+                 total.oda_log),
+            funs(between = mean(., na.rm=TRUE),  # meaned
+                 within = . - mean(., na.rm=TRUE))) %>%  # demeaned
+  ungroup()
+
+df.country.aid.demean.after_5 <- 
+  filter(df.country.aid.demean.after_5.both, m == "original")
+
+df.country.aid.demean.after_5.impute <- 
+  filter(df.country.aid.demean.after_5.both, m != "original")
+```
+
+## H~1~
+
+```{r h1-models-bayes-1, warning=FALSE, message=FALSE}
+mods.h1.next_year.raw.bayes <- df.country.aid.demean.next_year.both %>%
+  nest(-m) %>%
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
+                                              "total.oda_log_next_year"),
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
+                                            "total.oda_log_next_year"),
+         mod.h1.type.total = data %>% map(mod.h1.type.total,
+                                          "total.oda_log_next_year"),
+         mod.h1.type.new = data %>% map(mod.h1.type.new,
+                                        "total.oda_log_next_year"),
+         mod.h1.csre = data %>% map(mod.h1.csre,
+                                    "total.oda_log_next_year"))
+```
+
+
+## H~2~
+
+```{r h2-models-bayes-1, warning=FALSE, message=FALSE}
+mods.h2.next_year.raw.bayes <- df.country.aid.demean.next_year.both %>%
+  nest(-m) %>%
+  mutate(mod.h2.barriers.total = data %>% map(mod.h2.barriers.total,
+                                              "prop.contentious_logit_next_year"),
+         mod.h2.barriers.new = data %>% map(mod.h2.barriers.new,
+                                            "prop.contentious_logit_next_year"),
+         mod.h2.type.total = data %>% map(mod.h2.type.total,
+                                          "prop.contentious_logit_next_year"),
+         mod.h2.type.new = data %>% map(mod.h2.type.new,
+                                        "prop.contentious_logit_next_year"),
+         mod.h2.csre = data %>% map(mod.h2.csre,
+                                    "prop.contentious_logit_next_year"))
+```
+
+
+## H~3~
+
+### Domestic
+
+```{r h3-models-bayes-1-domestic, warning=FALSE, message=FALSE}
+mods.h3.dom.next_year.raw <- df.country.aid.us.demean.next_year.both %>%
+  nest(-m) %>%
+  mutate(mod.h3.barriers.total = data %>% map(mod.h3.barriers.total,
+                                              "prop.ngo.dom_logit_next_year"),
+         mod.h3.barriers.new = data %>% map(mod.h3.barriers.new,
+                                            "prop.ngo.dom_logit_next_year"),
+         mod.h3.type.total = data %>% map(mod.h3.type.total,
+                                          "prop.ngo.dom_logit_next_year"),
+         mod.h3.type.new = data %>% map(mod.h3.type.new,
+                                        "prop.ngo.dom_logit_next_year"),
+         mod.h3.csre = data %>% map(mod.h3.csre,
+                                    "prop.ngo.dom_logit_next_year"))
+```
+
+### Foreign
+
+```{r h3-models-bayes-1-foreign, warning=FALSE, message=FALSE}
+mods.h3.foreign.next_year.raw <- df.country.aid.us.demean.next_year.both %>%
+  nest(-m) %>%
+  mutate(mod.h3.barriers.total = data %>% map(mod.h3.foreign.barriers.total,
+                                              "prop.ngo.foreign_logit_next_year"),
+         mod.h3.barriers.new = data %>% map(mod.h3.foreign.barriers.new,
+                                            "prop.ngo.foreign_logit_next_year"),
+         mod.h3.type.total = data %>% map(mod.h3.foreign.type.total,
+                                          "prop.ngo.foreign_logit_next_year"),
+         mod.h3.type.new = data %>% map(mod.h3.foreign.type.new,
+                                        "prop.ngo.foreign_logit_next_year"),
+         mod.h3.csre = data %>% map(mod.h3.foreign.csre,
+                                    "prop.ngo.foreign_logit_next_year"))
+```
+
+
+## H~4~
+
+```{r h4-models-bayes-1, warning=FALSE, message=FALSE}
+mods.h4.next_year.raw <- df.country.aid.demean.next_year.both %>%
+  nest(-m) %>%
+  mutate(mod.h4.barriers.total = data %>% map(mod.h4.barriers.total,
+                                              "nb_oda.sum_log_next_year"),
+         mod.h4.barriers.new = data %>% map(mod.h4.barriers.new,
+                                            "nb_oda.sum_log_next_year"),
+         mod.h4.type.total = data %>% map(mod.h4.type.total,
+                                          "nb_oda.sum_log_next_year"),
+         mod.h4.type.new = data %>% map(mod.h4.type.new,
+                                        "nb_oda.sum_log_next_year"),
+         mod.h4.csre = data %>% map(mod.h4.csre,
+                                    "nb_oda.sum_log_next_year"))
+```
+
+
+## Robustness
+
+### After 2 years
+
+```{r h1-models-2-bayes, warning=FALSE, message=FALSE, cache=TRUE}
+mods.h1.after_2.raw.bayes <- df.country.aid.demean.after_2.impute %>%
+  nest(-m) %>%
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
+                                              "total.oda_log_next_year"),
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
+                                            "total.oda_log_next_year"),
+         mod.h1.type.total = data %>% map(mod.h1.type.total,
+                                          "total.oda_log_next_year"),
+         mod.h1.type.new = data %>% map(mod.h1.type.new,
+                                        "total.oda_log_next_year"),
+         mod.h1.csre = data %>% map(mod.h1.csre,
+                                    "total.oda_log_next_year"))
+```
+
+### After 5 years
+
+```{r h1-models-5-bayes, warning=FALSE, message=FALSE, cache=TRUE}
+mods.h1.after_5.raw.bayes <- df.country.aid.demean.after_5.impute %>%
+  nest(-m) %>%
+  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
+                                              "total.oda_log_next_year"),
+         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
+                                            "total.oda_log_next_year"),
+         mod.h1.type.total = data %>% map(mod.h1.type.total,
+                                          "total.oda_log_next_year"),
+         mod.h1.type.new = data %>% map(mod.h1.type.new,
+                                        "total.oda_log_next_year"),
+         mod.h1.csre = data %>% map(mod.h1.csre,
+                                    "total.oda_log_next_year"))
+```
