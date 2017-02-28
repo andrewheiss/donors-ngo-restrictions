@@ -28,6 +28,13 @@ knitr::read_chunk(file.path(PROJHOME, "Analysis", "models-chunks.R"))
 ```{r load-data, cache=TRUE, message=FALSE}
 ```
 
+```{r load-bayesian-models}
+source(file.path(PROJHOME, "Analysis", "h1_model_definitions_bayes.R"))
+source(file.path(PROJHOME, "Analysis", "h2_model_definitions_bayes.R"))
+source(file.path(PROJHOME, "Analysis", "h3_model_definitions_bayes.R"))
+source(file.path(PROJHOME, "Analysis", "h4_model_definitions_bayes.R"))
+```
+
 ```{r helpful-functions}
 ```
 
