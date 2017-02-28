@@ -21,7 +21,7 @@ saveRDS(df.country.aid.impute,
         file.path(PROJHOME, "Data", "data_clean",
                   "df_country_aid_imputation.rds"))
 
-saveRDS(df.country.aid.impute.10, 
+saveRDS(df.country.aid.impute.m10, 
         file.path(PROJHOME, "Data", "data_clean",
                   "df_country_aid_imputation_m10.rds"))
 
