@@ -31,6 +31,7 @@ library(modelr)
 library(broom)
 
 source(file.path(PROJHOME, "lib", "graphics.R"))
+source(file.path(PROJHOME, "lib", "bayes.R"))
 source(file.path(PROJHOME, "lib", "pandoc.R"))
 
 source(file.path(PROJHOME, "Analysis", "h1_model_definitions_bayes.R"))
@@ -159,36 +160,52 @@ df.country.aid.demean.after_5.impute <-
 ## H~1~
 
 ```{r h1-models-bayes-1, warning=FALSE, message=FALSE}
-mods.h1.next_year.raw.bayes <- df.country.aid.demean.next_year.both %>%
-  nest(-m) %>%
-  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
+h1.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h1.rds")
+
+if (file.exists(h1.raw.path)) {
+  mods.h1.next_year.raw.bayes <- readRDS(h1.raw.path)
+} else {
+  mods.h1.next_year.raw.bayes <- df.country.aid.demean.next_year.both %>%
+    nest(-m) %>%
+    mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
+                                                "total.oda_log_next_year"),
+           mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
                                               "total.oda_log_next_year"),
-         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
+           mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
                                             "total.oda_log_next_year"),
-         mod.h1.type.total = data %>% map(mod.h1.type.total,
+           mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
                                           "total.oda_log_next_year"),
-         mod.h1.type.new = data %>% map(mod.h1.type.new,
-                                        "total.oda_log_next_year"),
-         mod.h1.csre = data %>% map(mod.h1.csre,
-                                    "total.oda_log_next_year"))
+           mod.h1.csre = data %>% map(mod.h1.csre.bayes,
+                                      "total.oda_log_next_year"))
+  
+  saveRDS(mods.h1.next_year.raw.bayes, h1.raw.path)
+}
 ```
 
 
 ## H~2~
 
 ```{r h2-models-bayes-1, warning=FALSE, message=FALSE}
-mods.h2.next_year.raw.bayes <- df.country.aid.demean.next_year.both %>%
-  nest(-m) %>%
-  mutate(mod.h2.barriers.total = data %>% map(mod.h2.barriers.total,
+h2.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h2.rds")
+
+if (file.exists(h2.raw.path)) {
+  mods.h2.next_year.raw.bayes <- readRDS(h2.raw.path)
+} else {
+  mods.h2.next_year.raw.bayes <- df.country.aid.demean.next_year.both %>%
+    nest(-m) %>%
+    mutate(mod.h2.barriers.total = data %>% map(mod.h2.barriers.total.bayes,
+                                                "prop.contentious_logit_next_year"),
+           mod.h2.barriers.new = data %>% map(mod.h2.barriers.new.bayes,
                                               "prop.contentious_logit_next_year"),
-         mod.h2.barriers.new = data %>% map(mod.h2.barriers.new,
+           mod.h2.type.total = data %>% map(mod.h2.type.total.bayes,
                                             "prop.contentious_logit_next_year"),
-         mod.h2.type.total = data %>% map(mod.h2.type.total,
+           mod.h2.type.new = data %>% map(mod.h2.type.new.bayes,
                                           "prop.contentious_logit_next_year"),
-         mod.h2.type.new = data %>% map(mod.h2.type.new,
-                                        "prop.contentious_logit_next_year"),
-         mod.h2.csre = data %>% map(mod.h2.csre,
-                                    "prop.contentious_logit_next_year"))
+           mod.h2.csre = data %>% map(mod.h2.csre.bayes,
+                                      "prop.contentious_logit_next_year"))
+  
+  saveRDS(mods.h2.next_year.raw.bayes, h2.raw.path)
+}
 ```
 
 
@@ -197,53 +214,79 @@ mods.h2.next_year.raw.bayes <- df.country.aid.demean.next_year.both %>%
 ### Domestic
 
 ```{r h3-models-bayes-1-domestic, warning=FALSE, message=FALSE}
-mods.h3.dom.next_year.raw <- df.country.aid.us.demean.next_year.both %>%
-  nest(-m) %>%
-  mutate(mod.h3.barriers.total = data %>% map(mod.h3.barriers.total,
+h3.domestic.raw.path <- file.path(PROJHOME, "Data", "data_cache", 
+                                  "models_bayes_h3_domestic.rds")
+
+if (file.exists(h3.domestic.raw.path)) {
+  mods.h3.dom.next_year.raw <- readRDS(h3.domestic.raw.path)
+} else {
+  mods.h3.dom.next_year.raw <- df.country.aid.us.demean.next_year.both %>%
+    nest(-m) %>%
+    mutate(mod.h3.barriers.total = data %>% map(mod.h3.barriers.total.bayes,
+                                                "prop.ngo.dom_logit_next_year"),
+           mod.h3.barriers.new = data %>% map(mod.h3.barriers.new.bayes,
                                               "prop.ngo.dom_logit_next_year"),
-         mod.h3.barriers.new = data %>% map(mod.h3.barriers.new,
+           mod.h3.type.total = data %>% map(mod.h3.type.total.bayes,
                                             "prop.ngo.dom_logit_next_year"),
-         mod.h3.type.total = data %>% map(mod.h3.type.total,
+           mod.h3.type.new = data %>% map(mod.h3.type.new.bayes,
                                           "prop.ngo.dom_logit_next_year"),
-         mod.h3.type.new = data %>% map(mod.h3.type.new,
-                                        "prop.ngo.dom_logit_next_year"),
-         mod.h3.csre = data %>% map(mod.h3.csre,
-                                    "prop.ngo.dom_logit_next_year"))
+           mod.h3.csre = data %>% map(mod.h3.csre.bayes,
+                                      "prop.ngo.dom_logit_next_year"))
+  
+  saveRDS(mods.h3.dom.next_year.raw, h3.domestic.raw.path)
+}
 ```
 
 ### Foreign
 
 ```{r h3-models-bayes-1-foreign, warning=FALSE, message=FALSE}
-mods.h3.foreign.next_year.raw <- df.country.aid.us.demean.next_year.both %>%
-  nest(-m) %>%
-  mutate(mod.h3.barriers.total = data %>% map(mod.h3.foreign.barriers.total,
+h3.foreign.raw.path <- file.path(PROJHOME, "Data", "data_cache", 
+                                 "models_bayes_h3_foreign.rds")
+
+if (file.exists(h3.foreign.raw.path)) {
+  mods.h3.foreign.next_year.raw <- readRDS(h3.foreign.raw.path)
+} else {
+  mods.h3.foreign.next_year.raw <- df.country.aid.us.demean.next_year.both %>%
+    nest(-m) %>%
+    mutate(mod.h3.barriers.total = data %>% map(mod.h3.foreign.barriers.total.bayes,
+                                                "prop.ngo.foreign_logit_next_year"),
+           mod.h3.barriers.new = data %>% map(mod.h3.foreign.barriers.new.bayes,
                                               "prop.ngo.foreign_logit_next_year"),
-         mod.h3.barriers.new = data %>% map(mod.h3.foreign.barriers.new,
+           mod.h3.type.total = data %>% map(mod.h3.foreign.type.total.bayes,
                                             "prop.ngo.foreign_logit_next_year"),
-         mod.h3.type.total = data %>% map(mod.h3.foreign.type.total,
+           mod.h3.type.new = data %>% map(mod.h3.foreign.type.new.bayes,
                                           "prop.ngo.foreign_logit_next_year"),
-         mod.h3.type.new = data %>% map(mod.h3.foreign.type.new,
-                                        "prop.ngo.foreign_logit_next_year"),
-         mod.h3.csre = data %>% map(mod.h3.foreign.csre,
-                                    "prop.ngo.foreign_logit_next_year"))
+           mod.h3.csre = data %>% map(mod.h3.foreign.csre.bayes,
+                                      "prop.ngo.foreign_logit_next_year"))
+  
+  saveRDS(mods.h3.foreign.next_year.raw, h3.foreign.raw.path)
+}
 ```
 
 
 ## H~4~
 
 ```{r h4-models-bayes-1, warning=FALSE, message=FALSE}
-mods.h4.next_year.raw <- df.country.aid.demean.next_year.both %>%
-  nest(-m) %>%
-  mutate(mod.h4.barriers.total = data %>% map(mod.h4.barriers.total,
+h4.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h4.rds")
+
+if (file.exists(h4.raw.path)) {
+  mods.h4.next_year.raw <- readRDS(h4.raw.path)
+} else {
+  mods.h4.next_year.raw <- df.country.aid.demean.next_year.both %>%
+    nest(-m) %>%
+    mutate(mod.h4.barriers.total = data %>% map(mod.h4.barriers.total.bayes,
+                                                "nb_oda.sum_log_next_year"),
+           mod.h4.barriers.new = data %>% map(mod.h4.barriers.new.bayes,
                                               "nb_oda.sum_log_next_year"),
-         mod.h4.barriers.new = data %>% map(mod.h4.barriers.new,
+           mod.h4.type.total = data %>% map(mod.h4.type.total.bayes,
                                             "nb_oda.sum_log_next_year"),
-         mod.h4.type.total = data %>% map(mod.h4.type.total,
+           mod.h4.type.new = data %>% map(mod.h4.type.new.bayes,
                                           "nb_oda.sum_log_next_year"),
-         mod.h4.type.new = data %>% map(mod.h4.type.new,
-                                        "nb_oda.sum_log_next_year"),
-         mod.h4.csre = data %>% map(mod.h4.csre,
-                                    "nb_oda.sum_log_next_year"))
+           mod.h4.csre = data %>% map(mod.h4.csre.bayes,
+                                      "nb_oda.sum_log_next_year"))
+  
+  saveRDS(mods.h4.next_year.raw, h4.raw.path)
+}
 ```
 
 
@@ -252,33 +295,51 @@ mods.h4.next_year.raw <- df.country.aid.demean.next_year.both %>%
 ### After 2 years
 
 ```{r h1-models-2-bayes, warning=FALSE, message=FALSE, cache=TRUE}
-mods.h1.after_2.raw.bayes <- df.country.aid.demean.after_2.impute %>%
-  nest(-m) %>%
-  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
+h1_2.raw.path <- file.path(PROJHOME, "Data", "data_cache",
+                           "models_bayes_h1_after_2.rds")
+
+if (file.exists(h1_2.raw.path)) {
+  mods.h1.after_2.raw.bayes <- readRDS(h1_2.raw.path)
+} else {
+  mods.h1.after_2.raw.bayes <- df.country.aid.demean.after_2.impute %>%
+    nest(-m) %>%
+    mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
+                                                "total.oda_log_next_year"),
+           mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
                                               "total.oda_log_next_year"),
-         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
+           mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
                                             "total.oda_log_next_year"),
-         mod.h1.type.total = data %>% map(mod.h1.type.total,
+           mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
                                           "total.oda_log_next_year"),
-         mod.h1.type.new = data %>% map(mod.h1.type.new,
-                                        "total.oda_log_next_year"),
-         mod.h1.csre = data %>% map(mod.h1.csre,
-                                    "total.oda_log_next_year"))
+           mod.h1.csre = data %>% map(mod.h1.csre.bayes,
+                                      "total.oda_log_next_year"))
+  
+  saveRDS(mods.h1.after_2.raw.bayes, h1_2.raw.path)
+}
 ```
 
 ### After 5 years
 
 ```{r h1-models-5-bayes, warning=FALSE, message=FALSE, cache=TRUE}
-mods.h1.after_5.raw.bayes <- df.country.aid.demean.after_5.impute %>%
-  nest(-m) %>%
-  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
+h1_5.raw.path <- file.path(PROJHOME, "Data", "data_cache",
+                           "models_bayes_h1_after_5.rds")
+
+if (file.exists(h1_5.raw.path)) {
+  mods.h1.after_5.raw.bayes <- readRDS(h1_5.raw.path)
+} else {
+  mods.h1.after_5.raw.bayes <- df.country.aid.demean.after_5.impute %>%
+    nest(-m) %>%
+    mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
+                                                "total.oda_log_next_year"),
+           mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
                                               "total.oda_log_next_year"),
-         mod.h1.barriers.new = data %>% map(mod.h1.barriers.new,
+           mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
                                             "total.oda_log_next_year"),
-         mod.h1.type.total = data %>% map(mod.h1.type.total,
+           mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
                                           "total.oda_log_next_year"),
-         mod.h1.type.new = data %>% map(mod.h1.type.new,
-                                        "total.oda_log_next_year"),
-         mod.h1.csre = data %>% map(mod.h1.csre,
-                                    "total.oda_log_next_year"))
+           mod.h1.csre = data %>% map(mod.h1.csre.bayes,
+                                      "total.oda_log_next_year"))
+  
+  saveRDS(mods.h1.after_5.raw.bayes, h1_5.raw.path)
+}
 ```
