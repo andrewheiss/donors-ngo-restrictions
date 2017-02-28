@@ -1,4 +1,4 @@
-## ---- load-libraries ----
+# ---- load-libraries ---------------------------------------------------------
 knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
                       tidy.opts=list(width.cutoff=120),  # For code
                       options(width=120))  # For output
@@ -25,7 +25,7 @@ my.seed <- 1234
 set.seed(my.seed)
 
 
-## ---- load-data ----
+# ---- load-data --------------------------------------------------------------
 df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
                                     "df_country_aid_no_imputation.rds"))
 
@@ -150,7 +150,7 @@ df.country.aid.demean.after_5.impute <-
   filter(df.country.aid.demean.after_5.both, m != "original")
 
 
-## ---- helpful-functions ----
+# ---- helpful-functions ------------------------------------------------------
 stars <- function(p) {
   out <- symnum(p, cutpoints=c(0, 0.01, 0.05, 0.1, 1),
                 symbols=c("***", "**", "*", ""))
