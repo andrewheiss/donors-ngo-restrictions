@@ -87,7 +87,7 @@ fake.lm <- function(form) {
   return(model.fake)
 }
 
-bayes.meld <- function(models, coefs.to.keep) {
+bayes.meld <- function(models, coefs.to.keep, exponentiate=FALSE) {
   model.coefs <- models %>%
     # Make big data frame of just posterior coefficients
     # For some reason one of the Sigma columns really likes to duplicate itself, 
@@ -134,6 +134,11 @@ bayes.meld <- function(models, coefs.to.keep) {
     left_join(model.posterior.probs, by=c("model.name", "term")) %>%
     rename(med = median)
   
+  if (exponentiate) {
+    melded.summary <- melded.summary %>%
+      mutate_at(vars(med, `2.5%`, `97.5%`), exp)
+  }
+  
   return(list(model.coefs = model.coefs, melded.summary = melded.summary))
 }
 
@@ -174,7 +179,7 @@ bayesgazer <- function(models, digits=2, caption=NULL, note=NULL, exponentiate=F
       slice(match(note, term))
   }
   
-  model.melded <- bayes.meld(models, coefs.for.top)
+  model.melded <- bayes.meld(models, coefs.for.top, exponentiate=exponentiate)
   
   model.output <- model.melded$melded.summary
   model.coefs <- model.melded$model.coefs

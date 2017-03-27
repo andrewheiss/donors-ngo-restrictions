@@ -282,7 +282,7 @@ vars.to.plot <- c("barriers.total_within", "barriers.total_between",
                   "csre_within", "csre_between")
 
 mods.h2.melded <- bayes.meld(mods.h2.next_year.bayes,
-                             vars.to.plot)$melded.summary
+                             vars.to.plot, exponentiate=TRUE)$melded.summary
 
 plot.data <- mods.h2.melded %>%
   left_join(coef.names.all, by="term") %>%
@@ -298,14 +298,13 @@ plot.data <- mods.h2.melded %>%
                             ordered=TRUE)) %>%
   mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
 
-fig.coefs.h2 <- ggplot(plot.data, aes(x=med, y=term_plot, 
-                                      xmin=`2.5%`, xmax=`97.5%`, colour=model.name)) +
-  geom_vline(xintercept=0) +
-  geom_pointrangeh() +
-  labs(x="Posterior median change in log ODA in following year", y=NULL) +
+fig.coefs.h2 <- ggplot(plot.data, aes(x=med, y=term_plot, colour=model.name)) +
+  geom_vline(xintercept=1, colour="grey50", size=0.5) + 
+  geom_pointrangeh(aes(xmin=`2.5%`, xmax=`97.5%`), size=0.5) + 
+  labs(x="Odds ratio", y=NULL) +
   scale_colour_manual(values=model.colors) +
   guides(color=FALSE) +
-  theme_donors() + theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  theme_donors() + 
   facet_wrap(~ coef.type, scales="free")
 fig.coefs.h2
 
@@ -448,7 +447,7 @@ caption <- "The effect of anti-NGO legislation on the proportion of US aid chann
 note <- c("Dependent variable log transformed.")
 
 table.h3.domestic <- bayesgazer(mods.h3.dom.next_year.bayes,
-                                caption=caption, note=note)
+                                caption=caption, note=note, exponentiate=TRUE)
 
 cat(table.h3.domestic)
 cat(table.h3.domestic, file=file.path(PROJHOME, "Output",
@@ -462,7 +461,7 @@ caption <- "The effect of anti-NGO legislation on the proportion of US aid chann
 note <- c("Dependent variable log transformed.")
 
 table.h3.domestic <- bayesgazer(mods.h3.foreign.next_year.bayes,
-                                caption=caption, note=note)
+                                caption=caption, note=note, exponentiate=TRUE)
 
 cat(table.h3.domestic)
 cat(table.h3.domestic, file=file.path(PROJHOME, "Output",
@@ -481,7 +480,7 @@ vars.to.plot <- c("barriers.total_within", "barriers.total_between",
                   "csre_within", "csre_between")
 
 mods.h3.dom.melded <- bayes.meld(mods.h3.dom.next_year.bayes,
-                                 vars.to.plot)$melded.summary
+                                 vars.to.plot, exponentiate=TRUE)$melded.summary
 
 coefs.raw.h3.dom <- mods.h3.dom.melded %>%
   left_join(coef.names.all, by="term") %>%
@@ -498,7 +497,7 @@ coefs.raw.h3.dom <- mods.h3.dom.melded %>%
   mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
 
 mods.h3.foreign.melded <- bayes.meld(mods.h3.foreign.next_year.bayes,
-                                     vars.to.plot)$melded.summary
+                                     vars.to.plot, exponentiate=TRUE)$melded.summary
 
 coefs.raw.h3.foreign <- mods.h3.foreign.melded %>%
   left_join(coef.names.all, by="term") %>%
