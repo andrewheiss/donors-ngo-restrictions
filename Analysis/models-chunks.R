@@ -157,9 +157,15 @@ stars <- function(p) {
   as.character(out)
 }
 
-fixed.digits <- function(x, n=2) {
-  formatC(x, digits=n, format="f")
+fixed.digits <- function(x, digits = 2) {
+  formatC(x, digits=digits, format="f")
 }
+
+# Use 2 significant digits only on the decimal part of the number, ignoring the
+# integer part. See my question here: http://stackoverflow.com/q/43050903/120898
+# fixed.digits <- function(x, digits = 2) {
+#   as.character(floor(x) + signif(x %% 1, digits))
+# }
 
 # Inverse logit, with the ability to account for adjustments
 # via http://stackoverflow.com/a/23845527/120898
