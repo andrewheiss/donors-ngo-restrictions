@@ -38,7 +38,23 @@ source(file.path(PROJHOME, "Analysis", "h4_model_definitions_bayes.R"))
 ```{r helpful-functions}
 ```
 
-## H~1~
+---
+
+## H~1~: Donors reduce aid in response to legislation
+
+> **H~1~**: In response to restrictive NGO legislation, bilateral, multilateral, and private donors may reduce their aid to repressive countries.
+
+$$ln( \text{ODA}_{\text{OECD}} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
+
+Our dependent variable for this hypothesis is the log of ODA (constant 2011 dollars), leaded by one year so we don't have to lag every other independent variable. As a robustness check, we also include models with log ODA leaded by 2 years and 5 years to account the implementation period following the passage of a law.
+
+We look at NGO legislation in a few different ways:
+
+- `barriers.total`: Number of anti-NGO legal barriers in a country-year
+- `barriers.total_new`: Indicator marking if a new anti-NGO barrier was passed in a country year
+- `advocacy + entry + funding`: Number of anti-NGO legal barriers by type of barrier
+- `advocacy_new + entry_new + funding_new`: Indicators marking new type of barrier
+- `csre`: Civil society regulatory environment index (CSRE), ranging from roughly -4 to 4 (higher values = better civil society regulations)
 
 ```{r h1-models-bayes-1, warning=FALSE, message=FALSE}
 h1.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h1.rds")
@@ -61,12 +77,144 @@ if (file.exists(h1.raw.path)) {
   
   saveRDS(mods.h1.next_year.raw.bayes, h1.raw.path)
 }
+
+# Get model details and parameters
+mods.h1.next_year.bayes <- mods.h1.next_year.raw.bayes %>%
+  gather(model.name, model, -m, -data) %>%
+  mutate(glance = model %>% map(broom::glance),
+         tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
+         augment = model %>% map(broom::augment)) %>%
+  filter(m != "original")
 ```
 
 
-## H~2~
+### MCMC diagnostics
 
-```{r h2-models-bayes-1, warning=FALSE, message=FALSE}
+We use one of the imputed models (`mod.h1.barriers.total`) to check for fit and convergence.
+
+```{r h1-diagnostics-bayes}
+model.to.check <- mods.h1.next_year.bayes %>%
+  filter(m == "imp1", model.name == "mod.h1.barriers.total") %>%
+  select(model) %>% .[[1]] %>% .[[1]]
+```
+
+How well does the posterior predictive distribution fit the observed outcome? Not great, but not perfectly. The actual distribution is bimodal, with a bunch of zeros, and the model gets the two peaks, but they're shallow. We can live with it, though.
+
+```{r h1-diag-density}
+pp_check(model.to.check, plotfun="ppc_dens_overlay", overlay=TRUE, nreps=5) + 
+  theme_donors()
+```
+
+What about chain convergence? These should look like tops if everything converges, with no observations at 0 in the mean Metropolis-Hastings aceptance panel.
+
+```{r h1-diag-divergence}
+rstan::stan_diag(model.to.check, information="divergence")
+```
+
+
+### Merging MCMC chains
+
+Merging the MCMC chains is relatively easy, but then working with the 20,000 rows of simulations is trickier, since merging makes the model a `data_frame` intead of a `stanreg` object, meaning all the convenience funcions like `posterior_predict()` don't work anymore. That means lots of math. Ugh.
+
+So instead, we do two things. We calculate the posterior median and MD by just merging all the MCMC chains from all imputations. Becuase `posterior_predict()` doesn't work on merged chains like this, we run `posterior_predict()` on each imputation and then take the mean of each imputation's credible intervals. This should be okay—taking the median of medians (or [mean of means](http://stats.stackexchange.com/q/133138/3025)) will yield the same value if the group sizes are the same (thus avoiding Simpson's Paradox). Like this:
+
+```{r median-of-medians}
+group1 = c(1, 2, 3, 4)
+group2 = c(5, 6, 7, 8)
+
+median(c(group1, group2))
+median(c(median(group1), median(group2)))
+```
+
+If it's a little off, it should be okay—it'll be off by an order of 0.001ish. 
+
+
+### Results
+
+```{r h1-plot-coefs, fig.width=7, fig.height=4}
+vars.to.plot <- c("barriers.total_within", "barriers.total_between",
+                  "barriers.total_new",
+                  "advocacy_within", "advocacy_between", 
+                  "entry_within", "entry_between", 
+                  "funding_within", "funding_between",
+                  "advocacy_new", "entry_new", "funding_new",
+                  "csre_within", "csre_between")
+
+mods.h1.melded <- bayes.meld(mods.h1.next_year.bayes,
+                             vars.to.plot)$melded.summary
+
+plot.data <- mods.h1.melded %>%
+  left_join(coef.names.all, by="term") %>%
+  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  arrange(desc(term)) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(coef.type = case_when(
+    str_detect(.$term, "_within") ~ "Within",
+    str_detect(.$term, "_between") ~ "Between",
+    TRUE ~ "Not split"
+  )) %>% 
+  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
+                            ordered=TRUE)) %>%
+  mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
+
+fig.coefs.h1 <- ggplot(plot.data, aes(x=med, y=term_plot, 
+                                      xmin=`2.5%`, xmax=`97.5%`, colour=model.name)) +
+  geom_vline(xintercept=0) +
+  geom_pointrangeh() +
+  labs(x="Posterior median change in log ODA in following year", y=NULL) +
+  scale_colour_manual(values=model.colors) +
+  guides(color=FALSE) +
+  theme_donors() + theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  facet_wrap(~ coef.type, scales="free")
+fig.coefs.h1
+
+fig.save.cairo(fig.coefs.h1, filename="fig-coefs-h1-bayes",
+               width=7, height=2.5)
+```
+
+```{r h1-table, results="asis", warning=FALSE}
+caption <- "The effect of anti-NGO legislation on OECD overseas development assistance (ODA) in the following year (H~1~), full models {#tbl:h1-coefs}"
+note <- c("Dependent variable log transformed.")
+table.h1 <- bayesgazer(mods.h1.next_year.bayes,
+                       caption=caption, note=note)
+
+cat(table.h1)
+cat(table.h1, file=file.path(PROJHOME, "Output",
+                             "tbl-h1-coefs-bayes.md"))
+```
+
+
+### Model diagnostics
+
+Country intercepts vary with an SD of 0.07 (etc.), year intercepts vary with an SD of 0.07 (etc.), and the SD of error not accounted for by either within-country or within-year variability is 3.02 (etc.)
+
+
+### Predicted ODA
+
+```{r h1-simulate-total, warning=FALSE, fig.width=6}
+#
+```
+
+
+---
+
+## H~2~: Donors shift aid to tamer causes
+
+> **H~2~**: As restrictive laws against NGOs are enacted, donors start increasing funds for 'tamer' causes, and decreasing funds for politically sensitive causes.
+
+Our dependent variable for this hypothesis is the percentage of ODA (still in constant 2011 dollars) allocated for contentious purposes, again leaded by one year. We classify contentious aid as any project focused on government and civil society (DAC codes 150 and 151) or conflict prevention and resolution, peace and security (DAC code 152).
+
+Working with proportion data, however, poses interesting mathematical and methodological challenges, since the range of possible outcomes is limited to a value between 0 and 1. Treating proportion variables in a mixed model is technically possible, but it yields predicitions that go beyond the allowable range of values (1.13, -0.5, etc.). Treating the proportion as a binomial variable is also possible and is indeed [one of the ways to use the `glm()` function](http://stackoverflow.com/a/9111904/120898) in R. However, this entails considering the proportion as a ratio of success and failures. In this case, treating a dollar of contentious aid as a success feels off, especially since aid amounts aren't independence events—it's not like each dollar of aid goes through a probabalistic process likek a coin flip. Another solution is to use [beta regression](https://cran.r-project.org/package=betareg), which [constrains the outcome variable to values between 0 and 1](http://www.theanalysisfactor.com/zero-one-inflated-beta-models-for-proportion-data/), but unfortunately does not allow for values of exactly 0 or 1. Zero-and-one inflated beta regression models make adjustments for this, but [they aren't very popular](https://CRAN.R-project.org/package=zoib) and definitely don't accont for random effects and mixed models. 
+
+[One recommendation by Ben Bolker](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2011q1/015422.html), the maintainer of [`lme4`](https://cran.r-project.org/package=lme4), is to use a logit transformation of the dependent variable in `lmer()` models. This seems to be [standard practice in political science research](https://acrowinghen.com/2014/04/24/interpreting-coefficients-from-a-logit-linear-model-with-a-proportional-dependent-variable/), too. Logit transformations still can't handle values of exactly 0 or 1, though, so we [winsorize](https://en.wikipedia.org/wiki/Winsorizing) those values by adding or subtracting 0.001 to the extremes.
+
+We thus use a logit-linear model of the ratio of contentious aid to non-contentious aid:
+
+$$ln( \frac{\text{contentious ODA}_{\text{OECD}}}{\text{noncontentious ODA}_{\text{OECD}}} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
+
+We look at NGO legislation in the same ways as H~1~ and use the same controls.
+
+```{r h2-models-bayes, warning=FALSE, message=FALSE}
 h2.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h2.rds")
 
 if (file.exists(h2.raw.path)) {
@@ -87,14 +235,123 @@ if (file.exists(h2.raw.path)) {
   
   saveRDS(mods.h2.next_year.raw.bayes, h2.raw.path)
 }
+
+# Get model details and parameters
+mods.h2.next_year.bayes <- mods.h2.next_year.raw.bayes %>%
+  gather(model.name, model, -m, -data) %>%
+  mutate(glance = model %>% map(broom::glance),
+         tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
+         augment = model %>% map(broom::augment)) %>%
+  filter(m != "original")
 ```
 
 
-## H~3~
+### MCMC diagnostics
 
-### Domestic
+Again, use one of the imputed models (`mod.h2.barriers.total`) to check for fit and convergence.
 
-```{r h3-models-bayes-1-domestic, warning=FALSE, message=FALSE}
+```{r h2-diagnostics-bayes}
+model.to.check <- mods.h2.next_year.bayes %>%
+  filter(m == "imp1", model.name == "mod.h2.barriers.total") %>%
+  select(model) %>% .[[1]] %>% .[[1]]
+```
+
+Posterior predictive distribution vs. observed outcome?
+
+```{r h2-diag-density}
+pp_check(model.to.check, plotfun="ppc_dens_overlay", overlay=TRUE, nreps=5) + 
+  theme_donors()
+```
+
+Chain convergence:
+
+```{r h2-diag-divergence}
+rstan::stan_diag(model.to.check, information="divergence")
+```
+
+
+### Results
+
+```{r h2-plot-coefs, fig.width=7, fig.height=4}
+vars.to.plot <- c("barriers.total_within", "barriers.total_between",
+                  "barriers.total_new",
+                  "advocacy_within", "advocacy_between", 
+                  "entry_within", "entry_between", 
+                  "funding_within", "funding_between",
+                  "advocacy_new", "entry_new", "funding_new",
+                  "csre_within", "csre_between")
+
+mods.h2.melded <- bayes.meld(mods.h2.next_year.bayes,
+                             vars.to.plot)$melded.summary
+
+plot.data <- mods.h2.melded %>%
+  left_join(coef.names.all, by="term") %>%
+  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  arrange(desc(term)) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(coef.type = case_when(
+    str_detect(.$term, "_within") ~ "Within",
+    str_detect(.$term, "_between") ~ "Between",
+    TRUE ~ "Not split"
+  )) %>% 
+  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
+                            ordered=TRUE)) %>%
+  mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
+
+fig.coefs.h2 <- ggplot(plot.data, aes(x=med, y=term_plot, 
+                                      xmin=`2.5%`, xmax=`97.5%`, colour=model.name)) +
+  geom_vline(xintercept=0) +
+  geom_pointrangeh() +
+  labs(x="Posterior median change in log ODA in following year", y=NULL) +
+  scale_colour_manual(values=model.colors) +
+  guides(color=FALSE) +
+  theme_donors() + theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  facet_wrap(~ coef.type, scales="free")
+fig.coefs.h2
+
+fig.save.cairo(fig.coefs.h2, filename="fig-coefs-h2-bayes",
+               width=7, height=2.5)
+```
+
+```{r h2-table, results="asis", warning=FALSE}
+caption <- "The effect of anti-NGO legislation on the proportion of OECD overseas development assistance (ODA) committed to contentious purposes in the following year (H~2~), full models {#tbl:h2-coefs}"
+note <- c("Logit-linear models. Odds ratios reported.")
+
+table.h2 <- bayesgazer(mods.h2.next_year.bayes, exponentiate=TRUE,
+                       caption=caption, note=note)
+
+cat(table.h2)
+cat(table.h2, file=file.path(PROJHOME, "Output",
+                             "tbl-h2-coefs-bayes.md"))
+```
+
+
+### Model diagnostics
+
+### Predicted ODA
+
+```{r h2-simulate-total, warning=FALSE, fig.width=6}
+#
+```
+
+
+---
+
+## H~3~: Donors shift aid to international NGOs
+
+> **H~3~**: As restrictive laws against local NGOs increase, states should be more likely to provide aid to INGOs rather than local NGOs.
+
+We use two dependent variables for this hypothesis: the proportion of aid channeled through either (1) domestic or (2) international or US-based (or foreign) NGOs, once again leaded by one year. The OECD and AidData do not track the channels of aid delivery, so we cannot see how aid is distributed on a global scale. USAID, however, does track channels, so we can measure how much aid goes to domestic NGOs (and also US-based and international NGOs). USAID didn't start tracking this until 2001, though, so we have to limit our models to 2001–2013. (Boo.)
+
+It would be cool to model the ratio aid channeled through domestic to foreign NGOs, but doing that causes weird mathematical issues with logit transformations, since the ratios can exceed 1. 
+
+Because the DVs are proportions, we have to make the same assumptions and weird interpretive tricks as H~2~, building a logit-linear model of the ratio of domestic or foreign NGO aid to all other channels:
+
+$$ln( \frac{\text{Aid to (domestic or foreign) NGOs}_{\text{USAID}}}{\text{Aid to other channels}_{\text{USAID}}} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
+
+Again, we use the same NGO legislation variables as H~1~ and H~2~ and use the same controls, except we omit "After 1989" since no observations actually occur after 1989.
+
+```{r h3-models-bayes-domestic, warning=FALSE, message=FALSE}
 h3.domestic.raw.path <- file.path(PROJHOME, "Data", "data_cache", 
                                   "models_bayes_h3_domestic.rds")
 
@@ -116,11 +373,17 @@ if (file.exists(h3.domestic.raw.path)) {
   
   saveRDS(mods.h3.dom.next_year.raw, h3.domestic.raw.path)
 }
+
+# Get model details and parameters
+mods.h3.dom.next_year.bayes <- mods.h3.dom.next_year.raw %>%
+  gather(model.name, model, -m, -data) %>%
+  mutate(glance = model %>% map(broom::glance),
+         tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
+         augment = model %>% map(broom::augment)) %>%
+  filter(m != "original")
 ```
 
-### Foreign
-
-```{r h3-models-bayes-1-foreign, warning=FALSE, message=FALSE}
+```{r h3-models-bayes-foreign, warning=FALSE, message=FALSE}
 h3.foreign.raw.path <- file.path(PROJHOME, "Data", "data_cache", 
                                  "models_bayes_h3_foreign.rds")
 
@@ -142,12 +405,158 @@ if (file.exists(h3.foreign.raw.path)) {
   
   saveRDS(mods.h3.foreign.next_year.raw, h3.foreign.raw.path)
 }
+
+# Get model details and parameters
+mods.h3.foreign.next_year.bayes <- mods.h3.foreign.next_year.raw %>%
+  gather(model.name, model, -m, -data) %>%
+  mutate(glance = model %>% map(broom::glance),
+         tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
+         augment = model %>% map(broom::augment)) %>%
+  filter(m != "original")
+```
+
+### MCMC diagnostics
+
+Again, use one of the imputed models (`mod.h3.barriers.total`) to check for fit and convergence.
+
+```{r h3-diagnostics-bayes}
+model.to.check <- mods.h3.dom.next_year.bayes %>%
+  filter(m == "imp1", model.name == "mod.h3.barriers.total") %>%
+  select(model) %>% .[[1]] %>% .[[1]]
+```
+
+Posterior predictive distribution vs. observed outcome?
+
+```{r h3-diag-density}
+pp_check(model.to.check, plotfun="ppc_dens_overlay", overlay=TRUE, nreps=5) + 
+  theme_donors()
+```
+
+Chain convergence:
+
+```{r h3-diag-divergence}
+rstan::stan_diag(model.to.check, information="divergence")
 ```
 
 
-## H~4~
+### Results
 
-```{r h4-models-bayes-1, warning=FALSE, message=FALSE}
+#### Proportion to domestic NGOs
+
+```{r h3-table-domestic, results="asis", warning=FALSE}
+caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *domestic* NGOs in the following year (H~3~), full models {#tbl:h3-domestic-coefs}"
+note <- c("Dependent variable log transformed.")
+
+table.h3.domestic <- bayesgazer(mods.h3.dom.next_year.bayes,
+                                caption=caption, note=note)
+
+cat(table.h3.domestic)
+cat(table.h3.domestic, file=file.path(PROJHOME, "Output",
+                                      "tbl-h3-domestic-coefs-bayes.md"))
+```
+
+#### Proportion to foreign NGOs
+
+```{r h3-table-foreign, results="asis", warning=FALSE}
+caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *US-based and international* NGOs in the following year (H~3~), full models {#tbl:h3-foreign-coefs}"
+note <- c("Dependent variable log transformed.")
+
+table.h3.domestic <- bayesgazer(mods.h3.foreign.next_year.bayes,
+                                caption=caption, note=note)
+
+cat(table.h3.domestic)
+cat(table.h3.domestic, file=file.path(PROJHOME, "Output",
+                                      "tbl-h3-domestic-coefs-bayes.md"))
+```
+
+#### Both
+
+```{r plot-h3-coefs-both, fig.width=7, fig.height=4}
+vars.to.plot <- c("barriers.total_within", "barriers.total_between",
+                  "barriers.total_new",
+                  "advocacy_within", "advocacy_between", 
+                  "entry_within", "entry_between", 
+                  "funding_within", "funding_between",
+                  "advocacy_new", "entry_new", "funding_new",
+                  "csre_within", "csre_between")
+
+mods.h3.dom.melded <- bayes.meld(mods.h3.dom.next_year.bayes,
+                                 vars.to.plot)$melded.summary
+
+coefs.raw.h3.dom <- mods.h3.dom.melded %>%
+  left_join(coef.names.all, by="term") %>%
+  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  arrange(desc(term)) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(coef.type = case_when(
+    str_detect(.$term, "_within") ~ "Within",
+    str_detect(.$term, "_between") ~ "Between",
+    TRUE ~ "Not split"
+  )) %>% 
+  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
+                            ordered=TRUE)) %>%
+  mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
+
+mods.h3.foreign.melded <- bayes.meld(mods.h3.foreign.next_year.bayes,
+                                     vars.to.plot)$melded.summary
+
+coefs.raw.h3.foreign <- mods.h3.foreign.melded %>%
+  left_join(coef.names.all, by="term") %>%
+  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  arrange(desc(term)) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(coef.type = case_when(
+    str_detect(.$term, "_within") ~ "Within",
+    str_detect(.$term, "_between") ~ "Between",
+    TRUE ~ "Not split"
+  )) %>% 
+  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
+                            ordered=TRUE)) %>%
+  mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
+
+coefs.h3.both <- bind_rows(`Domestic NGOs` = coefs.raw.h3.dom,
+                           `Foreign NGOs` = coefs.raw.h3.foreign,
+                           .id="channel")
+
+fig.coefs.h3 <- ggplot(coefs.h3.both, aes(y=term_plot, x=med, 
+                                          colour=interaction(model.name, channel))) + 
+  geom_vline(xintercept=1, colour="grey50", size=1) + 
+  geom_pointrangeh(aes(xmin=`2.5%`, xmax=`97.5%`, shape=channel), size=0.5,
+                   position=position_dodgev(height=0.5)) + 
+  labs(x="Odds ratio", y=NULL) +
+  scale_colour_manual(values=c(model.colors, model.colors)) +
+  guides(color=FALSE, shape=guide_legend(title=NULL, reverse=TRUE)) +
+  theme_donors() +
+  facet_wrap(~ coef.type, scales="free")
+fig.coefs.h3
+
+fig.save.cairo(fig.coefs.h3, filename="fig-coefs-h3-bayes",
+               width=7, height=3)
+```
+
+### Model diagnostics
+
+
+### Predicted ODA
+
+```{r h3-simulate-total, warning=FALSE, fig.width=6}
+#
+```
+
+
+---
+
+## H~4~: Donors shift aid to neighboring countries
+
+> **H~4~**: As restrictive laws against NGOs in a country are enacted, donors should be more likely to provide aid to neighboring countries.
+
+Our dependent variable for this hypothesis is the total amount of ODA given to countries within 900 km of a country's border, capturing aid given to the overall neighborhood. The model is structured similarly to H~1~, using just the log of aid rather than any proportional measure, which makes interpreting the coefficients a lot easier (yay!): 
+
+$$ln( \text{ODA in neighboring countries}_{\text{OECD}} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
+
+With the dependent variable specified like this, it makes less sense to use country-level random effects, since the unit of analysis is essentially the entire neighborhood, not a single country. We're looking at the effect of one country's regulations, wealth, democracy, corruption, and bad stuff on the overall neighborhood's aid.
+
+```{r h4-models-bayes, warning=FALSE, message=FALSE}
 h4.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h4.rds")
 
 if (file.exists(h4.raw.path)) {
@@ -168,59 +577,178 @@ if (file.exists(h4.raw.path)) {
   
   saveRDS(mods.h4.next_year.raw, h4.raw.path)
 }
+
+# Get model details and parameters
+mods.h4.next_year.bayes <- mods.h4.next_year.raw %>%
+  gather(model.name, model, -m, -data) %>%
+  mutate(glance = model %>% map(broom::glance),
+         tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
+         augment = model %>% map(broom::augment)) %>%
+  filter(m != "original")
 ```
 
 
-## Robustness
+### MCMC diagnostics
 
-### After 2 years
+Again, use one of the imputed models (`mod.h4.barriers.total`) to check for fit and convergence.
 
-```{r h1-models-2-bayes, warning=FALSE, message=FALSE, cache=TRUE}
-h1_2.raw.path <- file.path(PROJHOME, "Data", "data_cache",
-                           "models_bayes_h1_after_2.rds")
-
-if (file.exists(h1_2.raw.path)) {
-  mods.h1.after_2.raw.bayes <- readRDS(h1_2.raw.path)
-} else {
-  mods.h1.after_2.raw.bayes <- df.country.aid.demean.after_2.impute %>%
-    nest(-m) %>%
-    mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
-                                                "total.oda_log_next_year"),
-           mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
-                                              "total.oda_log_next_year"),
-           mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
-                                            "total.oda_log_next_year"),
-           mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
-                                          "total.oda_log_next_year"),
-           mod.h1.csre = data %>% map(mod.h1.csre.bayes,
-                                      "total.oda_log_next_year"))
-  
-  saveRDS(mods.h1.after_2.raw.bayes, h1_2.raw.path)
-}
+```{r h4-diagnostics-bayes}
+model.to.check <- mods.h4.next_year.bayes %>%
+  filter(m == "imp1", model.name == "mod.h4.barriers.total") %>%
+  select(model) %>% .[[1]] %>% .[[1]]
 ```
 
-### After 5 years
+Posterior predictive distribution vs. observed outcome?
 
-```{r h1-models-5-bayes, warning=FALSE, message=FALSE, cache=TRUE}
-h1_5.raw.path <- file.path(PROJHOME, "Data", "data_cache",
-                           "models_bayes_h1_after_5.rds")
-
-if (file.exists(h1_5.raw.path)) {
-  mods.h1.after_5.raw.bayes <- readRDS(h1_5.raw.path)
-} else {
-  mods.h1.after_5.raw.bayes <- df.country.aid.demean.after_5.impute %>%
-    nest(-m) %>%
-    mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
-                                                "total.oda_log_next_year"),
-           mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
-                                              "total.oda_log_next_year"),
-           mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
-                                            "total.oda_log_next_year"),
-           mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
-                                          "total.oda_log_next_year"),
-           mod.h1.csre = data %>% map(mod.h1.csre.bayes,
-                                      "total.oda_log_next_year"))
-  
-  saveRDS(mods.h1.after_5.raw.bayes, h1_5.raw.path)
-}
+```{r h4-diag-density}
+pp_check(model.to.check, plotfun="ppc_dens_overlay", overlay=TRUE, nreps=5) + 
+  theme_donors()
 ```
+
+Chain convergence:
+
+```{r h4-diag-divergence}
+rstan::stan_diag(model.to.check, information="divergence")
+```
+
+
+### Results
+
+```{r h4-plot-coefs, fig.width=5, fig.height=4}
+vars.to.plot <- c("barriers.total", "barriers.total_new",
+                  "advocacy", "entry", "funding",
+                  "advocacy_new", "entry_new", "funding_new",
+                  "csre")
+
+mods.h4.melded <- bayes.meld(mods.h4.next_year.bayes,
+                             vars.to.plot)$melded.summary
+
+plot.data <- mods.h4.melded %>%
+  left_join(coef.names.all, by="term") %>%
+  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  arrange(desc(term)) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(coef.type = case_when(
+    str_detect(.$term, "_within") ~ "Within",
+    str_detect(.$term, "_between") ~ "Between",
+    TRUE ~ "Not split"
+  )) %>% 
+  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
+                            ordered=TRUE)) %>%
+  mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
+
+fig.coefs.h4 <-  ggplot(plot.data, 
+                        aes(y=term_plot, x=med, colour=model.name)) + 
+  geom_vline(xintercept=0, colour="grey50", size=0.5) + 
+  geom_pointrangeh(aes(xmin=`2.5%`, xmax=`97.5%`), size=.5) + 
+  labs(x="Estimate", y=NULL) +
+  scale_colour_manual(values=model.colors) +
+  guides(color=FALSE) +
+  theme_donors()
+fig.coefs.h4
+
+fig.save.cairo(fig.coefs.h4, filename="fig-coefs-h4-bayes",
+               width=4, height=2.5)
+```
+
+```{r h4-table, results="asis", warning=FALSE}
+caption <- "The effect of anti-NGO legislation on OECD overseas development assistance (ODA) in countries within 900 km radius in the following year (H~4~), full models {#tbl:h4-coefs}"
+note <- c("Dependent variable log transformed.")
+
+table.h4 <- bayesgazer(mods.h4.next_year.bayes,
+                       caption=caption, note=note,
+                       coefs.for.bottom = c("year_b", "sigma_b"))
+
+cat(table.h4)
+cat(table.h4, file=file.path(PROJHOME, "Output",
+                             "tbl-h4-coefs-bayes.md"))
+```
+
+
+### Model diagnostics
+
+
+
+### Predicted ODA
+
+```{r h4-simulate-total, warning=FALSE, fig.width=6}
+#
+```
+
+
+---
+
+## Robustness checks
+
+### Imputation
+
+
+### Longer lags
+
+Looking at aid 2 years and 5 years after the change in anti-NGO legislation shows similar trends to 1 year after.
+
+```{r h1-models-2, warning=FALSE, message=FALSE, cache=TRUE}
+# h1_2.raw.path <- file.path(PROJHOME, "Data", "data_cache",
+#                            "models_bayes_h1_after_2.rds")
+# 
+# if (file.exists(h1_2.raw.path)) {
+#   mods.h1.after_2.raw.bayes <- readRDS(h1_2.raw.path)
+# } else {
+#   mods.h1.after_2.raw.bayes <- df.country.aid.demean.after_2.impute %>%
+#     nest(-m) %>%
+#     mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
+#                                                 "total.oda_log_next_year"),
+#            mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
+#                                               "total.oda_log_next_year"),
+#            mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
+#                                             "total.oda_log_next_year"),
+#            mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
+#                                           "total.oda_log_next_year"),
+#            mod.h1.csre = data %>% map(mod.h1.csre.bayes,
+#                                       "total.oda_log_next_year"))
+#   
+#   saveRDS(mods.h1.after_2.raw.bayes, h1_2.raw.path)
+# }
+# 
+# # Get model details and parameters
+# mods.h1.after_2.bayes <- mods.h1.after_2.raw.bayes %>%
+#   gather(model.name, model, -m, -data) %>%
+#   mutate(glance = model %>% map(broom::glance),
+#          tidy = model %>% map(broom::tidy, conf.int=TRUE)) %>%
+#   filter(m != "original")
+```
+
+```{r h1-models-5, warning=FALSE, message=FALSE, cache=TRUE}
+# h1_5.raw.path <- file.path(PROJHOME, "Data", "data_cache",
+#                            "models_bayes_h1_after_5.rds")
+# 
+# if (file.exists(h1_5.raw.path)) {
+#   mods.h1.after_5.raw.bayes <- readRDS(h1_5.raw.path)
+# } else {
+#   mods.h1.after_5.raw.bayes <- df.country.aid.demean.after_5.impute %>%
+#     nest(-m) %>%
+#     mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
+#                                                 "total.oda_log_next_year"),
+#            mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
+#                                               "total.oda_log_next_year"),
+#            mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
+#                                             "total.oda_log_next_year"),
+#            mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
+#                                           "total.oda_log_next_year"),
+#            mod.h1.csre = data %>% map(mod.h1.csre.bayes,
+#                                       "total.oda_log_next_year"))
+#   
+#   saveRDS(mods.h1.after_5.raw.bayes, h1_5.raw.path)
+# }
+# 
+# # Get model details and parameters
+# mods.h1.after_5.bayes <- mods.h1.after_5.raw.bayes %>%
+#   gather(model.name, model, -m, -data) %>%
+#   mutate(glance = model %>% map(broom::glance),
+#          tidy = model %>% map(broom::tidy, conf.int=TRUE)) %>%
+#   filter(m != "original")
+```
+
+#### Effect on ODA after 2 years
+
+#### Effect on ODA after 5 years

@@ -22,3 +22,8 @@ prop.contentious_logit,Proportion of contentious aid in present year (logit)
 prop.ngo.dom_logit,Proportion of aid to domestic NGOs in present year (logit)
 prop.ngo.foreign_logit,Proportion of aid to foreign NGOs in present year (logit)
 nb_oda.sum_log,Total aid to neighbors in present year (log)
+cowcode_b,Within-country variability
+year_b,Within-year variability
+sigma_b,Residual random error
+nobs,N
+pss,Posterior sample size
