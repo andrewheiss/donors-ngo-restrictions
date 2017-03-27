@@ -234,10 +234,13 @@ bayesgazer <- function(models, digits=2, caption=NULL, note=NULL, exponentiate=F
   
   # Get glance() information for all imputed models even though pss and nobs are
   # identical across all imputations; averaging them just gets the actual value
+  n.m <- models %>% distinct(m) %>% nrow()
+  
   bottom.details <- models %>%
     unnest(glance) %>%
     group_by(model.name) %>%
     summarise_at(vars(pss, nobs), mean) %>%
+    mutate(m = n.m) %>%
     gather(term, value, -model.name) %>%
     mutate(value = as.character(value)) %>%
     spread(model.name, value) %>%

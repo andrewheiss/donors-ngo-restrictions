@@ -27,3 +27,4 @@ year_b,Within-year variability
 sigma_b,Residual random error
 nobs,N
 pss,Posterior sample size
+m,Imputed datasets (*m*)
