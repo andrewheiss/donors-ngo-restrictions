@@ -173,7 +173,7 @@ fig.save.cairo(fig.coefs.h1, filename="fig-coefs-h1-bayes",
 ```
 
 ```{r h1-table, results="asis", warning=FALSE}
-caption <- "The effect of anti-NGO legislation on OECD overseas development assistance (ODA) in the following year (H~1~), full models {#tbl:h1-coefs}"
+caption <- "The effect of anti-NGO legislation on OECD overseas development assistance (ODA) in the following year (H~1~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than zero. {#tbl:h1-coefs}"
 note <- c("Dependent variable log transformed.")
 table.h1 <- bayesgazer(mods.h1.next_year.bayes,
                        caption=caption, note=note)
@@ -313,7 +313,7 @@ fig.save.cairo(fig.coefs.h2, filename="fig-coefs-h2-bayes",
 ```
 
 ```{r h2-table, results="asis", warning=FALSE}
-caption <- "The effect of anti-NGO legislation on the proportion of OECD overseas development assistance (ODA) committed to contentious purposes in the following year (H~2~), full models {#tbl:h2-coefs}"
+caption <- "The effect of anti-NGO legislation on the proportion of OECD overseas development assistance (ODA) committed to contentious purposes in the following year (H~2~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than zero. {#tbl:h2-coefs}"
 note <- c("Logit-linear models. Odds ratios reported.")
 
 table.h2 <- bayesgazer(mods.h2.next_year.bayes, exponentiate=TRUE,
@@ -443,8 +443,8 @@ rstan::stan_diag(model.to.check, information="divergence")
 #### Proportion to domestic NGOs
 
 ```{r h3-table-domestic, results="asis", warning=FALSE}
-caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *domestic* NGOs in the following year (H~3~), full models {#tbl:h3-domestic-coefs}"
-note <- c("Dependent variable log transformed.")
+caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *domestic* NGOs in the following year (H~3~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than zero. {#tbl:h3-domestic-coefs}"
+note <- c("Logit-linear models. Odds ratios reported.")
 
 table.h3.domestic <- bayesgazer(mods.h3.dom.next_year.bayes,
                                 caption=caption, note=note, exponentiate=TRUE)
@@ -457,8 +457,8 @@ cat(table.h3.domestic, file=file.path(PROJHOME, "Output",
 #### Proportion to foreign NGOs
 
 ```{r h3-table-foreign, results="asis", warning=FALSE}
-caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *US-based and international* NGOs in the following year (H~3~), full models {#tbl:h3-foreign-coefs}"
-note <- c("Dependent variable log transformed.")
+caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *US-based and international* NGOs in the following year (H~3~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than zero. {#tbl:h3-foreign-coefs}"
+note <- c("Logit-linear models. Odds ratios reported.")
 
 table.h3.domestic <- bayesgazer(mods.h3.foreign.next_year.bayes,
                                 caption=caption, note=note, exponentiate=TRUE)
@@ -651,7 +651,7 @@ fig.save.cairo(fig.coefs.h4, filename="fig-coefs-h4-bayes",
 ```
 
 ```{r h4-table, results="asis", warning=FALSE}
-caption <- "The effect of anti-NGO legislation on OECD overseas development assistance (ODA) in countries within 900 km radius in the following year (H~4~), full models {#tbl:h4-coefs}"
+caption <- "The effect of anti-NGO legislation on OECD overseas development assistance (ODA) in countries within 900 km radius in the following year (H~4~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than zero. {#tbl:h4-coefs}"
 note <- c("Dependent variable log transformed.")
 
 table.h4 <- bayesgazer(mods.h4.next_year.bayes,
