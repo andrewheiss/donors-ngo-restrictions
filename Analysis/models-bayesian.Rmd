@@ -1007,10 +1007,146 @@ cat(table.h4, file=file.path(PROJHOME, "Output",
 
 
 
-### Predicted ODA
+### Predicted ODA to all neighbors
 
-```{r h4-simulate-total, warning=FALSE, fig.width=6}
-#
+```{r h4-predict-total, warning=FALSE, message=FALSE}
+model <- mods.h4.next_year.bayes %>%
+  filter(m == "imp1", model.name == "mod.h4.barriers.total") %>%
+  select(model) %>% .[[1]] %>% .[[1]]
+
+# For whatever reason, stanreg objects return the full data frame used in the
+# model, not just the model matrix, when calling object$data. model.frame()
+# chokes on object$formula because of (1 | x) grouping terms, but
+# get_all_vars() works.
+new.data <- get_all_vars(model$formula, data=model$data) %>%
+  select(-c(barriers.total, year)) %>%
+    summarise_all(typical) %>%
+    mutate(id = 1) %>%
+    right_join(expand.grid(barriers.total = seq(0, 12, 0.5),
+                           cowcode = 1000,
+                           year = 1981:2012,
+                           id = 1), by="id") %>% select(-id)
+
+cluster <- create_cluster(cores=cores)
+
+predicted.h4.barriers.total <- new.data %>%
+  nest(-cowcode) %>%
+  partition(cowcode, cluster=cluster) %>%
+  cluster_library("tidyverse") %>%
+  cluster_assign_value("model", model) %>%
+  cluster_assign_value("generate_predictions", generate_predictions) %>%
+  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  collect() %>%
+  unnest()
+
+df.plot.data <- predicted.h4.barriers.total %>%
+  group_by(barriers.total) %>%
+  summarise_at(vars(predicted), funs(mean(.))) %>%
+  ungroup()
+
+df.plot.data.mean <- df.plot.data %>%
+  group_by(barriers.total) %>%
+  summarise(predicted = mean(predicted)) %>%
+  mutate(cowcode=1)  # Fake country so the line plots
+```
+
+```{r h4-predict-individual, warning=FALSE, message=FALSE}
+barriers.indiv.clean.names <- tribble(
+  ~barrier, ~barrier.clean,
+  "advocacy", "Barriers to advocacy",
+  "entry", "Barriers to entry",
+  "funding", "Barriers to funding"
+)
+
+model <- mods.h4.next_year.bayes %>%
+  filter(m == "imp1", model.name == "mod.h4.type.total") %>%
+  select(model) %>% .[[1]] %>% .[[1]]
+
+hypothetical.bounds <- get_all_vars(model$formula, data=model$data) %>%
+    select(advocacy, entry, funding) %>%
+    summarise_all(funs(min, max)) %>%
+    gather(key, value) %>%
+    mutate(value = round(value, 0)) %>%
+    # Have to separate on _m because of multiple _s, then re-add the m
+    separate(key, into=c("term", "variable"), sep="_m") %>%
+    mutate(variable = paste0("m", variable)) %>%
+    spread(variable, value)
+
+new.data.hypothetical.nested <- hypothetical.bounds %>%
+    nest(-term) %>%
+    mutate(newdata = map2(.x=data, .y=term,
+                          ~ expand.grid(term = seq(.x$min, .x$max, by=0.5),
+                                        cowcode = 1000,
+                                        year = 1981:2012,
+                                        id = 1) %>%
+                            # Rename the term column to the actual term name
+                            magrittr::set_colnames(c(.y, colnames(.)[-1]))))
+  
+new.data.hypothetical <- as_tibble(bind_rows(new.data.hypothetical.nested$newdata)) %>%
+  mutate_at(vars(advocacy, entry, funding), funs(ifelse(is.na(.), 0, .)))
+  
+new.data <- get_all_vars(model$formula, data=model$data) %>%
+  select(-c(advocacy, entry, funding, year)) %>%
+  summarise_all(typical) %>%
+  mutate(id = 1) %>%
+  right_join(new.data.hypothetical, by="id") %>% select(-id)
+
+cluster <- create_cluster(cores=cores)
+
+predicted.h4.barriers.individual <- new.data %>%
+  nest(-cowcode) %>%
+  partition(cowcode, cluster=cluster) %>%
+  cluster_library("tidyverse") %>%
+  cluster_assign_value("model", model) %>%
+  cluster_assign_value("generate_predictions", generate_predictions) %>%
+  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  collect() %>%
+  unnest()
+
+df.plot.data.indiv <- predicted.h4.barriers.individual %>%
+  gather(barrier, barrier.value, c(advocacy, entry, funding)) %>%
+  group_by(cowcode, barrier.value, barrier) %>%
+  summarise_at(vars(predicted), funs(mean(.))) %>%
+  left_join(barriers.indiv.clean.names, by="barrier")
+
+df.plot.data.mean.indiv <- df.plot.data.indiv %>%
+  group_by(barrier, barrier.value) %>%
+  summarise(predicted = mean(predicted)) %>%
+  mutate(cowcode=1) %>%  # Fake country so the line plots
+  left_join(barriers.indiv.clean.names, by="barrier")
+```
+
+```{r h4-predict-both, warning=FALSE, fig.width=6.5, fig.height=4}
+# Combine the two plot data frames
+df.plot.data.both <- df.plot.data %>%
+  mutate(barrier = "barriers.total", barrier.clean = "Total barriers") %>%
+  rename(barrier.value = barriers.total) %>%
+  bind_rows(df.plot.data.indiv) %>%
+  mutate(barrier.clean = ordered(fct_inorder(barrier.clean)),
+         highlight = ifelse(barrier.clean == "Total barriers", TRUE, FALSE))
+
+# Create data frame for highlighting the total panel
+df.panel.highlight <- df.plot.data.both %>%
+  distinct(barrier.clean, highlight)
+
+fig.predicted.h4.barriers.both <- ggplot(df.plot.data.both, 
+                                         aes(x=barrier.value, y=expm1(predicted))) + 
+  geom_rect(data=df.panel.highlight, 
+            aes(fill=highlight, x=NULL, y=NULL, group=NULL),
+            xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf, alpha=0.15) +
+  geom_smooth(size=1.5, method="lm", colour="#BD4932") +
+  labs(x="Hypothetical anti-NGO legal barriers",
+       y="Predicted neighborhood ODA in the following year") +
+  scale_y_continuous(labels=scales::dollar, trans=scales::log1p_trans()) +
+  scale_x_continuous(breaks=integer_breaks()) +
+  scale_fill_manual(values=c(NA, "grey50"), guide=FALSE) +
+  facet_wrap(~ barrier.clean, scales="free_x") +
+  theme_donors()
+
+fig.predicted.h4.barriers.both
+
+fig.save.cairo(fig.predicted.h4.barriers.both, filename="fig-simulated-h4",
+               width=6.5, height=4)
 ```
 
 
