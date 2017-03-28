@@ -241,31 +241,31 @@ While we have outlined some of the broad strategies that donors have undertaken 
 ## Full model results
 
 \small
-!INCLUDE "../../Output/tbl-h1-coefs.md"
+!INCLUDE "../../Output/tbl-h1-coefs-bayes.md"
 \normalsize
 
 \clearpage
 
 \small
-!INCLUDE "../../Output/tbl-h2-coefs.md"
+!INCLUDE "../../Output/tbl-h2-coefs-bayes.md"
 \normalsize
 
 \clearpage
 
 \small
-!INCLUDE "../../Output/tbl-h3-domestic-coefs.md"
+!INCLUDE "../../Output/tbl-h3-domestic-coefs-bayes.md"
 \normalsize
 
 \clearpage
 
 \small
-!INCLUDE "../../Output/tbl-h3-foreign-coefs.md"
+!INCLUDE "../../Output/tbl-h3-foreign-coefs-bayes.md"
 \normalsize
 
 \clearpage
 
 \small
-!INCLUDE "../../Output/tbl-h4-coefs.md"
+!INCLUDE "../../Output/tbl-h4-coefs-bayes.md"
 \normalsize
 
 \clearpage
