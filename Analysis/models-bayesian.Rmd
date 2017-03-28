@@ -486,7 +486,7 @@ cat(table.h2, file=file.path(PROJHOME, "Output",
 
 ### Model diagnostics
 
-### Predicted ODA
+### Predicted proportion of contentious aid
 
 ```{r h2-predict-both, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4}
 # Barriers to advocacy
