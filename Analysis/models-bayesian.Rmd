@@ -348,7 +348,7 @@ fig.display.both <- fig.predicted.h1.barriers.both +
        caption="Chaudhry and Heiss (2017)") + 
   theme_donors(11)
 
-fig.simulated.h1.barriers.both
+fig.predicted.h1.barriers.both
 
 fig.save.cairo(fig.predicted.h1.barriers.both, filename="fig-predicted-h1",
                width=6.5, height=4)
@@ -787,7 +787,7 @@ fig.save.cairo(fig.coefs.h3, filename="fig-coefs-h3-bayes",
 
 ### Predicted proprtion of aid channeled to domestic or foreign NGOs
 
-```{r h3-simulate-both, warning=FALSE, fig.width=6.5, fig.height=4}
+```{r h3-predict-both, warning=FALSE, fig.width=6.5, fig.height=4}
 # Aid to foreign NGOs ~ barriers to funding
 model <- mods.h3.foreign.next_year.bayes %>%
   filter(m == "imp1", model.name == "mod.h3.type.total") %>%
@@ -871,7 +871,7 @@ fig.predicted.h3.barriers <- ggplot(df.plot.data, aes(x=variable,
   geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
   geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour="#BD4932") +
   labs(x="Difference from average number of barriers to funding\n(within effect)",
-       y="Simulated proportion of aid to\ntype of NGO in the following year") +
+       y="Predicted proportion of aid to\ntype of NGO in the following year") +
   scale_y_continuous(labels=scales::percent) +
   facet_wrap(~ variable.clean, scales="free_x") +
   theme_donors()
@@ -1145,7 +1145,7 @@ fig.predicted.h4.barriers.both <- ggplot(df.plot.data.both,
 
 fig.predicted.h4.barriers.both
 
-fig.save.cairo(fig.predicted.h4.barriers.both, filename="fig-simulated-h4",
+fig.save.cairo(fig.predicted.h4.barriers.both, filename="fig-predicted-h4",
                width=6.5, height=4)
 ```
 
