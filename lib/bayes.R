@@ -294,3 +294,11 @@ bayesgazer <- function(models, digits=2, caption=NULL, note=NULL, exponentiate=F
                       missing="",
                       justify=table.align, caption=caption)
 }
+
+generate_predictions <- function(x, draws=10) {
+  rstanarm::posterior_predict(model, newdata=x, draws=draws, re.form=NA) %>%
+    as.data.frame() %>%
+    summarise_all(median) %>%
+    gather(key, predicted) %>% 
+    select(predicted) %>% unlist() %>% unname() %>% c()
+}

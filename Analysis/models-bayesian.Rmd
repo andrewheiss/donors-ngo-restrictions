@@ -35,6 +35,13 @@ source(file.path(PROJHOME, "Analysis", "h3_model_definitions_bayes.R"))
 source(file.path(PROJHOME, "Analysis", "h4_model_definitions_bayes.R"))
 ```
 
+```{r multidplyr}
+# https://www.r-bloggers.com/speed-up-your-code-parallel-processing-with-multidplyr/
+library(multidplyr)
+cores <- parallel::detectCores()
+# parallel::stopCluster(cluster)
+```
+
 ```{r helpful-functions}
 ```
 
@@ -191,8 +198,160 @@ Country intercepts vary with an SD of 0.07 (etc.), year intercepts vary with an 
 
 ### Predicted ODA
 
-```{r h1-simulate-total, warning=FALSE, fig.width=6}
-#
+Here, for the sake of computational efficiency and speed, we only use one of the imputed datasets for predictions. Technically we should base the predictions on all the merged chains, but (1) there's no function that can handle that, (2) it would take forever to run predictions on each individual imputation and then combine the predictions, and (3) these are posterior medians anyway from ostensibly the same-ish distribution—quintupling the number of chains to simulate is overkill for drawing a picture.
+
+```{r h1-predict-total, warning=FALSE, fig.width=6}
+model <- mods.h1.next_year.bayes %>%
+  filter(m == "imp1", model.name == "mod.h1.barriers.total") %>%
+  select(model) %>% .[[1]] %>% .[[1]]
+
+# For whatever reason, stanreg objects return the full data frame used in the
+# model, not just the model matrix, when calling object$data. model.frame()
+# chokes on object$formula because of (1 | x) grouping terms, but
+# get_all_vars() works.
+new.data <- get_all_vars(model$formula, data=model$data) %>%
+  select(-c(barriers.total_within, year, cowcode)) %>%
+    summarise_all(typical) %>%
+    mutate(id = 1) %>%
+    right_join(expand.grid(barriers.total_within = seq(-5, 5, 0.5),
+                           cowcode = 1000:1025,
+                           year = 1981:2012,
+                           id = 1), by="id") %>% select(-id)
+
+cluster <- create_cluster(cores=cores)
+
+predicted.h1.barriers.total <- new.data %>%
+  nest(-cowcode) %>%
+  partition(cowcode, cluster=cluster) %>%
+  cluster_library("tidyverse") %>%
+  cluster_assign_value("model", model) %>%
+  cluster_assign_value("generate_predictions", generate_predictions) %>%
+  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  collect() %>%
+  unnest()
+
+df.plot.data <- predicted.h1.barriers.total %>%
+  group_by(cowcode, barriers.total_within) %>%
+  summarise_at(vars(predicted), funs(mean(.))) %>%
+  ungroup()
+
+df.plot.data.mean <- df.plot.data %>%
+  group_by(barriers.total_within) %>%
+  summarise(predicted = mean(predicted)) %>%
+  mutate(cowcode=1)  # Fake country so the line plots
+```
+
+```{r h1-predict-individual, warning=FALSE}
+barriers.indiv.clean.names <- tribble(
+  ~barrier, ~barrier.clean,
+  "advocacy_within", "Barriers to advocacy",
+  "entry_within", "Barriers to entry",
+  "funding_within", "Barriers to funding"
+)
+
+model <- mods.h1.next_year.bayes %>%
+  filter(m == "imp1", model.name == "mod.h1.type.total") %>%
+  select(model) %>% .[[1]] %>% .[[1]]
+
+hypothetical.bounds <- get_all_vars(model$formula, data=model$data) %>%
+    select(advocacy_within, entry_within, funding_within) %>%
+    summarise_all(funs(min, max)) %>%
+    gather(key, value) %>%
+    mutate(value = round(value, 0)) %>%
+    # Have to separate on _m because of multiple _s, then re-add the m
+    separate(key, into=c("term", "variable"), sep="_m") %>%
+    mutate(variable = paste0("m", variable)) %>%
+    spread(variable, value)
+
+new.data.hypothetical.nested <- hypothetical.bounds %>%
+    nest(-term) %>%
+    mutate(newdata = map2(.x=data, .y=term,
+                          ~ expand.grid(term = seq(.x$min, .x$max, by=0.5),
+                                        cowcode = 1000:1050,
+                                        year = 1981:2012,
+                                        id = 1) %>%
+                            # Rename the term column to the actual term name
+                            magrittr::set_colnames(c(.y, colnames(.)[-1]))))
+  
+new.data.hypothetical <- as_tibble(bind_rows(new.data.hypothetical.nested$newdata)) %>%
+  mutate_at(vars(contains("within")), funs(ifelse(is.na(.), 0, .)))
+  
+new.data <- get_all_vars(model$formula, data=model$data) %>%
+  select(-c(advocacy_within, entry_within, funding_within, year, cowcode)) %>%
+  summarise_all(typical) %>%
+  mutate(id = 1) %>%
+  right_join(new.data.hypothetical, by="id") %>% select(-id)
+
+cluster <- create_cluster(cores=cores)
+
+predicted.h1.barriers.individual <- new.data %>%
+  nest(-cowcode) %>%
+  partition(cowcode, cluster=cluster) %>%
+  cluster_library("tidyverse") %>%
+  cluster_assign_value("model", model) %>%
+  cluster_assign_value("generate_predictions", generate_predictions) %>%
+  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  collect() %>%
+  unnest()
+
+df.plot.data.indiv <- predicted.h1.barriers.individual %>%
+  gather(barrier, barrier.value, c(advocacy_within, entry_within, funding_within)) %>%
+  group_by(cowcode, barrier.value, barrier) %>%
+  summarise_at(vars(predicted), funs(mean(.))) %>%
+  left_join(barriers.indiv.clean.names, by="barrier")
+
+df.plot.data.mean.indiv <- df.plot.data.indiv %>%
+  group_by(barrier, barrier.value) %>%
+  summarise(predicted = mean(predicted)) %>%
+  mutate(cowcode=1) %>%  # Fake country so the line plots
+  left_join(barriers.indiv.clean.names, by="barrier")
+```
+
+```{r h1-predict-both, warning=FALSE, fig.width=6.5, fig.height=4}
+# Combine the two plot data frames
+df.plot.data.both <- df.plot.data %>%
+  mutate(barrier = "barriers.total_within", barrier.clean = "Total barriers") %>%
+  rename(barrier.value = barriers.total_within) %>%
+  bind_rows(df.plot.data.indiv) %>%
+  mutate(barrier.clean = ordered(fct_inorder(barrier.clean)),
+         highlight = ifelse(barrier.clean == "Total barriers", TRUE, FALSE))
+
+df.plot.data.mean.both <- df.plot.data.mean %>%
+  mutate(barrier = "barriers.total_within", barrier.clean = "Total barriers") %>%
+  rename(barrier.value = barriers.total_within) %>%
+  bind_rows(df.plot.data.mean.indiv) %>%
+  mutate(barrier.clean = ordered(fct_inorder(barrier.clean)))
+
+# Create data frame for highlighting the total panel
+df.panel.highlight <- df.plot.data.both %>%
+  distinct(barrier.clean, highlight)
+
+fig.predicted.h1.barriers.both <- ggplot(df.plot.data.both, 
+                                         aes(x=barrier.value, y=expm1(predicted), 
+                                             group=cowcode)) + 
+  geom_rect(data=df.panel.highlight, 
+            aes(fill=highlight, x=NULL, y=NULL, group=NULL),
+            xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf, alpha=0.15) +
+  geom_vline(xintercept=0, size=0.5) +
+  geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
+  geom_smooth(data=df.plot.data.mean.both, size=1.5, method="lm", colour="#BD4932") +
+  labs(x="Difference from average number of anti-NGO barriers in country\n(within effects)",
+       y="Predicted ODA in the following year") +
+  scale_y_continuous(labels=scales::dollar, trans=scales::log1p_trans()) +
+  scale_fill_manual(values=c(NA, "grey50"), guide=FALSE) +
+  facet_wrap(~ barrier.clean, scales="free_x") +
+  theme_donors()
+
+fig.display.both <- fig.predicted.h1.barriers.both + 
+  labs(title="Donors reduce aid more in response to\nadditional advocacy-focused anti-NGO laws",
+       subtitle="Simulated foreign aid (ODA) across range of differences from the average number of\nanti-NGO laws in a hypothetical average country; dark line shows average of\n50 simulations across 5 imputed datasets",
+       caption="Chaudhry and Heiss (2017)") + 
+  theme_donors(11)
+
+fig.simulated.h1.barriers.both
+
+fig.save.cairo(fig.predicted.h1.barriers.both, filename="fig-predicted-h1",
+               width=6.5, height=4)
 ```
 
 
