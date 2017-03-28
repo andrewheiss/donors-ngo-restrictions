@@ -1,30 +1,35 @@
-term,term_clean
-barriers.total,Total legal barriers
-barriers.total_new,New legal barrier
-advocacy,Barriers to advocacy
-entry,Barriers to entry
-funding,Barriers to funding
-advocacy_new,New barrier to advocacy
-entry_new,New barrier to entry
-funding_new,New barrier to funding
-csre,Civil society reg. env. (CSRE)
-polity,Polity IV (0–10)
-gdp.capita_log,GDP per capita (log)
-trade.pct.gdp,Trade as % of GDP
-corruption,Corruption
-total.oda_log,Total aid in present year (log)
-internal.conflict.past.5,Internal conflict in last 5 years
-natural_disaster.occurrence,Natural disaster occurred
-cowcode,Within-country variability ($\sigma$)
-year,Within-year variability ($\sigma$)
-post.1989,After 1989
-prop.contentious_logit,Proportion of contentious aid in present year (logit)
-prop.ngo.dom_logit,Proportion of aid to domestic NGOs in present year (logit)
-prop.ngo.foreign_logit,Proportion of aid to foreign NGOs in present year (logit)
-nb_oda.sum_log,Total aid to neighbors in present year (log)
-cowcode_b,Within-country variability
-year_b,Within-year variability
-sigma_b,Residual random error
-nobs,N
-pss,Posterior sample size
-m,Imputed datasets (*m*)
+term,term_clean,term_clean_table,summarize,summary_order,source
+barriers.total,Total legal barriers,Total legal barriers,TRUE,5,@ChristensenWeinstein:2013
+barriers.total_new,New legal barrier,,,,
+advocacy,Barriers to advocacy,Barriers to advocacy,TRUE,6,@ChristensenWeinstein:2013
+entry,Barriers to entry,Barriers to entry,TRUE,7,@ChristensenWeinstein:2013
+funding,Barriers to funding,Barriers to funding,TRUE,8,@ChristensenWeinstein:2013
+advocacy_new,New barrier to advocacy,,,,
+entry_new,New barrier to entry,,,,
+funding_new,New barrier to funding,,,,
+csre,Civil society reg. env. (CSRE),Civil society regulatory environment (CSRE),TRUE,9,V-Dem
+polity,Polity IV (0–10),Polity IV (0–10),TRUE,10,V-Dem
+gdp.capita_log,GDP per capita (log),,,,
+gdp.capita,GDP per capita,GDP per capita (constant 2011 USD),TRUE,11,UN and World Bank
+trade.pct.gdp,Trade as % of GDP,Trade as % of GDP,TRUE,12,UN and World Bank
+corruption,Corruption,Corruption,TRUE,13,V-Dem
+total.oda_log,Total aid in present year (log),,,,
+internal.conflict.past.5,Internal conflict in last 5 years,Internal conflict in last 5 years,TRUE,14,UCDP/PRIO
+natural_disaster.occurrence,Natural disasters,Natural disasters,TRUE,15,EM-DAT
+cowcode,Within-country variability ($\sigma$),,,,
+year,Within-year variability ($\sigma$),,,,
+post.1989,After 1989,,,,
+prop.contentious_logit,Proportion of contentious aid in present year (logit),,,,
+prop.ngo.dom_logit,Proportion of aid to domestic NGOs in present year (logit),,,,
+prop.ngo.foreign_logit,Proportion of aid to foreign NGOs in present year (logit),,,,
+nb_oda.sum_log,Total aid to neighbors in present year (log),,,,
+cowcode_b,Within-country variability,,,,
+year_b,Within-year variability,,,,
+sigma_b,Residual random error,,,,
+nobs,N,,,,
+pss,Posterior sample size,,,,
+m,Imputed datasets (*m*),,,,
+total.oda,Total aid,"Total aid (constant 2011 USD, millions)",TRUE,1,OECD and AidData
+prop.contentious,Proportion of contentious aid,Proportion of contentious aid,TRUE,2,OECD and AidData
+prop.ngo.dom,Proportion of aid to domestic NGOs,Proportion of aid to domestic NGOs,TRUE,3,USAID
+prop.ngo.foreign,Proportion of aid to foreign NGOs,Proportion of aid to foreign NGOs,TRUE,4,USAID

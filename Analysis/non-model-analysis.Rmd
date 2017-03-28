@@ -53,7 +53,7 @@ dcjw.responses.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
                                            "dcjw_responses.csv"))
 ```
 
-## Data summary
+## Overall data summary
 
 ```{r data-summary}
 num.countries <- df.country.aid %>% distinct(cowcode) %>% nrow()
@@ -63,6 +63,44 @@ year.last <- df.country.aid %>% distinct(year) %>% max()
 ```
 
 Our data includes information about `r num.countries` countries across `r num.years` years (from `r year.first`–`r year.last`)
+
+
+## Summary of variables in model
+
+```{r summary-vars-model, results="asis", message=FALSE}
+coef.names <- read_csv(file.path(PROJHOME, "Data", "data_clean",
+                                 "coef_names.csv"))
+
+vars.to.summarize <- coef.names %>%
+  filter(summarize == TRUE)
+
+vars.summarized <- df.country.aid %>%
+  select(one_of(vars.to.summarize$term)) %>%
+  mutate(trade.pct.gdp = trade.pct.gdp / 100,  # This is scaled up for modeling
+         total.oda = total.oda / 1000000) %>%
+  summarise_each(funs(XXMean = mean(., na.rm=TRUE),
+                      XXSD = sd(., na.rm=TRUE),
+                      XXMedian = median(., na.rm=TRUE),
+                      XXN = sum(!is.na(.)),
+                      XXMin = min(., na.rm=TRUE),
+                      XXMax = max(., na.rm=TRUE))) %>%
+  gather(key, value) %>%
+  separate(key, c("term", "key"), sep="_XX") %>%
+  spread(key, value) %>%
+  left_join(vars.to.summarize, by="term") %>%
+  arrange(summary_order) %>%
+  select(Variable = term_clean_table, Source = source, Mean, SD, Median, Min, Max, N) %>%
+  as.data.frame()
+
+caption <- "Summary of all variables included in models {#tbl:var-summary}"
+var.summary <- pandoc.table.return(vars.summarized, keep.line.breaks=TRUE, 
+                                   round=2, big.mark=",",
+                                   justify="llcccccc", caption=caption, style="multiline")
+
+cat(var.summary)
+cat(var.summary, file=file.path(PROJHOME, "Output", "tbl-var-summary.md"))
+```
+
 
 ## Aid stuff
 
