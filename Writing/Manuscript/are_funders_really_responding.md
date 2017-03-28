@@ -128,7 +128,7 @@ We are primarily interested in donor reactions to restrictive NGO legislation, w
 
 ![**Left**: Average number of barriers to NGO activity per country over time; **right**: average civil society regulatory environment (CSRE) per country over time](../../Output/fig-barriers){#fig:barriers}
 
-\small
+\footnotesize
 !INCLUDE "../../Output/tbl-ngo-barriers-index.md"
 \normalsize
 
