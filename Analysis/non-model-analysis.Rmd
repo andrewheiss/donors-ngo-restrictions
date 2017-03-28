@@ -288,22 +288,39 @@ fig.save.cairo(fig.dvs, filename="fig-dvs",
 Laws requiring NGO registration aren't necessarily a sign of oppression—even the US requires that nonprofits that earn above a certain threshold register as 501(c)(3) organizations. Though the figure below shows that compulsory regulation have increased over time, actual restriction has occurred too. Burdensome registration is not just another standard layer of bureaucracy.
 
 ```{r compulsory-vs-burdensome, fig.width=4.5, fig.height=2.5}
+autocracies <- df.country %>%
+  group_by(cowcode) %>%
+  summarise(polity.avg = mean(polity, na.rm=TRUE)) %>%
+  mutate(autocracy = polity.avg < 7) %>%
+  # These countries are missing polity scores
+  mutate(autocracy = case_when(
+    # Equatorial Guinea, Kuwait, Bahrain, UAE, Oman, Singapore
+    .$cowcode %in% c(411, 690, 692, 696, 698, 830) ~ TRUE,
+    # Serbia, Kosovo
+    .$cowcode %in% c(340, 347) ~ FALSE,
+    TRUE ~ .$autocracy
+  ))
+
 df.regulation <- df.country %>%
-  select(cowcode, year, ngo_register, ngo_register_burden) %>%
-  group_by(year) %>%
+  left_join(autocracies, by="cowcode") %>%
+  group_by(year, autocracy) %>%
   summarise(`Registration required` = sum(ngo_register) / n(),
             `Registration burdensome` = sum(ngo_register_burden) / n()) %>%
-  gather(type.of.law, value, -year) %>%
-  mutate(type.of.law = factor(type.of.law, levels=))
+  gather(type.of.law, value, -year, -autocracy) %>%
+  mutate(autocracy = 
+           factor(autocracy, levels=c(TRUE, FALSE),
+                  labels=c("Autocracies", "Democracies")))
 
 fig.regulation.burden <- ggplot(df.regulation, 
                                 aes(x=year, y=value, colour=type.of.law)) +
   geom_line() + 
-  scale_y_continuous(labels=scales::percent, limits=c(0, 0.6)) +
+  scale_y_continuous(labels=scales::percent) +
+  coord_cartesian(ylim=c(0, 0.7)) +
   scale_colour_manual(values=burden.colors) +
   guides(colour=guide_legend(reverse=TRUE, title=NULL)) +
   labs(x=NULL, y="Proportion of countries\nwith regulation") +
-  theme_donors()
+  theme_donors() +
+  facet_wrap(~ autocracy)
 
 fig.regulation.burden
 fig.save.cairo(fig.regulation.burden, filename="fig-regulation-burden",
