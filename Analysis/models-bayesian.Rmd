@@ -578,7 +578,7 @@ fig.predicted.h2.barriers <- ggplot(df.plot.data, aes(x=variable,
   theme_donors()
 fig.predicted.h2.barriers
 
-fig.save.cairo(fig.predicted.h2.barriers, filename="fig-predicted-2",
+fig.save.cairo(fig.predicted.h2.barriers, filename="fig-predicted-h2",
                width=6.5, height=2.5)
 ```
 
