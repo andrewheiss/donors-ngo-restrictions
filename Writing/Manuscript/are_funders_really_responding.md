@@ -91,7 +91,11 @@ Indeed, previous research by @BBCM2014 has found that cross-border activism can 
 
 # Data and methods
 
-We analyze donor reactions to state crackdown of NGOs by looking at how foreign aid has changed in response to anti-NGO legislation. We combine variables from several existing datasets and create a cross-sectional time series panel that includes information about aid and NGO legislation in 148 countries from 1981–2013.[^1]
+We analyze donor reactions to state crackdown of NGOs by looking at how foreign aid has changed in response to anti-NGO legislation. We combine variables from several existing datasets and create a cross-sectional time series panel that includes information about aid and NGO legislation in 148 countries from 1981–2013.[^1] Summary statistics for all the variables we use in our models are provided in @tbl:var-summary.
+
+\small
+!INCLUDE "../../Output/tbl-var-summary.md"
+\normalsize
 
 ## Dependent variables
 
