@@ -200,7 +200,7 @@ Country intercepts vary with an SD of 0.07 (etc.), year intercepts vary with an 
 
 Here, for the sake of computational efficiency and speed, we only use one of the imputed datasets for predictions. Technically we should base the predictions on all the merged chains, but (1) there's no function that can handle that, (2) it would take forever to run predictions on each individual imputation and then combine the predictions, and (3) these are posterior medians anyway from ostensibly the same-ish distribution—quintupling the number of chains to simulate is overkill for drawing a picture.
 
-```{r h1-predict-total, warning=FALSE, fig.width=6}
+```{r h1-predict-total, warning=FALSE, message=FALSE}
 model <- mods.h1.next_year.bayes %>%
   filter(m == "imp1", model.name == "mod.h1.barriers.total") %>%
   select(model) %>% .[[1]] %>% .[[1]]
@@ -241,7 +241,7 @@ df.plot.data.mean <- df.plot.data %>%
   mutate(cowcode=1)  # Fake country so the line plots
 ```
 
-```{r h1-predict-individual, warning=FALSE}
+```{r h1-predict-individual, warning=FALSE, message=FALSE}
 barriers.indiv.clean.names <- tribble(
   ~barrier, ~barrier.clean,
   "advocacy_within", "Barriers to advocacy",
@@ -488,8 +488,98 @@ cat(table.h2, file=file.path(PROJHOME, "Output",
 
 ### Predicted ODA
 
-```{r h2-simulate-total, warning=FALSE, fig.width=6}
-#
+```{r h2-predict-both, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4}
+# Barriers to advocacy
+model <- mods.h2.next_year.bayes %>%
+  filter(m == "imp1", model.name == "mod.h2.type.total") %>%
+  select(model) %>% .[[1]] %>% .[[1]]
+
+new.data <- get_all_vars(model$formula, data=model$data) %>%
+  select(-c(advocacy_within, year, cowcode)) %>%
+    summarise_all(typical) %>%
+    mutate(id = 1) %>%
+    right_join(expand.grid(advocacy_within = seq(-1, 2, 0.5),
+                           cowcode = 1000:1049,
+                           year = 1981:2012,
+                           id = 1), by="id") %>% select(-id)
+
+cluster <- create_cluster(cores=cores)
+
+predicted.h2.advocacy <- new.data %>%
+  nest(-cowcode) %>%
+  partition(cowcode, cluster=cluster) %>%
+  cluster_library("tidyverse") %>%
+  cluster_assign_value("model", model) %>%
+  cluster_assign_value("generate_predictions", generate_predictions) %>%
+  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  collect() %>%
+  unnest()
+
+# CSRE
+model <- mods.h2.next_year.bayes %>%
+  filter(m == "imp1", model.name == "mod.h2.csre") %>%
+  select(model) %>% .[[1]] %>% .[[1]]
+
+new.data <- get_all_vars(model$formula, data=model$data) %>%
+  select(-c(csre_within, year, cowcode)) %>%
+    summarise_all(typical) %>%
+    mutate(id = 1) %>%
+    right_join(expand.grid(csre_within = seq(-5, 5, 0.5),
+                           cowcode = 1000:1049,
+                           year = 1981:2012,
+                           id = 1), by="id") %>% select(-id)
+
+cluster <- create_cluster(cores=cores)
+
+predicted.h2.csre <- new.data %>%
+  nest(-cowcode) %>%
+  partition(cowcode, cluster=cluster) %>%
+  cluster_library("tidyverse") %>%
+  cluster_assign_value("model", model) %>%
+  cluster_assign_value("generate_predictions", generate_predictions) %>%
+  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  collect() %>%
+  unnest()
+
+# Combine predictions into plottable data
+df.plot.h2.advocacy <- predicted.h2.advocacy %>%
+  group_by(cowcode, advocacy_within) %>%
+  summarise_at(vars(predicted), funs(mean(.))) %>%
+  ungroup() %>%
+  mutate(value.fixed = inv.logit(predicted, a=0.001),
+         variable.clean = "Barriers to advocacy") %>%
+  rename(variable = advocacy_within)
+
+df.plot.h2.csre <- predicted.h2.csre %>%
+  group_by(cowcode, csre_within) %>%
+  summarise_at(vars(predicted), funs(mean(.))) %>%
+  ungroup() %>%
+  mutate(value.fixed = inv.logit(predicted, a=0.001),
+         variable.clean = "Civil society regulatory environment") %>%
+  rename(variable = csre_within)
+
+df.plot.data <- bind_rows(df.plot.h2.advocacy, df.plot.h2.csre)
+
+df.plot.data.mean <- df.plot.data %>%
+  group_by(variable.clean, variable) %>%
+  summarise(predicted = mean(predicted)) %>%
+  mutate(value.fixed = inv.logit(predicted, a=0.001)) %>%
+  mutate(cowcode=1)  # Fake country so the line plots
+
+fig.predicted.h2.barriers <- ggplot(df.plot.data, aes(x=variable, 
+                                                      y=value.fixed, group=cowcode)) + 
+  geom_vline(xintercept=0, size=0.5) +
+  geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
+  geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour="#BD4932") +
+  labs(x="Difference from average level of NGO legislation in country\n(within effect)",
+       y="Predicted proportion of\ncontentious aid in the following year") +
+  scale_y_continuous(labels=scales::percent) +
+  facet_wrap(~ variable.clean, scales="free_x") +
+  theme_donors()
+fig.predicted.h2.barriers
+
+fig.save.cairo(fig.predicted.h2.barriers, filename="fig-predicted-2",
+               width=6.5, height=2.5)
 ```
 
 
