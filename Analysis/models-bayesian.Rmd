@@ -785,9 +785,9 @@ fig.save.cairo(fig.coefs.h3, filename="fig-coefs-h3-bayes",
 ### Model diagnostics
 
 
-### Predicted proprtion of aid channeled to domestic or foreign NGOs
+### Predicted proportion of aid channeled to domestic or foreign NGOs
 
-```{r h3-predict-both, warning=FALSE, fig.width=6.5, fig.height=4}
+```{r h3-predict-both, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4}
 # Aid to foreign NGOs ~ barriers to funding
 model <- mods.h3.foreign.next_year.bayes %>%
   filter(m == "imp1", model.name == "mod.h3.type.total") %>%
