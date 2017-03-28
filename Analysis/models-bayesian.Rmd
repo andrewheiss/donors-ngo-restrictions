@@ -785,10 +785,100 @@ fig.save.cairo(fig.coefs.h3, filename="fig-coefs-h3-bayes",
 ### Model diagnostics
 
 
-### Predicted ODA
+### Predicted proprtion of aid channeled to domestic or foreign NGOs
 
-```{r h3-simulate-total, warning=FALSE, fig.width=6}
-#
+```{r h3-simulate-both, warning=FALSE, fig.width=6.5, fig.height=4}
+# Aid to foreign NGOs ~ barriers to funding
+model <- mods.h3.foreign.next_year.bayes %>%
+  filter(m == "imp1", model.name == "mod.h3.type.total") %>%
+  select(model) %>% .[[1]] %>% .[[1]]
+
+new.data <- get_all_vars(model$formula, data=model$data) %>%
+  select(-c(funding_within, year, cowcode)) %>%
+    summarise_all(typical) %>%
+    mutate(id = 1) %>%
+    right_join(expand.grid(funding_within = seq(-2, 4, 0.5),
+                           cowcode = 1000:1049,
+                           year = 1981:2012,
+                           id = 1), by="id") %>% select(-id)
+
+cluster <- create_cluster(cores=cores)
+
+predicted.h3.foreign <- new.data %>%
+  nest(-cowcode) %>%
+  partition(cowcode, cluster=cluster) %>%
+  cluster_library("tidyverse") %>%
+  cluster_assign_value("model", model) %>%
+  cluster_assign_value("generate_predictions", generate_predictions) %>%
+  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  collect() %>%
+  unnest()
+
+# Aid to domestic NGOs ~ barriers to funding
+model <- mods.h3.dom.next_year.bayes %>%
+  filter(m == "imp1", model.name == "mod.h3.type.total") %>%
+  select(model) %>% .[[1]] %>% .[[1]]
+
+new.data <- get_all_vars(model$formula, data=model$data) %>%
+  select(-c(funding_within, year, cowcode)) %>%
+    summarise_all(typical) %>%
+    mutate(id = 1) %>%
+    right_join(expand.grid(funding_within = seq(-2, 4, 0.5),
+                           cowcode = 1000:1049,
+                           year = 1981:2012,
+                           id = 1), by="id") %>% select(-id)
+
+cluster <- create_cluster(cores=cores)
+
+predicted.h3.domestic <- new.data %>%
+  nest(-cowcode) %>%
+  partition(cowcode, cluster=cluster) %>%
+  cluster_library("tidyverse") %>%
+  cluster_assign_value("model", model) %>%
+  cluster_assign_value("generate_predictions", generate_predictions) %>%
+  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  collect() %>%
+  unnest()
+
+# Combine predictions into plottable data
+df.plot.h3.foreign <- predicted.h3.foreign %>%
+  group_by(cowcode, funding_within) %>%
+  summarise_at(vars(predicted), funs(mean(.))) %>%
+  ungroup() %>%
+  mutate(value.fixed = inv.logit(predicted, a=0.001),
+         variable.clean = "Aid through foreign NGOs") %>%
+  rename(variable = funding_within)
+
+df.plot.h3.domestic <- predicted.h3.domestic %>%
+  group_by(cowcode, funding_within) %>%
+  summarise_at(vars(predicted), funs(mean(.))) %>%
+  ungroup() %>%
+  mutate(value.fixed = inv.logit(predicted, a=0.001),
+         variable.clean = "Aid through domestic NGOs") %>%
+  rename(variable = funding_within)
+
+df.plot.data <- bind_rows(df.plot.h3.foreign, df.plot.h3.domestic)
+
+df.plot.data.mean <- df.plot.data %>%
+  group_by(variable.clean, variable) %>%
+  summarise(predicted = mean(predicted)) %>%
+  mutate(value.fixed = inv.logit(predicted, a=0.001)) %>%
+  mutate(cowcode=1)  # Fake country so the line plots
+
+fig.predicted.h3.barriers <- ggplot(df.plot.data, aes(x=variable, 
+                                                      y=value.fixed, group=cowcode)) + 
+  geom_vline(xintercept=0, size=0.5) +
+  geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
+  geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour="#BD4932") +
+  labs(x="Difference from average number of barriers to funding\n(within effect)",
+       y="Simulated proportion of aid to\ntype of NGO in the following year") +
+  scale_y_continuous(labels=scales::percent) +
+  facet_wrap(~ variable.clean, scales="free_x") +
+  theme_donors()
+fig.predicted.h3.barriers
+
+fig.save.cairo(fig.predicted.h3.barriers, filename="fig-predicted-h3",
+               width=6.5, height=2.5)
 ```
 
 
