@@ -60,8 +60,6 @@ While @DupuyPrakash lay the necessary groundwork for understanding the consequen
 
 In the 1990s and 2000s, the issue of restrictive NGO legislation had not reached ubiquitous or severe proportions, but this is no longer the case. Further, it is becoming evident that these laws are a result of government desire to restrict rather than simply monitor or audit NGOs [@btb2016]. @fig:regulation-burden shows that since the 1990s, there has been an almost uniform increase in NGO registration requirements in both democracies and autocracies as governments routinized and streamlined state-NGO relations.[^regime] However, the restrictiveness of these laws varies by regime type—autocracies have been far more likely to make these regulations burdensome and opaque. @chaudhry2016 finds that while many states have made it mandatory for NGOs to register in their territories, very often these requirements are not straightforward: approval times are lengthy, NGOs may not be allowed appeals in denied registration, and some countries require an unreasonably large number of founders in order to register. @Heiss:2016b also finds that international NGOs face more arbitrary restrictions like payroll taxes and employment laws targeted at organizations that hire foreign workers. Thus, in this paper we do not only look at laws that can be considered routine regulation—we also analyze the impact of laws that can be considered repressive.
 
-[^regime]: We define autocracies here as any country averaging less than 7 on the 0–10 Polity scale between 1981–2015.
-
 ![Proportion of countries with laws that require NGO registration and that impose additional burdens on the registration process](../../Output/fig-regulation-burden){#fig:regulation-burden}
 
 Given the wide range of funders and NGOs that are affected by this global crackdown, we hypothesize that state and private donors can respond to increasingly repressive NGO legislation in two broad ways—they can either scale back their operations, or they can respond to this pushback in a number of other ways, so that indigenous civil society in developing countries is not completely bereft of external assistance. 
@@ -273,3 +271,5 @@ While we have outlined some of the broad strategies that donors have undertaken 
 [^3]:   DAC code 152.
 
 [^4]:   We varied the number of imputed datasets between 5 and 10 and found only trivial differences in coefficients, as predicted by @KingHonakerJoseph:2001. In the interest of computational efficiency and speed, we only use five imputed datasets in our final analysis.
+
+[^regime]: We define autocracies here as any country averaging less than 7 on the 0–10 Polity scale between 1981–2015.
