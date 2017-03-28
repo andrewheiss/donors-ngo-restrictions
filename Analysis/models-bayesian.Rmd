@@ -214,7 +214,7 @@ new.data <- get_all_vars(model$formula, data=model$data) %>%
     summarise_all(typical) %>%
     mutate(id = 1) %>%
     right_join(expand.grid(barriers.total_within = seq(-5, 5, 0.5),
-                           cowcode = 1000:1025,
+                           cowcode = 1000:1049,
                            year = 1981:2012,
                            id = 1), by="id") %>% select(-id)
 
@@ -267,7 +267,7 @@ new.data.hypothetical.nested <- hypothetical.bounds %>%
     nest(-term) %>%
     mutate(newdata = map2(.x=data, .y=term,
                           ~ expand.grid(term = seq(.x$min, .x$max, by=0.5),
-                                        cowcode = 1000:1050,
+                                        cowcode = 1000:1049,
                                         year = 1981:2012,
                                         id = 1) %>%
                             # Rename the term column to the actual term name
@@ -344,7 +344,7 @@ fig.predicted.h1.barriers.both <- ggplot(df.plot.data.both,
 
 fig.display.both <- fig.predicted.h1.barriers.both + 
   labs(title="Donors reduce aid more in response to\nadditional advocacy-focused anti-NGO laws",
-       subtitle="Simulated foreign aid (ODA) across range of differences from the average number of\nanti-NGO laws in a hypothetical average country; dark line shows average of\n50 simulations across 5 imputed datasets",
+       subtitle="Predicted foreign aid (ODA) across range of differences from the average number of\nanti-NGO laws in a hypothetical average country; dark line shows average of\n500 draws from posterior distribution",
        caption="Chaudhry and Heiss (2017)") + 
   theme_donors(11)
 
