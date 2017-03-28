@@ -1,9 +1,9 @@
 term,term_clean,term_clean_table,summarize,summary_order,source
-barriers.total,Total legal barriers,Total legal barriers,TRUE,5,@ChristensenWeinstein:2013
+barriers.total,Total legal barriers,Total legal barriers,TRUE,5,@christensen2013
 barriers.total_new,New legal barrier,,,,
-advocacy,Barriers to advocacy,Barriers to advocacy,TRUE,6,@ChristensenWeinstein:2013
-entry,Barriers to entry,Barriers to entry,TRUE,7,@ChristensenWeinstein:2013
-funding,Barriers to funding,Barriers to funding,TRUE,8,@ChristensenWeinstein:2013
+advocacy,Barriers to advocacy,Barriers to advocacy,TRUE,6,@christensen2013
+entry,Barriers to entry,Barriers to entry,TRUE,7,@christensen2013
+funding,Barriers to funding,Barriers to funding,TRUE,8,@christensen2013
 advocacy_new,New barrier to advocacy,,,,
 entry_new,New barrier to entry,,,,
 funding_new,New barrier to funding,,,,
