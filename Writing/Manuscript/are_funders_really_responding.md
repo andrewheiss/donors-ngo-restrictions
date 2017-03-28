@@ -158,6 +158,8 @@ While this model specification is at first a little unwieldy, it has multiple be
 
 We use models with split *within* and *between* covariates and crossed country and year random effects for our first three hypotheses. The unit of analysis in our fourth hypothesis is slightly different, however, since it is the sum of all a country's neighbors and correspondingly double counts the variation of countries (e.g. the variable for both Rwanda and Burundi includes aid to Uganda). As such, we omit country-level random effects and include random effects only for year.
 
+Finally, we test our hypotheses using a series of Bayesian regression models, rather than frequentist null hypothesis significance tests (NHST). Bayesian methods yield more meaningful inferences [@Kruschke:2010; @Korner-NievergeltRothFelten:2015; @GelmanCarlinStern:2013]: whereas NHST analysis determines the *probability of the data* given a *null hypothesis* (i.e. $P(\text{data} | H_0)$), Bayesian analysis determines the *probability of a hypothesis* given *the data* (i.e. $P(H | \text{data})$). Bayesian models return full posterior probability distributions for each parameter instead of simple point estimates, meaning that the probability of a given hypothesis can be calculated directly and corresponds to the proportion of the posterior distribution that falls on either side of zero [@Galantucci:2014; @Gill:2014]. For each model variable, we report the posterior median, the proportion of the distribution that is greater than zero (or the probability), and the 95% credible interval, or the range of the posterior distribution that has a 95% chance of containing the true value of the estimated coefficient.[^stan] 
+
 
 # Results and analysis
 
@@ -279,3 +281,5 @@ While we have outlined some of the broad strategies that donors have undertaken 
 [^regime]: We define autocracies here as any country averaging less than 7 on the 0–10 Polity scale between 1981–2015.
 
 [^oecd]: See "Guidance for analysis of the policy objectives of aid" at [https://www.oecd.org/dac/stats/crsguide.htm](https://www.oecd.org/dac/stats/crsguide.htm).
+
+[^stan]: We use weakly informative prior distributions for each of the coefficient parameters, based on a normal distribution with a mean of zero. We obtain the posterior distribution of each dependent variable with Markov Chain Monte Carlo (MCMC) sampling and simulate values from the joint posterior distribution of the coefficient parameters. We use Stan [@stan] through R [@rstan; @r-project] to generate 4 MCMC chains with 2,000 iterations in each chain, 1,000 of which are used for warmup. All chains converge; we assess convergence with visual inspection, and diagnostic plots are included in the online appendix. We use the medians of the simulated values from the MCMC samples as coefficient estimates and use the 2.5% and 97.5% quantiles as lower and upper limits for 95% credible intervals. 
