@@ -7,14 +7,14 @@ author:
 - name: Andrew Heiss
   affiliation: Duke University
   email: andrew.heiss@duke.edu
-date: February 13, 2017
-published: Draft for ISA 2017. Please do not cite without permission.
+date: March 28, 2017
+published: Please do not cite without permission.
 reference-section-title: References
 git-repo: https://github.com/andrewheiss/donors-ngo-restrictions
 abstract: >-
     The last two decades have seen a proliferation of laws restricting NGOs throughout the world, resulting in an increasingly closed space for civil society. This crackdown on NGOs has been particularly acute in the Global South where states have imposed ever stricter regulations on foreign and domestic organizations. What is the effect of civil society restrictions on overall amounts of foreign aid, the targets of aid, and the nature of issues being funded? Looking at 148 countries from 1981–2013, we find we find that increasing anti-NGO legal barriers, in particular, barriers to advocacy, significantly decreases the amount of foreign channeled to that country. Adding new restrictions on advocacy also tends to reduce the amount of contentious aid that donors allocate to those countries. In general, as the legal environment for NGOs improves, donors are more likely to engage in contentious programming. Finally, we find that additional barriers to funding actually leads USAID to grant more aid to domestic NGOs in restrictive countries. Our findings have strong implications not just for donors, but for the operation of domestic NGOs across the Global South and the sustainability of the civil society sector in these regions.
 thanks: >-
-    We thank Elizabeth Bloodgood, Christopher Pallas, and the participants of the "Beyond the Boomerang" workshop held before the 2017 annual International Studies Association conference for their helpful comments. We also acknowledge John Holbein, Robbie Richards, and Simon Weschle for their invaluable help with interpreting the statistical models.
+    We thank Elizabeth Bloodgood, Christopher Pallas, and the participants of the "Beyond the Boomerang" workshop held before the 2017 annual International Studies Association conference for their helpful comments. We also acknowledge John Holbein, Robbie Richards, and Simon Weschle for their invaluable help with the statistical models.
 ...
 
 
