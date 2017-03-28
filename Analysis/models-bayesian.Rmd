@@ -1152,6 +1152,24 @@ fig.save.cairo(fig.predicted.h4.barriers.both, filename="fig-simulated-h4",
 
 ---
 
+## Summary of hypotheses
+
+```{r hypotheses-summary, results="asis", message=FALSE, warning=FALSE}
+findings.summary <- read_csv(file.path(PROJHOME, "Data", "data_clean", 
+                                       "findings_summary.csv"))
+
+caption <- "Summary of findings {#tbl:findings-summary}"
+findings.summary.table <- pandoc.table.return(findings.summary, justify="lll",
+                                              caption=caption)
+
+cat(findings.summary.table)
+cat(findings.summary.table, file=file.path(PROJHOME, "Output",
+                                           "tbl-findings-summary.md"))
+```
+
+
+---
+
 ## Robustness checks
 
 ### Imputation
