@@ -26,6 +26,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 - [Non-model analysis](Analysis/non-model-analysis.html)
 - [Models](Analysis/models.html)
+- [Final Bayesian models](Analysis/models-bayesian.html)
 
 ## Code
 
