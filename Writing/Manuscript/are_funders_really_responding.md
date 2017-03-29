@@ -231,7 +231,7 @@ Finally, do donors react to anti-NGO laws by shifting money to neighboring count
 We do not find much evidence to support this hypothesis and believe that the one positive finding is likely spurious. We need to find a better approach to test this hypothesis.
 
 
-# Implications and Conclusion
+# Implications and conclusion
 
 In this article, we analyzed the impact of increasingly restrictive NGO legislation and restrictive regulatory environments on the amount of aid channeled to countries, the targets of aid, and the purpose of aid based on its contentious nature. Looking at 148 countries from 1981–2013, we find, as hypothesized by our theory, that increasing anti-NGO legal barriers, in particular, barriers to advocacy, decreases the amount of ODA channeled to that country. Adding new restrictions on advocacy also tends to reduce the amount of contentious aid that donors allocate to those countries. In general, as the legal environment for NGOs improves, donors are more likely to engage in contentious programming focusing on elections, human rights, security, conflict resolution and prevention. These findings support recent literature that donors, in particular, democracy assistance agencies, tame their programming when confronting dictators. 
 
