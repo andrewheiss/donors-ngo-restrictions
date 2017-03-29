@@ -93,6 +93,9 @@ pdfpagelabels, bookmarksnumbered]{hyperref}
 \usepackage[all,defaultlines=2]{nowidow}  % Fix widows and orphans
 
 \urlstyle{same}  % Don't typeset URLs in a monospaced font
+% Add - to url's default breaks
+\def\UrlBreaks{\do\.\do\@\do\\\do\/\do\!\do\_\do\|\do\;\do\>\do\]%
+    \do\)\do\,\do\?\do\&\do\'\do+\do\=\do\#\do-}
 
 % Sans serif tables
 \let\newfloat\undefined  % Necessary because floatrow and memoir are technically incompatible
