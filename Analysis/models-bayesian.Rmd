@@ -714,7 +714,7 @@ table.h3.domestic <- bayesgazer(mods.h3.foreign.next_year.bayes,
 
 cat(table.h3.domestic)
 cat(table.h3.domestic, file=file.path(PROJHOME, "Output",
-                                      "tbl-h3-domestic-coefs-bayes.md"))
+                                      "tbl-h3-foreign-coefs-bayes.md"))
 ```
 
 #### Both
