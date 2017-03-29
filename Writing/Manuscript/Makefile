@@ -146,7 +146,7 @@ bib:	$(BIB)
 		-V chapterstyle=hikma-article \
 		-V pagestyle=athgit \
 		-V vc \
-		--base-header-level=2 \
+		--base-header-level=1 \
 	-o $@
 	@echo "$(WARN_COLOR)Removing weird space above lists in tables...$(NO_COLOR)"
 	perl -i -0777 -pe 's/\\strut\n\\begin{itemize}/\n\\begin{itemize}/gm;' $@
