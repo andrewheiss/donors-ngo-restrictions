@@ -495,11 +495,14 @@ dcjw.orig <- read_excel(dcjw.orig.path)[,1:50] %>%
 dcjw.path <- file.path(PROJHOME, "Data", "data_raw", "DCJW NGO Laws",
                        "Admn Crackdown_updated.xlsx")
 
-dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
-                                           "dcjw_questions.csv"))
+dcjw.questions.raw <- read_csv(file.path(PROJHOME, "Data", "data_clean",
+                                         "dcjw_questions.csv"))
 
-dcjw.barriers.clean <- dcjw.questions.clean %>%
+dcjw.barriers.clean <- dcjw.questions.raw %>%
   distinct(question_cat, barrier)
+
+dcjw.barriers.ignore <- dcjw.questions.raw %>%
+  select(question, ignore_in_index)
 
 dcjw <- read_excel(dcjw.path)[,1:50] %>%
   select(-c(dplyr::contains("source"), dplyr::contains("burden"), 
@@ -628,20 +631,29 @@ dcjw.panel.barriers <- dcjw.panel.all.laws %>%
     .$question == "q_4a" & .$value == 2 ~ 1,
     TRUE ~ .$value
   )) %>%
+  # Ignore neutral indexes, like basic registration requirements
+  left_join(dcjw.barriers.ignore, by="question") %>%
+  mutate(value_restrictive = ifelse(ignore_in_index, 0, value)) %>%
   group_by(Country, year, barrier) %>%
   # Add up all the barriers for each country year
   # Use a floor of zero to account for negative values
-  summarise(index = sum(value, na.rm=TRUE)) %>%
-  mutate(index = ifelse(index < 0, as.integer(0), index)) %>%
+  summarise(all = sum(value, na.rm=TRUE),
+            restrictive = sum(value_restrictive, na.rm=TRUE)) %>%
+  mutate_at(vars(all, restrictive),
+            funs(ifelse(. < 0, as.integer(0), .))) %>%
   # Join with full possible panel
   right_join(potential.dcjw.panel.barrier,
              by=c("Country", "barrier", "year")) %>%
-  spread(barrier, index) %>%
+  gather(temp, value, all, restrictive) %>%
+  unite(temp1, barrier, temp, sep="_") %>%
+  spread(temp1, value) %>%
   ungroup() %>%
+  rename_(.dots = setNames(paste0(unique(dcjw.questions.raw$barrier), "_restrictive"), 
+                           unique(dcjw.questions.raw$barrier))) %>%
   # Standardize barrier indexes by dividing by maximum number possible
   mutate(association.std = association / 2,
-         entry.std = entry / 4,
-         funding.std = funding / 8,
+         entry.std = entry / 3,  # 4, but 1 ignored
+         funding.std = funding / 7,  # 8, but 1 ignored
          advocacy.std = advocacy / 4) %>%
   mutate(barriers.total = advocacy + association + entry + funding,
          barriers.std.total = advocacy.std + association.std + entry.std + funding.std)
@@ -651,8 +663,8 @@ dcjw.full <- dcjw.panel.all.laws %>%
   # Lop off the ancient observations
   filter(year > 1980) %>%
   # Rename q_* variables
-  rename_(.dots = setNames(dcjw.questions.clean$question, 
-                           dcjw.questions.clean$question_clean)) %>%
+  rename_(.dots = setNames(dcjw.questions.raw$question, 
+                           dcjw.questions.raw$question_clean)) %>%
   # Add additional variables
   mutate(Country = countrycode(Country, "country.name", "country.name"),
          cowcode = countrycode(Country, "country.name", "cown"),
