@@ -545,21 +545,21 @@ if (all.na.means.zero) {
     # gives us more flexibility to set different defaults per law (like how q_2b
     # or q_4c might be better as NA_integer_ instead of 0)
     mutate(value.fixed = case_when(
-      is.na(value) & .$question == "q_1a" ~ as.integer(0),
-      is.na(value) & .$question == "q_1b" ~ as.integer(0),
-      is.na(value) & .$question == "q_2a" ~ as.integer(0),
-      is.na(value) & .$question == "q_2b" ~ as.integer(0),
-      is.na(value) & .$question == "q_2c" ~ as.integer(0),
-      is.na(value) & .$question == "q_2d" ~ as.integer(0),
-      is.na(value) & .$question == "q_3a" ~ as.integer(0),
-      is.na(value) & .$question == "q_3b" ~ as.integer(0),
-      is.na(value) & .$question == "q_3c" ~ as.integer(0),
-      is.na(value) & .$question == "q_3d" ~ as.integer(0),
-      is.na(value) & .$question == "q_3e" ~ as.integer(0),
-      is.na(value) & .$question == "q_3f" ~ as.integer(0),
-      is.na(value) & .$question == "q_4a" ~ as.integer(0),
-      is.na(value) & .$question == "q_4b" ~ as.integer(0),
-      is.na(value) & .$question == "q_4c" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_1a" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_1b" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_2a" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_2b" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_2c" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_2d" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_3a" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_3b" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_3c" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_3d" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_3e" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_3f" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_4a" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_4b" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_4c" ~ as.integer(0),
       TRUE ~ .$value
     )) %>%
     select(-value) %>%
@@ -577,21 +577,21 @@ if (all.na.means.zero) {
     # gives us more flexibility to set different defaults per law (like how q_2b
     # or q_4c might be better as NA_integer_ instead of 0)
     mutate(value.fixed = case_when(
-      .$not.all.na & is.na(value) & .$question == "q_1a" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_1b" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_2a" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_2b" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_2c" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_2d" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_3a" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_3b" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_3c" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_3d" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_3e" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_3f" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_4a" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_4b" ~ as.integer(0),
-      .$not.all.na & is.na(value) & .$question == "q_4c" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_1a" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_1b" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_2a" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_2b" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_2c" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_2d" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_3a" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_3b" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_3c" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_3d" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_3e" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_3f" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_4a" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_4b" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_4c" ~ as.integer(0),
       TRUE ~ .$value
     )) %>%
     select(-not.all.na, -value) %>%
@@ -1091,6 +1091,7 @@ col.clean <- col.raw %>%
     .$ind.from.cowcode == 315 ~ "Czechoslovakia",
     .$ind.from.cowcode == 678 ~ "Yemen (Arab Republic of Yemen)",
     .$ind.from.cowcode == 730 ~ "Korea",
+    is.na(.$ind.from.cowcode) ~ NA_character_,
     TRUE ~ .$ind.from.country.name
   )) %>%
   mutate(ind.from.iso3 = case_when(
@@ -1099,6 +1100,7 @@ col.clean <- col.raw %>%
     .$ind.from.cowcode == 315 ~ "CZE",
     .$ind.from.cowcode == 678 ~ "YEM",
     .$ind.from.cowcode == 730 ~ "KOR",
+    is.na(.$ind.from.cowcode) ~ NA_character_,
     TRUE ~ .$ind.from.iso3
   )) %>%
   # Mark never modernly colonzied countries as such instead of missing
@@ -1237,7 +1239,7 @@ disasters <- disasters.raw %>%
     .$iso == "SCG" ~ "Yugoslavia",
     .$iso == "SUN" ~ "Russia",
     .$iso == "YMN" ~ "Yemen",
-    TRUE ~ country_name
+    TRUE ~ .$country_name
   )) %>%
   # Fix ISOs
   mutate(iso = countrycode(country_name, "country.name", "iso3c")) %>%
