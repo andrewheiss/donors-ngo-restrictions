@@ -971,11 +971,19 @@ wdi.indicators <- c("NY.GDP.PCAP.KD",        # GDP per capita (constant 2010 USD
                     "SP.POP.TOTL",           # Population, total
                     "NE.TRD.GNFS.ZS")        # Trade as % of GDP
 
-# Get all countries and regions because the World Bank chokes on ISO codes like
-# XK for Kosovo, even though it returns data for Kosovo with the XK code
-# ¯\_(ツ)_/¯
-wdi.raw <- WDI(country="all", wdi.indicators,
-               extra=FALSE, start=1980, end=2015)
+wdi.path <- file.path(PROJHOME, "data", "data_cache", "wdi.rds")
+
+if (!file.exists(wdi.path)) {
+  # Get all countries and regions because the World Bank chokes on ISO codes like
+  # XK for Kosovo, even though it returns data for Kosovo with the XK code
+  # ¯\_(ツ)_/¯
+  wdi.raw <- WDI(country="all", wdi.indicators,
+                 extra=FALSE, start=1980, end=2015)
+  
+  saveRDS(wdi.raw, wdi.path)
+} else {
+  wdi.raw <- readRDS(wdi.path)
+}
 
 # Filter countries here instead
 wdi.clean.intermediate <- wdi.raw %>%
