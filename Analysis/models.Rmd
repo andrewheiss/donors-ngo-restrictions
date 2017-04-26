@@ -41,8 +41,7 @@ $$
 \begin{aligned}
 \boldsymbol{H_1}&: ln( \text{ODA}_{\text{OECD}} )_{i, t+1} &= \text{NGO legislation}_{it} + \text{controls}_{it} \\
 \boldsymbol{H_2}&: ln( \frac{\text{contentious ODA}_{\text{OECD}}}{\text{noncontentious ODA}_{\text{OECD}}} )_{i, t+1} &= \text{NGO legislation}_{it} + \text{controls}_{it} \\
-\boldsymbol{H_3}&: ln( \frac{\text{Aid to (domestic or foreign) NGOs}_{\text{USAID}}}{\text{Aid to other channels}_{\text{USAID}}} )_{i, t+1} &= \text{NGO legislation}_{it} + \text{controls}_{it} \\
-\boldsymbol{H_4}&: ln( \text{ODA in neighboring countries}_{\text{OECD}} )_{i, t+1} &= \text{NGO legislation}_{it} + \text{controls}_{it}
+\boldsymbol{H_3}&: ln( \frac{\text{Aid to (domestic or foreign) NGOs}_{\text{USAID}}}{\text{Aid to other channels}_{\text{USAID}}} )_{i, t+1} &= \text{NGO legislation}_{it} + \text{controls}_{it}
 \end{aligned}
 $$ {#eq:all-models-dvs}
 
