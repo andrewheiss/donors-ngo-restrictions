@@ -33,6 +33,21 @@ source(file.path(PROJHOME, "Analysis", "h1_model_definitions_bayes.R"))
 source(file.path(PROJHOME, "Analysis", "h2_model_definitions_bayes.R"))
 source(file.path(PROJHOME, "Analysis", "h3_model_definitions_bayes.R"))
 source(file.path(PROJHOME, "Analysis", "h4_model_definitions_bayes.R"))
+
+h1.raw <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h1.rds")
+h2.raw <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h2.rds")
+h3.domestic.raw <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h3_domestic.rds")
+h3.foreign.raw <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h3_foreign.rds")
+
+if (file.exists(h1.raw) & file.exists(h2.raw) & 
+    file.exists(h3.domestic.raw) & file.exists(h3.foreign.raw)) {
+  mods.h1.next_year.raw.bayes <- readRDS(h1.raw)
+  mods.h2.next_year.raw.bayes <- readRDS(h2.raw)
+  mods.h3.dom.next_year.raw <- readRDS(h3.domestic.raw)
+  mods.h3.foreign.next_year.raw <- readRDS(h3.foreign.raw)
+} else {
+  stop("Run Data/run_bayes_remote.R to generate the model data")
+}
 ```
 
 ```{r multidplyr}
@@ -64,27 +79,6 @@ We look at NGO legislation in a few different ways:
 - `csre`: Civil society regulatory environment index (CSRE), ranging from roughly -4 to 4 (higher values = better civil society regulations)
 
 ```{r h1-models-bayes-1, warning=FALSE, message=FALSE}
-h1.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h1.rds")
-
-if (file.exists(h1.raw.path)) {
-  mods.h1.next_year.raw.bayes <- readRDS(h1.raw.path)
-} else {
-  mods.h1.next_year.raw.bayes <- df.country.aid.demean.next_year.both %>%
-    nest(-m) %>%
-    mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
-                                                "total.oda_log_next_year"),
-           mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
-                                              "total.oda_log_next_year"),
-           mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
-                                            "total.oda_log_next_year"),
-           mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
-                                          "total.oda_log_next_year"),
-           mod.h1.csre = data %>% map(mod.h1.csre.bayes,
-                                      "total.oda_log_next_year"))
-  
-  saveRDS(mods.h1.next_year.raw.bayes, h1.raw.path)
-}
-
 # Get model details and parameters
 mods.h1.next_year.bayes <- mods.h1.next_year.raw.bayes %>%
   gather(model.name, model, -m, -data) %>%
@@ -374,27 +368,6 @@ $$ln( \frac{\text{contentious ODA}_{\text{OECD}}}{\text{noncontentious ODA}_{\te
 We look at NGO legislation in the same ways as H~1~ and use the same controls.
 
 ```{r h2-models-bayes, warning=FALSE, message=FALSE}
-h2.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h2.rds")
-
-if (file.exists(h2.raw.path)) {
-  mods.h2.next_year.raw.bayes <- readRDS(h2.raw.path)
-} else {
-  mods.h2.next_year.raw.bayes <- df.country.aid.demean.next_year.both %>%
-    nest(-m) %>%
-    mutate(mod.h2.barriers.total = data %>% map(mod.h2.barriers.total.bayes,
-                                                "prop.contentious_logit_next_year"),
-           mod.h2.barriers.new = data %>% map(mod.h2.barriers.new.bayes,
-                                              "prop.contentious_logit_next_year"),
-           mod.h2.type.total = data %>% map(mod.h2.type.total.bayes,
-                                            "prop.contentious_logit_next_year"),
-           mod.h2.type.new = data %>% map(mod.h2.type.new.bayes,
-                                          "prop.contentious_logit_next_year"),
-           mod.h2.csre = data %>% map(mod.h2.csre.bayes,
-                                      "prop.contentious_logit_next_year"))
-  
-  saveRDS(mods.h2.next_year.raw.bayes, h2.raw.path)
-}
-
 # Get model details and parameters
 mods.h2.next_year.bayes <- mods.h2.next_year.raw.bayes %>%
   gather(model.name, model, -m, -data) %>%
@@ -600,28 +573,6 @@ $$ln( \frac{\text{Aid to (domestic or foreign) NGOs}_{\text{USAID}}}{\text{Aid t
 Again, we use the same NGO legislation variables as H~1~ and H~2~ and use the same controls, except we omit "After 1989" since no observations actually occur after 1989.
 
 ```{r h3-models-bayes-domestic, warning=FALSE, message=FALSE}
-h3.domestic.raw.path <- file.path(PROJHOME, "Data", "data_cache", 
-                                  "models_bayes_h3_domestic.rds")
-
-if (file.exists(h3.domestic.raw.path)) {
-  mods.h3.dom.next_year.raw <- readRDS(h3.domestic.raw.path)
-} else {
-  mods.h3.dom.next_year.raw <- df.country.aid.us.demean.next_year.both %>%
-    nest(-m) %>%
-    mutate(mod.h3.barriers.total = data %>% map(mod.h3.barriers.total.bayes,
-                                                "prop.ngo.dom_logit_next_year"),
-           mod.h3.barriers.new = data %>% map(mod.h3.barriers.new.bayes,
-                                              "prop.ngo.dom_logit_next_year"),
-           mod.h3.type.total = data %>% map(mod.h3.type.total.bayes,
-                                            "prop.ngo.dom_logit_next_year"),
-           mod.h3.type.new = data %>% map(mod.h3.type.new.bayes,
-                                          "prop.ngo.dom_logit_next_year"),
-           mod.h3.csre = data %>% map(mod.h3.csre.bayes,
-                                      "prop.ngo.dom_logit_next_year"))
-  
-  saveRDS(mods.h3.dom.next_year.raw, h3.domestic.raw.path)
-}
-
 # Get model details and parameters
 mods.h3.dom.next_year.bayes <- mods.h3.dom.next_year.raw %>%
   gather(model.name, model, -m, -data) %>%
@@ -632,28 +583,6 @@ mods.h3.dom.next_year.bayes <- mods.h3.dom.next_year.raw %>%
 ```
 
 ```{r h3-models-bayes-foreign, warning=FALSE, message=FALSE}
-h3.foreign.raw.path <- file.path(PROJHOME, "Data", "data_cache", 
-                                 "models_bayes_h3_foreign.rds")
-
-if (file.exists(h3.foreign.raw.path)) {
-  mods.h3.foreign.next_year.raw <- readRDS(h3.foreign.raw.path)
-} else {
-  mods.h3.foreign.next_year.raw <- df.country.aid.us.demean.next_year.both %>%
-    nest(-m) %>%
-    mutate(mod.h3.barriers.total = data %>% map(mod.h3.foreign.barriers.total.bayes,
-                                                "prop.ngo.foreign_logit_next_year"),
-           mod.h3.barriers.new = data %>% map(mod.h3.foreign.barriers.new.bayes,
-                                              "prop.ngo.foreign_logit_next_year"),
-           mod.h3.type.total = data %>% map(mod.h3.foreign.type.total.bayes,
-                                            "prop.ngo.foreign_logit_next_year"),
-           mod.h3.type.new = data %>% map(mod.h3.foreign.type.new.bayes,
-                                          "prop.ngo.foreign_logit_next_year"),
-           mod.h3.csre = data %>% map(mod.h3.foreign.csre.bayes,
-                                      "prop.ngo.foreign_logit_next_year"))
-  
-  saveRDS(mods.h3.foreign.next_year.raw, h3.foreign.raw.path)
-}
-
 # Get model details and parameters
 mods.h3.foreign.next_year.bayes <- mods.h3.foreign.next_year.raw %>%
   gather(model.name, model, -m, -data) %>%
@@ -879,272 +808,4 @@ fig.predicted.h3.barriers
 
 fig.save.cairo(fig.predicted.h3.barriers, filename="fig-predicted-h3",
                width=6.5, height=2.5)
-```
-
-
----
-
-## H~4~: Donors shift aid to neighboring countries
-
-> **H~4~**: As restrictive laws against NGOs in a country are enacted, donors should be more likely to provide aid to neighboring countries.
-
-Our dependent variable for this hypothesis is the total amount of ODA given to countries within 900 km of a country's border, capturing aid given to the overall neighborhood. The model is structured similarly to H~1~, using just the log of aid rather than any proportional measure, which makes interpreting the coefficients a lot easier (yay!): 
-
-$$ln( \text{ODA in neighboring countries}_{\text{OECD}} )_{i, t+1} = \text{NGO legislation}_{it} + \text{controls}_{it}$$
-
-With the dependent variable specified like this, it makes less sense to use country-level random effects, since the unit of analysis is essentially the entire neighborhood, not a single country. We're looking at the effect of one country's regulations, wealth, democracy, corruption, and bad stuff on the overall neighborhood's aid.
-
-```{r h4-models-bayes, warning=FALSE, message=FALSE}
-h4.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h4.rds")
-
-if (file.exists(h4.raw.path)) {
-  mods.h4.next_year.raw <- readRDS(h4.raw.path)
-} else {
-  mods.h4.next_year.raw <- df.country.aid.demean.next_year.both %>%
-    nest(-m) %>%
-    mutate(mod.h4.barriers.total = data %>% map(mod.h4.barriers.total.bayes,
-                                                "nb_oda.sum_log_next_year"),
-           mod.h4.barriers.new = data %>% map(mod.h4.barriers.new.bayes,
-                                              "nb_oda.sum_log_next_year"),
-           mod.h4.type.total = data %>% map(mod.h4.type.total.bayes,
-                                            "nb_oda.sum_log_next_year"),
-           mod.h4.type.new = data %>% map(mod.h4.type.new.bayes,
-                                          "nb_oda.sum_log_next_year"),
-           mod.h4.csre = data %>% map(mod.h4.csre.bayes,
-                                      "nb_oda.sum_log_next_year"))
-  
-  saveRDS(mods.h4.next_year.raw, h4.raw.path)
-}
-
-# Get model details and parameters
-mods.h4.next_year.bayes <- mods.h4.next_year.raw %>%
-  gather(model.name, model, -m, -data) %>%
-  mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
-         augment = model %>% map(broom::augment)) %>%
-  filter(m != "original")
-```
-
-
-### MCMC diagnostics
-
-Again, use one of the imputed models (`mod.h4.barriers.total`) to check for fit and convergence.
-
-```{r h4-diagnostics-bayes}
-model.to.check <- mods.h4.next_year.bayes %>%
-  filter(m == "imp1", model.name == "mod.h4.barriers.total") %>%
-  select(model) %>% .[[1]] %>% .[[1]]
-```
-
-Posterior predictive distribution vs. observed outcome?
-
-```{r h4-diag-density}
-pp_check(model.to.check, plotfun="ppc_dens_overlay", overlay=TRUE, nreps=5) + 
-  theme_donors()
-```
-
-Chain convergence:
-
-```{r h4-diag-divergence}
-rstan::stan_diag(model.to.check, information="divergence")
-```
-
-
-### Results
-
-```{r h4-plot-coefs, fig.width=5, fig.height=4}
-vars.to.plot <- c("barriers.total", "barriers.total_new",
-                  "advocacy", "entry", "funding",
-                  "advocacy_new", "entry_new", "funding_new",
-                  "csre")
-
-mods.h4.melded <- bayes.meld(mods.h4.next_year.bayes,
-                             vars.to.plot)$melded.summary
-
-plot.data <- mods.h4.melded %>%
-  left_join(coef.names.all, by="term") %>%
-  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
-  arrange(desc(term)) %>%
-  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
-  mutate(coef.type = case_when(
-    str_detect(.$term, "_within") ~ "Within",
-    str_detect(.$term, "_between") ~ "Between",
-    TRUE ~ "Not split"
-  )) %>% 
-  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
-                            ordered=TRUE)) %>%
-  mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
-
-fig.coefs.h4 <-  ggplot(plot.data, 
-                        aes(y=term_plot, x=med, colour=model.name)) + 
-  geom_vline(xintercept=0, colour="grey50", size=0.5) + 
-  geom_pointrangeh(aes(xmin=`2.5%`, xmax=`97.5%`), size=.5) + 
-  labs(x="Estimate", y=NULL) +
-  scale_colour_manual(values=model.colors) +
-  guides(color=FALSE) +
-  theme_donors()
-fig.coefs.h4
-
-fig.save.cairo(fig.coefs.h4, filename="fig-coefs-h4-bayes",
-               width=4, height=2.5)
-```
-
-```{r h4-table, results="asis", warning=FALSE}
-caption <- "The effect of anti-NGO legislation on OECD overseas development assistance (ODA) in countries within 900 km radius in the following year (H~4~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than zero. {#tbl:h4-coefs}"
-note <- c("Dependent variable log transformed.")
-
-table.h4 <- bayesgazer(mods.h4.next_year.bayes,
-                       caption=caption, note=note,
-                       coefs.for.bottom = c("year_b", "sigma_b"))
-
-cat(table.h4)
-cat(table.h4, file=file.path(PROJHOME, "Output",
-                             "tbl-h4-coefs-bayes.md"))
-```
-
-
-### Model diagnostics
-
-
-
-### Predicted ODA to all neighbors
-
-```{r h4-predict-total, warning=FALSE, message=FALSE}
-model <- mods.h4.next_year.bayes %>%
-  filter(m == "imp1", model.name == "mod.h4.barriers.total") %>%
-  select(model) %>% .[[1]] %>% .[[1]]
-
-# For whatever reason, stanreg objects return the full data frame used in the
-# model, not just the model matrix, when calling object$data. model.frame()
-# chokes on object$formula because of (1 | x) grouping terms, but
-# get_all_vars() works.
-new.data <- get_all_vars(model$formula, data=model$data) %>%
-  select(-c(barriers.total, year)) %>%
-    summarise_all(typical) %>%
-    mutate(id = 1) %>%
-    right_join(expand.grid(barriers.total = seq(0, 12, 0.5),
-                           cowcode = 1000,
-                           year = 1981:2012,
-                           id = 1), by="id") %>% select(-id)
-
-cluster <- create_cluster(cores=cores)
-
-predicted.h4.barriers.total <- new.data %>%
-  nest(-cowcode) %>%
-  partition(cowcode, cluster=cluster) %>%
-  cluster_library("tidyverse") %>%
-  cluster_assign_value("model", model) %>%
-  cluster_assign_value("generate_predictions", generate_predictions) %>%
-  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
-  collect() %>%
-  unnest()
-
-df.plot.data <- predicted.h4.barriers.total %>%
-  group_by(barriers.total) %>%
-  summarise_at(vars(predicted), funs(mean(.))) %>%
-  ungroup()
-
-df.plot.data.mean <- df.plot.data %>%
-  group_by(barriers.total) %>%
-  summarise(predicted = mean(predicted)) %>%
-  mutate(cowcode=1)  # Fake country so the line plots
-```
-
-```{r h4-predict-individual, warning=FALSE, message=FALSE}
-barriers.indiv.clean.names <- tribble(
-  ~barrier, ~barrier.clean,
-  "advocacy", "Barriers to advocacy",
-  "entry", "Barriers to entry",
-  "funding", "Barriers to funding"
-)
-
-model <- mods.h4.next_year.bayes %>%
-  filter(m == "imp1", model.name == "mod.h4.type.total") %>%
-  select(model) %>% .[[1]] %>% .[[1]]
-
-hypothetical.bounds <- get_all_vars(model$formula, data=model$data) %>%
-    select(advocacy, entry, funding) %>%
-    summarise_all(funs(min, max)) %>%
-    gather(key, value) %>%
-    mutate(value = round(value, 0)) %>%
-    # Have to separate on _m because of multiple _s, then re-add the m
-    separate(key, into=c("term", "variable"), sep="_m") %>%
-    mutate(variable = paste0("m", variable)) %>%
-    spread(variable, value)
-
-new.data.hypothetical.nested <- hypothetical.bounds %>%
-    nest(-term) %>%
-    mutate(newdata = map2(.x=data, .y=term,
-                          ~ expand.grid(term = seq(.x$min, .x$max, by=0.5),
-                                        cowcode = 1000,
-                                        year = 1981:2012,
-                                        id = 1) %>%
-                            # Rename the term column to the actual term name
-                            magrittr::set_colnames(c(.y, colnames(.)[-1]))))
-  
-new.data.hypothetical <- as_tibble(bind_rows(new.data.hypothetical.nested$newdata)) %>%
-  mutate_at(vars(advocacy, entry, funding), funs(ifelse(is.na(.), 0, .)))
-  
-new.data <- get_all_vars(model$formula, data=model$data) %>%
-  select(-c(advocacy, entry, funding, year)) %>%
-  summarise_all(typical) %>%
-  mutate(id = 1) %>%
-  right_join(new.data.hypothetical, by="id") %>% select(-id)
-
-cluster <- create_cluster(cores=cores)
-
-predicted.h4.barriers.individual <- new.data %>%
-  nest(-cowcode) %>%
-  partition(cowcode, cluster=cluster) %>%
-  cluster_library("tidyverse") %>%
-  cluster_assign_value("model", model) %>%
-  cluster_assign_value("generate_predictions", generate_predictions) %>%
-  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
-  collect() %>%
-  unnest()
-
-df.plot.data.indiv <- predicted.h4.barriers.individual %>%
-  gather(barrier, barrier.value, c(advocacy, entry, funding)) %>%
-  group_by(cowcode, barrier.value, barrier) %>%
-  summarise_at(vars(predicted), funs(mean(.))) %>%
-  left_join(barriers.indiv.clean.names, by="barrier")
-
-df.plot.data.mean.indiv <- df.plot.data.indiv %>%
-  group_by(barrier, barrier.value) %>%
-  summarise(predicted = mean(predicted)) %>%
-  mutate(cowcode=1) %>%  # Fake country so the line plots
-  left_join(barriers.indiv.clean.names, by="barrier")
-```
-
-```{r h4-predict-both, warning=FALSE, fig.width=6.5, fig.height=4}
-# Combine the two plot data frames
-df.plot.data.both <- df.plot.data %>%
-  mutate(barrier = "barriers.total", barrier.clean = "Total barriers") %>%
-  rename(barrier.value = barriers.total) %>%
-  bind_rows(df.plot.data.indiv) %>%
-  mutate(barrier.clean = ordered(fct_inorder(barrier.clean)),
-         highlight = ifelse(barrier.clean == "Total barriers", TRUE, FALSE))
-
-# Create data frame for highlighting the total panel
-df.panel.highlight <- df.plot.data.both %>%
-  distinct(barrier.clean, highlight)
-
-fig.predicted.h4.barriers.both <- ggplot(df.plot.data.both, 
-                                         aes(x=barrier.value, y=expm1(predicted))) + 
-  geom_rect(data=df.panel.highlight, 
-            aes(fill=highlight, x=NULL, y=NULL, group=NULL),
-            xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf, alpha=0.15) +
-  geom_smooth(size=1.5, method="lm", colour="#BD4932") +
-  labs(x="Hypothetical anti-NGO legal barriers",
-       y="Predicted neighborhood ODA in the following year") +
-  scale_y_continuous(labels=scales::dollar, trans=scales::log1p_trans()) +
-  scale_x_continuous(breaks=integer_breaks()) +
-  scale_fill_manual(values=c(NA, "grey50"), guide=FALSE) +
-  facet_wrap(~ barrier.clean, scales="free_x") +
-  theme_donors()
-
-fig.predicted.h4.barriers.both
-
-fig.save.cairo(fig.predicted.h4.barriers.both, filename="fig-predicted-h4",
-               width=6.5, height=4)
 ```
