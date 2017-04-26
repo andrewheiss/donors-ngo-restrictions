@@ -314,13 +314,6 @@ table.robust.neutral.regs.h3 <- mods.robust.neutral.regs.melded.h3 %>%
 ```
 
 
-### Post-Color Revolution effect
-
-```{r}
-# mutate(post.2005 = year >= 2006)
-```
-
-
 ### Longer lags
 
 Looking at aid 2 years and 5 years after the change in anti-NGO legislation shows similar trends to 1 year after.
