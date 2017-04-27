@@ -183,6 +183,12 @@ build.formula <- function(DV, IVs) {
   reformulate(c(terms.fixed, terms.rand), response=DV)
 }
 
+get.terms <- function(IVs) {
+  terms.all <- attr(terms(IVs), "term.labels")
+  terms.clean <- stringr::str_replace_all(terms.all, "1 \\| ", "")
+  return(terms.clean)
+}
+
 # Meld a bunch of imputed models
 meld.imputed.models <- function(model.data, exponentiate=FALSE) {
   models.df <- model.data$glance[[1]]$df.residual

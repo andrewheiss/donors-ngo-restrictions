@@ -8,6 +8,7 @@ source(file.path(PROJHOME, "Analysis", "h2_model_definitions_bayes.R"))
 source(file.path(PROJHOME, "Analysis", "h3_model_definitions_bayes.R"))
 source(file.path(PROJHOME, "Analysis", "h4_model_definitions_bayes.R"))
 
+raw.dir <- file.path(PROJHOME, "Data", "data_cache")
 
 # H1 ---------------------------------------------------------------------
 print("Running H1 models")
@@ -16,27 +17,43 @@ h1.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h1.rds")
 if (file.exists(h1.raw.path)) {
   mods.h1.next_year.raw.bayes <- readRDS(h1.raw.path)
 } else {
-  mods.h1.next_year.raw.bayes <- df.country.aid.demean.next_year.both %>%
-    nest(-m) %>%
-    mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
-                                                "total.oda_log_next_year"),
-           mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
-                                              "total.oda_log_next_year"),
-           mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
-                                            "total.oda_log_next_year"),
-           mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
-                                          "total.oda_log_next_year"),
-           mod.h1.csre = data %>% map(mod.h1.csre.bayes,
-                                      "total.oda_log_next_year"))
+  mods.h1.next_year.raw.bayes.nested <- df.country.aid.demean.next_year.both %>%
+    select(one_of(c("m", "total.oda_log_next_year", h1.ivs))) %>%
+    nest(-m) 
   
-  saveRDS(mods.h1.next_year.raw.bayes, h1.raw.path)
-}
+  h1.barriers.total <- mods.h1.next_year.raw.bayes.nested %>%
+    mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total.bayes,
+                                                "total.oda_log_next_year"))
+  saveRDS(h1.barriers.total, file.path(raw.dir, "h1_1.rds"))
+  
+  h1.barriers.total <- mods.h1.next_year.raw.bayes.nested %>%
+    mutate(mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
+                                                "total.oda_log_next_year"))
+  saveRDS(h1.barriers.total, file.path(raw.dir, "h1_2.rds"))
+  
+  h1.barriers.total <- mods.h1.next_year.raw.bayes.nested %>%
+    mutate(mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
+                                                "total.oda_log_next_year"))
+  saveRDS(h1.barriers.total, file.path(raw.dir, "h1_3.rds"))
+  
+  h1.barriers.total <- mods.h1.next_year.raw.bayes.nested %>%
+    mutate(mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
+                                                "total.oda_log_next_year"))
+  saveRDS(h1.barriers.total, file.path(raw.dir, "h1_4.rds"))
+  
+  h1.barriers.total <- mods.h1.next_year.raw.bayes.nested %>%
+    mutate(mod.h1.csre = data %>% map(mod.h1.csre.bayes,
+                                                "total.oda_log_next_year"))
+  saveRDS(h1.barriers.total, file.path(raw.dir, "h1_5.rds"))
 
-h2.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h2.rds")
+  saveRDS(mods.h1.next_year.raw.bayes.nested, h1.raw.path)
+}
 
 
 # H2 ---------------------------------------------------------------------
 print("Running H2 models")
+h2.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h2.rds")
+
 if (file.exists(h2.raw.path)) {
   mods.h2.next_year.raw.bayes <- readRDS(h2.raw.path)
 } else {
