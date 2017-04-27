@@ -27,24 +27,24 @@ if (file.exists(h1.raw.path)) {
   
   h1.barriers.new <- mods.h1.next_year.raw.bayes.nested %>%
     mutate(mod.h1.barriers.new = data %>% map(mod.h1.barriers.new.bayes,
-                                                "total.oda_log_next_year"))
+                                              "total.oda_log_next_year"))
   saveRDS(h1.barriers.new, file.path(raw.dir, "h1_2.rds"))
   
   h1.type.total <- mods.h1.next_year.raw.bayes.nested %>%
     mutate(mod.h1.type.total = data %>% map(mod.h1.type.total.bayes,
-                                                "total.oda_log_next_year"))
+                                            "total.oda_log_next_year"))
   saveRDS(h1.type.total, file.path(raw.dir, "h1_3.rds"))
   
   h1.type.new <- mods.h1.next_year.raw.bayes.nested %>%
     mutate(mod.h1.type.new = data %>% map(mod.h1.type.new.bayes,
-                                                "total.oda_log_next_year"))
+                                          "total.oda_log_next_year"))
   saveRDS(h1.type.new, file.path(raw.dir, "h1_4.rds"))
   
   h1.csre <- mods.h1.next_year.raw.bayes.nested %>%
     mutate(mod.h1.csre = data %>% map(mod.h1.csre.bayes,
-                                                "total.oda_log_next_year"))
+                                      "total.oda_log_next_year"))
   saveRDS(h1.csre, file.path(raw.dir, "h1_5.rds"))
-
+  
   saveRDS(mods.h1.next_year.raw.bayes.nested, h1.raw.path)
 }
 
@@ -56,33 +56,33 @@ h2.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h2.rds")
 if (file.exists(h2.raw.path)) {
   mods.h2.next_year.raw.bayes <- readRDS(h2.raw.path)
 } else {
-    mods.h2.next_year.raw.bayes.nested <- df.country.aid.demean.next_year.both %>%
+  mods.h2.next_year.raw.bayes.nested <- df.country.aid.demean.next_year.both %>%
     select(one_of(c("m", "prop.contentious_logit_next_year", h2.ivs))) %>%
     nest(-m) 
-
-    h2.barriers.total <- mods.h2.next_year.raw.bayes.nested %>%
+  
+  h2.barriers.total <- mods.h2.next_year.raw.bayes.nested %>%
     mutate(mod.h2.barriers.total = data %>% map(mod.h2.barriers.total.bayes,
                                                 "prop.contentious_logit_next_year"))
   saveRDS(h2.barriers.total, file.path(raw.dir, "h2_1.rds"))
-
+  
   h2.barriers.new <- mods.h2.next_year.raw.bayes.nested %>%
     mutate(mod.h2.barriers.new = data %>% map(mod.h2.barriers.new.bayes,
-                                                "prop.contentious_logit_next_year"))
+                                              "prop.contentious_logit_next_year"))
   saveRDS(h2.barriers.new, file.path(raw.dir, "h2_2.rds"))
-
+  
   h2.type.total <- mods.h2.next_year.raw.bayes.nested %>%
     mutate(mod.h2.type.total = data %>% map(mod.h2.type.total.bayes,
-                                                "prop.contentious_logit_next_year"))
+                                            "prop.contentious_logit_next_year"))
   saveRDS(h2.type.total, file.path(raw.dir, "h2_3.rds"))
-
+  
   h2.type.new <- mods.h2.next_year.raw.bayes.nested %>%
     mutate(mod.h2.type.new = data %>% map(mod.h2.type.new.bayes,
-                                                "prop.contentious_logit_next_year"))
+                                          "prop.contentious_logit_next_year"))
   saveRDS(h2.type.new, file.path(raw.dir, "h2_4.rds"))
-
+  
   h2.csre <- mods.h2.next_year.raw.bayes.nested %>%
     mutate(mod.h2.csre = data %>% map(mod.h2.csre.bayes,
-                                                "prop.contentious_logit_next_year"))
+                                      "prop.contentious_logit_next_year"))
   saveRDS(h2.csre, file.path(raw.dir, "h2_5.rds"))
   
   saveRDS(mods.h2.next_year.raw.bayes.nested, h2.raw.path)
@@ -97,7 +97,7 @@ h3.domestic.raw.path <- file.path(PROJHOME, "Data", "data_cache",
 if (file.exists(h3.domestic.raw.path)) {
   mods.h3.dom.next_year.raw <- readRDS(h3.domestic.raw.path)
 } else {
-    mods.h3.dom.next_year.raw.nested <- df.country.aid.us.demean.next_year.both %>%
+  mods.h3.dom.next_year.raw.nested <- df.country.aid.us.demean.next_year.both %>%
     select(one_of(c("m", "total.oda_log_next_year", h3.ivs))) %>%
     nest(-m) 
   
@@ -108,24 +108,24 @@ if (file.exists(h3.domestic.raw.path)) {
   
   h3.barriers.new <- mods.h3.dom.next_year.raw.nested %>%
     mutate(mod.h3.barriers.new = data %>% map(mod.h3.barriers.new.bayes,
-                                                "prop.ngo.dom_logit_next_year"))
+                                              "prop.ngo.dom_logit_next_year"))
   saveRDS(h3.barriers.new, file.path(raw.dir, "h3_dom_2.rds"))
   
   h3.type.total <- mods.h3.dom.next_year.raw.nested %>%
     mutate(mod.h3.type.total = data %>% map(mod.h3.type.total.bayes,
-                                                "prop.ngo.dom_logit_next_year"))
+                                            "prop.ngo.dom_logit_next_year"))
   saveRDS(h3.type.total, file.path(raw.dir, "h3_dom_3.rds"))
   
   h3.type.new <- mods.h3.dom.next_year.raw.nested %>%
     mutate(mod.h3.type.new = data %>% map(mod.h3.type.new.bayes,
-                                                "prop.ngo.dom_logit_next_year"))
+                                          "prop.ngo.dom_logit_next_year"))
   saveRDS(h3.type.new, file.path(raw.dir, "h3_dom_4.rds"))
   
   h3.csre <- mods.h3.dom.next_year.raw.nested %>%
     mutate(mod.h3.csre = data %>% map(mod.h3.csre.bayes,
-                                                "prop.ngo.dom_logit_next_year"))
+                                      "prop.ngo.dom_logit_next_year"))
   saveRDS(h3.csre, file.path(raw.dir, "h3_dom_5.rds"))
-
+  
   saveRDS(mods.h3.dom.next_year.raw.nested, h3.domestic.raw.path)
 }
 
@@ -136,34 +136,34 @@ h3.foreign.raw.path <- file.path(PROJHOME, "Data", "data_cache",
 if (file.exists(h3.foreign.raw.path)) {
   mods.h3.foreign.next_year.raw <- readRDS(h3.foreign.raw.path)
 } else {
-    mods.h3.foreign.next_year.raw.nested <- df.country.aid.us.demean.next_year.both %>%
+  mods.h3.foreign.next_year.raw.nested <- df.country.aid.us.demean.next_year.both %>%
     select(one_of(c("m", "total.oda_log_next_year", h3.foreign.foreign.ivs))) %>%
     nest(-m) 
   
   h3.foreign.barriers.total <- mods.h3.foreign.next_year.raw.nested %>%
     mutate(mod.h3.foreign.barriers.total = data %>% map(mod.h3.foreign.barriers.total.bayes,
-                                                "prop.ngo.foreign_logit_next_year"))
+                                                        "prop.ngo.foreign_logit_next_year"))
   saveRDS(h3.foreign.barriers.total, file.path(raw.dir, "h3_foreign_1.rds"))
   
   h3.foreign.barriers.new <- mods.h3.foreign.next_year.raw.nested %>%
     mutate(mod.h3.foreign.barriers.new = data %>% map(mod.h3.foreign.barriers.new.bayes,
-                                                "prop.ngo.foreign_logit_next_year"))
+                                                      "prop.ngo.foreign_logit_next_year"))
   saveRDS(h3.foreign.barriers.new, file.path(raw.dir, "h3_foreign_2.rds"))
   
   h3.foreign.type.total <- mods.h3.foreign.next_year.raw.nested %>%
     mutate(mod.h3.foreign.type.total = data %>% map(mod.h3.foreign.type.total.bayes,
-                                                "prop.ngo.foreign_logit_next_year"))
+                                                    "prop.ngo.foreign_logit_next_year"))
   saveRDS(h3.foreign.type.total, file.path(raw.dir, "h3_foreign_3.rds"))
   
   h3.foreign.type.new <- mods.h3.foreign.next_year.raw.nested %>%
     mutate(mod.h3.foreign.type.new = data %>% map(mod.h3.foreign.type.new.bayes,
-                                                "prop.ngo.foreign_logit_next_year"))
+                                                  "prop.ngo.foreign_logit_next_year"))
   saveRDS(h3.foreign.type.new, file.path(raw.dir, "h3_foreign_4.rds"))
   
   h3.foreign.csre <- mods.h3.foreign.next_year.raw.nested %>%
     mutate(mod.h3.foreign.csre = data %>% map(mod.h3.foreign.csre.bayes,
-                                                "prop.ngo.foreign_logit_next_year"))
+                                              "prop.ngo.foreign_logit_next_year"))
   saveRDS(h3.foreign.csre, file.path(raw.dir, "h3_foreign_5.rds"))
-
+  
   saveRDS(mods.h3.foreign.next_year.raw.nested, h3.foreign.raw.path)
 }
