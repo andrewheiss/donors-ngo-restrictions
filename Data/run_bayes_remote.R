@@ -98,7 +98,7 @@ if (file.exists(h3.domestic.raw.path)) {
   mods.h3.dom.next_year.raw <- readRDS(h3.domestic.raw.path)
 } else {
   mods.h3.dom.next_year.raw.nested <- df.country.aid.us.demean.next_year.both %>%
-    select(one_of(c("m", "total.oda_log_next_year", h3.ivs))) %>%
+    select(one_of(c("m", "prop.ngo.dom_logit_next_year", h3.ivs))) %>%
     nest(-m) 
   
   h3.barriers.total <- mods.h3.dom.next_year.raw.nested %>%
@@ -137,7 +137,7 @@ if (file.exists(h3.foreign.raw.path)) {
   mods.h3.foreign.next_year.raw <- readRDS(h3.foreign.raw.path)
 } else {
   mods.h3.foreign.next_year.raw.nested <- df.country.aid.us.demean.next_year.both %>%
-    select(one_of(c("m", "total.oda_log_next_year", h3.foreign.foreign.ivs))) %>%
+    select(one_of(c("m", "prop.ngo.foreign_logit_next_year", h3.foreign.ivs))) %>%
     nest(-m) 
   
   h3.foreign.barriers.total <- mods.h3.foreign.next_year.raw.nested %>%
