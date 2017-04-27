@@ -1,5 +1,5 @@
 # devtools::install_github("robertzk/s3mpi@0.2.31")
-# nohup Rscript run_bayes.R > bayes.log 2>&1 &
+# nohup Rscript run_bayes_remote.R > bayes.log 2>&1 &
 print("Loading data")
 source(file.path(PROJHOME, "Analysis", "models-chunks.R"))
 
