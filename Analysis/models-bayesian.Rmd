@@ -202,7 +202,7 @@ new.data <- get_all_vars(model$formula, data=model$data) %>%
   select(-c(barriers.total_within, year, cowcode)) %>%
     summarise_all(typical) %>%
     mutate(id = 1) %>%
-    right_join(expand.grid(barriers.total_within = seq(-5, 5, 0.5),
+    right_join(expand.grid(barriers.total_within = seq(-3, 4, 0.5),
                            cowcode = 1000:1049,
                            year = 1981:2012,
                            id = 1), by="id") %>% select(-id)
@@ -721,7 +721,7 @@ new.data <- get_all_vars(model$formula, data=model$data) %>%
   select(-c(funding_within, year, cowcode)) %>%
     summarise_all(typical) %>%
     mutate(id = 1) %>%
-    right_join(expand.grid(funding_within = seq(-2, 4, 0.5),
+    right_join(expand.grid(funding_within = seq(-2, 3, 0.5),
                            cowcode = 1000:1049,
                            year = 1981:2012,
                            id = 1), by="id") %>% select(-id)
@@ -747,7 +747,7 @@ new.data <- get_all_vars(model$formula, data=model$data) %>%
   select(-c(funding_within, year, cowcode)) %>%
     summarise_all(typical) %>%
     mutate(id = 1) %>%
-    right_join(expand.grid(funding_within = seq(-2, 4, 0.5),
+    right_join(expand.grid(funding_within = seq(-2, 3, 0.5),
                            cowcode = 1000:1049,
                            year = 1981:2012,
                            id = 1), by="id") %>% select(-id)
