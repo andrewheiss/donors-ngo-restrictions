@@ -678,11 +678,15 @@ In addition to panel data on the presence or absence of specific NGO regulations
 
 - `association` (Q1a, Q1b; 2 points maximum): barriers to associational rights
     - Q1a and Q1b are reversed, so *not* having the constitutional right to assembly earns 1 point. 
-- `entry` (Q2a, Q2b, Q2c, Q2d; 4 points maximum): barriers to entry
+- `entry` (Q2b, Q2c, Q2d; 3 points maximum): barriers to entry
     - Q2c is reversed, so *not* being allowed to appeal registration status earns 1 point.
-- `funding` (Q3a, Q3b, Q3c, Q3d, Q3e, Q3f; 8 points maximum): barriers to funding
-- `advocacy` (Q4a, Q4b, Q4c; 4 points maximum): barriers to advocacy
-- `barriers.total` (18 points maximum, though actual max is `r max(dcjw.full$barriers.total)`): sum of all four indexes
+    - Q2a is omitted because it's benign
+- `funding` (Q3b, Q3c, Q3d, Q3e, Q3f; 5 points maximum): barriers to funding
+    - Q3s id omitted because it's benign
+    - Scores that range between 0–2 are rescaled to 0–1 (so 1 becomes 1.5)
+- `advocacy` (Q4a, Q4b, Q4c; 3 points maximum): barriers to advocacy
+    - Scores that range between 0–2 are rescaled to 0–1 (so 1 becomes 1.5)
+- `barriers.total` (13 points maximum, though actual max is `r max(dcjw.full$barriers.total)`): sum of all four indexes
 
 These indexes are also standardized by dividing by the maximum, yielding the following variables:
 
