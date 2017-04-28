@@ -97,7 +97,7 @@ model.to.check <- mods.h1.next_year.bayes %>%
 How well does the posterior predictive distribution fit the observed outcome? Not great, but not perfectly. The actual distribution is bimodal, with a bunch of zeros, and the model gets the two peaks, but they're shallow. We can live with it, though.
 
 ```{r h1-diag-density}
-pp_check(model.to.check, plotfun="ppc_dens_overlay", overlay=TRUE, nreps=5) + 
+pp_check(model.to.check, plotfun="ppc_dens_overlay", nreps=5) + 
   theme_donors()
 ```
 
@@ -386,7 +386,7 @@ model.to.check <- mods.h2.next_year.bayes %>%
 Posterior predictive distribution vs. observed outcome?
 
 ```{r h2-diag-density}
-pp_check(model.to.check, plotfun="ppc_dens_overlay", overlay=TRUE, nreps=5) + 
+pp_check(model.to.check, plotfun="ppc_dens_overlay", nreps=5) + 
   theme_donors()
 ```
 
@@ -600,7 +600,7 @@ model.to.check <- mods.h3.dom.next_year.bayes %>%
 Posterior predictive distribution vs. observed outcome?
 
 ```{r h3-diag-density}
-pp_check(model.to.check, plotfun="ppc_dens_overlay", overlay=TRUE, nreps=5) + 
+pp_check(model.to.check, plotfun="ppc_dens_overlay", nreps=5) + 
   theme_donors()
 ```
 

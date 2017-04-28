@@ -215,12 +215,12 @@ bayesgazer <- function(models, digits=2, caption=NULL, note=NULL, exponentiate=F
   if (all(c("cowcode_b", "year_b") %in% coefs.for.bottom)) {
     random.coefs.renamed <- random.coefs.raw %>%
       select(model.name, sigma_b = sigma,
-             cowcode_b = `Sigma[(Intercept),(Intercept)]`,
-             year_b = `Sigma[(Intercept),(Intercept)].1`)
+             cowcode_b = `Sigma[cowcode:(Intercept),(Intercept)]`,
+             year_b = `Sigma[year:(Intercept),(Intercept)]`)
   } else {
     random.coefs.renamed <- random.coefs.raw %>%
       select(model.name, sigma_b = sigma,
-             year_b = `Sigma[(Intercept),(Intercept)]`)
+             year_b = `Sigma[year:(Intercept),(Intercept)]`)
   }
 
   random.coefs <- random.coefs.renamed %>%
