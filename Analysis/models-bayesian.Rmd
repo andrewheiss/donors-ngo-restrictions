@@ -29,11 +29,6 @@ knitr::read_chunk(file.path(PROJHOME, "Analysis", "models-chunks.R"))
 ```
 
 ```{r load-bayesian-models}
-source(file.path(PROJHOME, "Analysis", "h1_model_definitions_bayes.R"))
-source(file.path(PROJHOME, "Analysis", "h2_model_definitions_bayes.R"))
-source(file.path(PROJHOME, "Analysis", "h3_model_definitions_bayes.R"))
-source(file.path(PROJHOME, "Analysis", "h4_model_definitions_bayes.R"))
-
 h1.raw <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h1.rds")
 h2.raw <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h2.rds")
 h3.domestic.raw <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h3_domestic.rds")
@@ -81,7 +76,7 @@ We look at NGO legislation in a few different ways:
 ```{r h1-models-bayes-1, warning=FALSE, message=FALSE}
 # Get model details and parameters
 mods.h1.next_year.bayes <- mods.h1.next_year.raw.bayes %>%
-  gather(model.name, model, -m, -data) %>%
+  gather(model.name, model, -m) %>%
   mutate(glance = model %>% map(broom::glance),
          tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
          augment = model %>% map(broom::augment)) %>%
@@ -370,7 +365,7 @@ We look at NGO legislation in the same ways as H~1~ and use the same controls.
 ```{r h2-models-bayes, warning=FALSE, message=FALSE}
 # Get model details and parameters
 mods.h2.next_year.bayes <- mods.h2.next_year.raw.bayes %>%
-  gather(model.name, model, -m, -data) %>%
+  gather(model.name, model, -m) %>%
   mutate(glance = model %>% map(broom::glance),
          tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
          augment = model %>% map(broom::augment)) %>%
@@ -575,7 +570,7 @@ Again, we use the same NGO legislation variables as H~1~ and H~2~ and use the sa
 ```{r h3-models-bayes-domestic, warning=FALSE, message=FALSE}
 # Get model details and parameters
 mods.h3.dom.next_year.bayes <- mods.h3.dom.next_year.raw %>%
-  gather(model.name, model, -m, -data) %>%
+  gather(model.name, model, -m) %>%
   mutate(glance = model %>% map(broom::glance),
          tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
          augment = model %>% map(broom::augment)) %>%
@@ -585,7 +580,7 @@ mods.h3.dom.next_year.bayes <- mods.h3.dom.next_year.raw %>%
 ```{r h3-models-bayes-foreign, warning=FALSE, message=FALSE}
 # Get model details and parameters
 mods.h3.foreign.next_year.bayes <- mods.h3.foreign.next_year.raw %>%
-  gather(model.name, model, -m, -data) %>%
+  gather(model.name, model, -m) %>%
   mutate(glance = model %>% map(broom::glance),
          tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
          augment = model %>% map(broom::augment)) %>%
@@ -719,7 +714,7 @@ fig.save.cairo(fig.coefs.h3, filename="fig-coefs-h3-bayes",
 ```{r h3-predict-both, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4}
 # Aid to foreign NGOs ~ barriers to funding
 model <- mods.h3.foreign.next_year.bayes %>%
-  filter(m == "imp1", model.name == "mod.h3.type.total") %>%
+  filter(m == "imp1", model.name == "mod.h3.foreign.type.total") %>%
   select(model) %>% .[[1]] %>% .[[1]]
 
 new.data <- get_all_vars(model$formula, data=model$data) %>%
