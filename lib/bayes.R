@@ -1,6 +1,6 @@
 library(rstanarm)
-# options(mc.cores = parallel::detectCores())  # Use all possible cores
-options(mc.cores = 1)  # Just use one core for now
+options(mc.cores = parallel::detectCores())  # Use all possible cores
+# options(mc.cores = 1)  # Just use one core for now
 
 # By default, R uses polynomial contrasts for ordered factors in linear models
 # options("contrasts") 
