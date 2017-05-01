@@ -21,7 +21,11 @@ output:
 # Externalize these chunks:
 # http://zevross.com/blog/2014/07/09/making-use-of-external-r-code-in-knitr-and-r-markdown/
 # Except @knitr was replaced with four dashes because of RStudio section folding
-knitr::read_chunk(file.path(PROJHOME, "Analysis", "models-chunks.R"))
+if (isTRUE(getOption('knitr.in.progress'))) {
+  knitr::read_chunk(file.path(PROJHOME, "Analysis", "models-chunks.R"))
+} else {
+  source(file.path(PROJHOME, "Analysis", "models-chunks.R"))
+}
 ```
 
 ```{r load-libraries, message=FALSE}

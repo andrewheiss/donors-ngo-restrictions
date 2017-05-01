@@ -19,7 +19,11 @@ output:
 
 
 ```{r echo=FALSE}
-knitr::read_chunk(file.path(PROJHOME, "Analysis", "models-chunks.R"))
+if (isTRUE(getOption('knitr.in.progress'))) {
+  knitr::read_chunk(file.path(PROJHOME, "Analysis", "models-chunks.R"))
+} else {
+  source(file.path(PROJHOME, "Analysis", "models-chunks.R"))
+}
 ```
 
 ```{r load-libraries, message=FALSE}
