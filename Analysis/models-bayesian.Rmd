@@ -326,8 +326,8 @@ fig.predicted.h1.barriers.both <- ggplot(df.plot.data.both,
             aes(fill=highlight, x=NULL, y=NULL, group=NULL),
             xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf, alpha=0.15) +
   geom_vline(xintercept=0, size=0.5) +
-  geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
-  geom_smooth(data=df.plot.data.mean.both, size=1.5, method="lm", colour="#BD4932") +
+  geom_smooth(method="lm", size=0.1, alpha=0.1, colour=simulation.individual) +
+  geom_smooth(data=df.plot.data.mean.both, size=1.5, method="lm", colour=simulation.mean) +
   labs(x="Difference from average number of anti-NGO barriers in country\n(within effects)",
        y="Predicted ODA in the following year") +
   scale_y_continuous(labels=scales::dollar, trans=scales::log1p_trans()) +
@@ -541,8 +541,8 @@ df.plot.data.mean <- df.plot.data %>%
 fig.predicted.h2.barriers <- ggplot(df.plot.data, aes(x=variable, 
                                                       y=value.fixed, group=cowcode)) + 
   geom_vline(xintercept=0, size=0.5) +
-  geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
-  geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour="#BD4932") +
+  geom_smooth(method="lm", size=0.1, alpha=0.1, colour=simulation.individual) +
+  geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour=simulation.mean) +
   labs(x="Difference from average level of NGO legislation in country\n(within effect)",
        y="Predicted proportion of\ncontentious aid in the following year") +
   scale_y_continuous(labels=scales::percent) +
@@ -796,8 +796,8 @@ df.plot.data.mean <- df.plot.data %>%
 fig.predicted.h3.barriers <- ggplot(df.plot.data, aes(x=variable, 
                                                       y=value.fixed, group=cowcode)) + 
   geom_vline(xintercept=0, size=0.5) +
-  geom_smooth(method="lm", size=0.1, alpha=0.1, colour="#DB9E36") +
-  geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour="#BD4932") +
+  geom_smooth(method="lm", size=0.1, alpha=0.1, colour=simulation.individual) +
+  geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour=simulation.mean) +
   labs(x="Difference from average number of barriers to funding\n(within effect)",
        y="Predicted proportion of aid to\ntype of NGO in the following year") +
   scale_y_continuous(labels=scales::percent) +

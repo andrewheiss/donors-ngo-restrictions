@@ -1,23 +1,47 @@
 library(gridExtra)
 library(ggstance)
 
-model.colors <- c("#1f78b4",  # Dark blue
-                  "#a6cee3",  # Light blue
-                  "#33a02c",  # Dark green
-                  "#b2df8a",  # Light green
-                  "#ff7f00")  # Dark orange
+# model.colors <- c("#1f78b4",  # Dark blue
+#                   "#a6cee3",  # Light blue
+#                   "#33a02c",  # Dark green
+#                   "#b2df8a",  # Light green
+#                   "#ff7f00")  # Dark orange
+# 
+# channel.colors <- c("#fdbf6f",  # Light orange
+#                     "#1f78b4",  # Dark blue
+#                     "#e31a1c")  # Red
+# 
+# barrier.colors <- c("#1b9e77",  # Turquoise
+#                     "#d95f02",  # Orange
+#                     "#7570b3",  # Purple
+#                     "#e7298a")  # Pink
+# 
+# burden.colors <- c("#ff7f00",  # Dark orange
+#                    "#1f78b4")  # Dark blue
+# 
+# simulation.individual <- "#DB9E36"  # Light orange
+# simulation.mean <- "#BD4932"  # Burnt orange
 
-channel.colors <- c("#fdbf6f",  # Light orange
-                    "#1f78b4",  # Dark blue
-                    "#e31a1c")  # Red
+model.colors <- c("black",
+                  "grey15",
+                  "grey50",
+                  "grey65",
+                  "grey80")
 
-barrier.colors <- c("#1b9e77",  # Turquoise
-                    "#d95f02",  # Orange
-                    "#7570b3",  # Purple
-                    "#e7298a")  # Pink
+channel.colors <- c("grey70",
+                    "grey40",
+                    "black")
 
-burden.colors <- c("#ff7f00",  # Dark orange
-                   "#1f78b4")  # Dark blue
+barrier.colors <- c("black",
+                    "grey60",
+                    "black",
+                    "grey60")
+
+burden.colors <- c("black",
+                   "grey60")
+
+simulation.individual <- "grey30"
+simulation.mean <- "black"
 
 plot.blank <- ggplot() + geom_blank(aes(1, 1)) + theme_void()
 

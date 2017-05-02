@@ -405,12 +405,14 @@ df.restrictions.type <- df.country %>%
 
 fig.ngo.barriers <- ggplot(df.restrictions.type, aes(x=year, y=y, colour=barrier)) +
   geom_ribbon(aes(ymin=ymin, ymax=ymax, fill=barrier), alpha=0.3, colour=NA) +
-  geom_line() +
+  geom_line(aes(linetype=barrier)) +
   labs(y="Average number of barriers", x=NULL) +
   scale_colour_manual(values=barrier.colors) +
   scale_fill_manual(values=barrier.colors) +
+  scale_linetype_manual(values=c("solid", "solid", "dashed", "dashed")) +
   guides(colour=guide_legend(title=NULL),
-         fill=guide_legend(title=NULL)) +
+         fill=guide_legend(title=NULL),
+         linetype=guide_legend(title=NULL)) +
   theme_donors()
 fig.ngo.barriers
 ```
