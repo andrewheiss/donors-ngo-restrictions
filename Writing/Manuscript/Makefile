@@ -177,7 +177,7 @@ bib:	$(BIB)
 
 %-manuscript.odt: %.md
 	@echo "$(WARN_COLOR)Converting Markdown to .odt using manuscript template...$(NO_COLOR)"
-	$(PREFIX)/bin/replace_includes.py $< | $(PREFIX)/bin/replace_pdfs.py $(PNG_CONVERT) | $(PREFIX)/bin/move_figs_tables_to_end.py | \
+	$(PREFIX)/bin/replace_includes.py $< | $(PREFIX)/bin/replace_pdfs.py $(PNG_CONVERT) | \
 	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block -w odt -S \
 		$(CROSSREF) \
 		--default-image-extension=png \
@@ -186,6 +186,7 @@ bib:	$(BIB)
 		--filter pandoc-citeproc \
 		--csl=$(PREFIX)/csl/$(CSL).csl \
 		--bibliography=$(BIB_FILE) \
+		-V blinded \
 	-o $@
 
 %.bib: %.md
