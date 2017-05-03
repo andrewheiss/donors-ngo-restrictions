@@ -1,5 +1,5 @@
 ---
-title: "Are Funders Really Responding? Analyzing the Impact of Global Restrictions on NGOs"
+title: "Are Donors Really Responding? Analyzing the Impact of Global Restrictions on NGOs"
 author:
 - name: Suparna Chaudhry
   affiliation: Dartmouth College
