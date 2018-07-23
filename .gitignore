@@ -4,20 +4,21 @@ Data/data_clean/*.rds
 
 # Analysis output
 index.html
-Analysis/**.html
-Analysis/**_files/*
-Analysis/**_cache/*
-Data/**.html
-Data/**_files/*
-Data/**_cache/*
+Analysis/**/*.html
+Analysis/**/*_files/*
+Analysis/**/*_cache/*
+Data/**/*.html
+Data/**/*_files/*
+Data/**/*_cache/*
 
 # Manuscript output
-Writing/**.docx
-Writing/**.html
-Writing/**.pdf
-Writing/**.tex
+Writing/**/*.docx
+Writing/**/*.html
+Writing/**/*.pdf
+Writing/**/*.tex
 Writing/Manuscript/tex_out/*
 Writing/Manuscript/vc*
+Writing/Feedback*
 
 # Other folders
 Sandbox/*
