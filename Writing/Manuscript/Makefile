@@ -33,7 +33,7 @@ MEXT = md
 MS_DIR = .
 
 # Location of Pandoc support files.
-PREFIX = ./pandoc
+PREFIX = /Users/andrew/.pandoc
 
 # Word and HTML can choke on PDF images, so those targets use a helper script
 # named replace_pdfs to replace all references to PDFs with PNGs and convert
@@ -43,7 +43,6 @@ PREFIX = ./pandoc
 # own PNGs, uncomment PNG_CONVERT below. The script will still replace
 # references to PDFs with PNGs, but will not convert the PDFs
 PNG_CONVERT = --no-convert
-
 
 # Location of your working bibliography file
 BIB_FILE = ../bibliography.bib
@@ -56,7 +55,7 @@ BIB_FILE = ../bibliography.bib
 #   * chicago-syllabus-no-bib
 #   * apa
 #   * apsa-no-bib
-CSL = american-political-science-association
+CSL = chicago-author-date
 
 # LaTeX doesn't use pandoc-citeproc + CSL and instead lets biblatex handle the
 # heavy lifting. There are three possible styles built in to the template:
@@ -69,11 +68,27 @@ TEX_DIR = tex_out
 # Cross reference options
 CROSSREF = --filter pandoc-crossref -M figPrefix:"Figure" -M eqnPrefix:"Equation" -M tblPrefix:"Table"
 
-# To add version control footer support in PDFs:
-#   1. Run vcinit in the directory
-#   2. Place `./vc` at the front of the formula
-#   3. Add `-V vc` to the pandoc command
-#   4. Change pagestyle to athgit instead of ath
+# Blinding and version control
+BLINDED = FALSE
+VC_ENABLE = TRUE
+
+# Blindify stuff if needed
+ifeq ($(BLINDED), TRUE)
+	# BLINDIFY = | ../lib/accecare.py ../lib/replacements.csv
+	BLINDIFY = 
+	VC_ENABLE = FALSE
+else
+	BLINDIFY = 
+endif
+
+# Enable fancy version control footers if needed
+ifeq ($(VC_ENABLE), TRUE)
+	VC_COMMAND = ./vc
+	VC_PANDOC = -V pagestyle=athgit -V vc
+else
+	VC_COMMAND = 
+	VC_PANDOC = 
+endif
 
 
 #--------------------
@@ -102,6 +117,7 @@ endif
 # Targets
 HTML=$(SRC:.md=.html)
 TEX=$(SRC:.md=.tex)
+MS_TEX=$(SRC:.md=-manuscript.tex)
 ODT=$(SRC:.md=.odt)
 DOCX=$(SRC:.md=.docx)
 MS_ODT=$(SRC:.md=-manuscript.odt)
@@ -116,16 +132,21 @@ docx:	clean $(DOCX)
 ms: 	clean $(MS_ODT)
 msdocx:	clean $(MS_DOCX)
 tex:	clean $(TEX)
+mstex:	clean $(MS_TEX)
 bib:	$(BIB)
 
 %.html:	%.md
 	@echo "$(WARN_COLOR)Converting Markdown to HTML using standard template...$(NO_COLOR)"
-	$(PREFIX)/bin/replace_includes.py $< | $(PREFIX)/bin/replace_pdfs.py $(PNG_CONVERT) | \
-	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block --mathjax -w html -S \
+	replace_includes $< | replace_pdfs $(PNG_CONVERT) $(BLINDIFY) | \
+	pandoc -r markdown+ascii_identifiers+smart -s -w html \
 		$(CROSSREF) \
 		--default-image-extension=png \
+		--mathjax \
+		--table-of-contents \
+		--metadata link-citations=true \
+		--metadata linkReferences=true \
 		--template=$(PREFIX)/templates/html.template \
-		--css=$(PREFIX)/styles/kultiad-serif.css \
+		--css=$(PREFIX)/styles/ath-clean/ath-clean.css \
 		--filter pandoc-citeproc \
 		--csl=$(PREFIX)/csl/$(CSL).csl \
 		--bibliography=$(BIB_FILE) \
@@ -133,35 +154,56 @@ bib:	$(BIB)
 	@echo "$(OK_COLOR)All done!$(NO_COLOR)"
 
 %.tex:	%.md
+	$(VC_COMMAND)
 	@echo "$(WARN_COLOR)Converting Markdown to TeX using hikma-article template...$(NO_COLOR)"
-	./vc; $(PREFIX)/bin/replace_includes.py $< | \
-	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block -w latex -s -S \
+	replace_includes $< $(BLINDIFY) | \
+	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block+smart+raw_tex -w latex -s \
 		$(CROSSREF) \
 		--default-image-extension=pdf \
-		--latex-engine=xelatex \
+		--filter pandoc-latex-fontsize \
+		--pdf-engine=xelatex \
+		--table-of-contents \
 		--template=$(PREFIX)/templates/xelatex.template \
 		--biblatex \
 		-V $(TEX_REF) \
 		--bibliography=$(BIB_FILE) \
 		-V chapterstyle=hikma-article \
-		-V pagestyle=athgit \
-		-V vc \
+		$(VC_PANDOC) \
 		--base-header-level=1 \
 	-o $@
-	@echo "$(WARN_COLOR)Removing weird space above lists in tables...$(NO_COLOR)"
-	perl -i -0777 -pe 's/\\strut\n\\begin{itemize}/\n\\begin{itemize}/gm;' $@
+	@echo "$(WARN_COLOR)...converting TeX to PDF with latexmk (prepare for lots of output)...$(NO_COLOR)"
+	latexmk -outdir=$(MS_DIR_FOR_TEX)$(TEX_DIR) -xelatex -quiet $@
+	@echo "$(OK_COLOR)All done!$(NO_COLOR)"
+
+%-manuscript.tex:	%.md
+	$(VC_COMMAND)
+	@echo "$(WARN_COLOR)Converting Markdown to TeX using hikma-article manuscript template...$(NO_COLOR)"
+	replace_includes $< $(BLINDIFY) | \
+	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block+smart+raw_tex -w latex -s \
+		$(CROSSREF) \
+		--default-image-extension=pdf \
+		--filter pandoc-latex-fontsize \
+		--pdf-engine=xelatex \
+		--table-of-contents \
+		--template=$(PREFIX)/templates/xelatex-manuscript.template \
+		--biblatex \
+		-V $(TEX_REF) \
+		--bibliography=$(BIB_FILE) \
+		$(VC_PANDOC) \
+		--base-header-level=1 \
+	-o $@
 	@echo "$(WARN_COLOR)...converting TeX to PDF with latexmk (prepare for lots of output)...$(NO_COLOR)"
 	latexmk -outdir=$(MS_DIR_FOR_TEX)$(TEX_DIR) -xelatex -quiet $@
 	@echo "$(OK_COLOR)All done!$(NO_COLOR)"
 
 %.odt:	%.md
 	@echo "$(WARN_COLOR)Converting Markdown to .odt using standard template...$(NO_COLOR)"
-	$(PREFIX)/bin/replace_includes.py $< | $(PREFIX)/bin/replace_pdfs.py $(PNG_CONVERT) | \
-	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block -w odt -S \
+	replace_includes $< | replace_pdfs $(PNG_CONVERT) $(BLINDIFY) | \
+	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block+smart -w odt \
 		$(CROSSREF) \
 		--default-image-extension=png \
 		--template=$(PREFIX)/templates/odt.template \
-		--reference-odt=$(PREFIX)/styles/reference.odt \
+		--reference-doc=$(PREFIX)/styles/reference.odt \
 		--filter pandoc-citeproc \
 		--csl=$(PREFIX)/csl/$(CSL).csl \
 		--bibliography=$(BIB_FILE) \
@@ -177,16 +219,15 @@ bib:	$(BIB)
 
 %-manuscript.odt: %.md
 	@echo "$(WARN_COLOR)Converting Markdown to .odt using manuscript template...$(NO_COLOR)"
-	$(PREFIX)/bin/replace_includes.py $< | $(PREFIX)/bin/replace_pdfs.py $(PNG_CONVERT) | \
-	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block -w odt -S \
+	replace_includes $< | replace_pdfs $(PNG_CONVERT) | move_figs_tables_to_end $(BLINDIFY) | \
+	pandoc -r markdown+simple_tables+table_captions+yaml_metadata_block+smart -w odt \
 		$(CROSSREF) \
 		--default-image-extension=png \
 		--template=$(PREFIX)/templates/odt-manuscript.template \
-		--reference-odt=$(PREFIX)/styles/reference-manuscript.odt \
+		--reference-doc=$(PREFIX)/styles/reference-manuscript.odt \
 		--filter pandoc-citeproc \
 		--csl=$(PREFIX)/csl/$(CSL).csl \
 		--bibliography=$(BIB_FILE) \
-		-V blinded \
 	-o $@
 
 %.bib: %.md
@@ -195,7 +236,7 @@ bib:	$(BIB)
 
 clean:
 	@echo "$(WARN_COLOR)Deleting all existing targets...$(NO_COLOR)"
-	rm -f $(addsuffix .html, $(BASE)) $(addsuffix .pdf, $(BASE)) \
+	rm -f $(addsuffix .html, $(BASE)) \
 		$(addsuffix .odt, $(BASE)) $(addsuffix .docx, $(BASE)) \
 		$(addsuffix -manuscript.odt, $(BASE)) $(addsuffix -manuscript.docx, $(BASE)) \
-		$(addsuffix .tex, $(BASE)) $(addsuffix .bib, $(BASE))
+		$(addsuffix .tex, $(BASE)) $(addsuffix -manuscript.tex, $(BASE)) $(addsuffix .bib, $(BASE))
