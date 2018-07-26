@@ -14,6 +14,8 @@ output:
     theme: spacelab
     includes:
       after_body: ../html/add_home_link.html
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r load-libraries, message=FALSE}
@@ -61,8 +63,26 @@ Also, [following Gleditsch and Ward](http://privatewww.essex.ac.uk/~ksg/data/iis
 
 ```{r load-gwcodes, message=FALSE}
 # Gleditsch Ward codes
+#
+# Download and cache data
+gw.states.url <- "https://web.archive.org/web/20170302085046/http://privatewww.essex.ac.uk/~ksg/data/iisystem.dat"
+gs.microstates.url <- "https://web.archive.org/web/20170302072201/http://privatewww.essex.ac.uk/~ksg/data/microstatessystem.dat"
+
+gw.states.path <- here("Data", "data_raw", "Gleditsch Ward")
+
+if (!file.exists(file.path(gw.states.path, basename(gw.states.url))) |
+    !file.exists(file.path(gw.states.path, basename(gs.microstates.url)))) {
+  GET(gw.states.url, 
+      write_disk(file.path(gw.states.path, basename(gw.states.url)),
+                 overwrite = TRUE))
+  
+  GET(gs.microstates.url, 
+      write_disk(file.path(gw.states.path, basename(gs.microstates.url)),
+                 overwrite = TRUE))
+}
+
 gw.date <- "%d:%m:%Y"
-gw.states <- read_tsv("http://privatewww.essex.ac.uk/~ksg/data/iisystem.dat",
+gw.states <- read_tsv(here("Data", "data_raw", "Gleditsch Ward", "iisystem.dat"),
                       col_names = c("gwcode", "cowc", "country.name",
                                     "date.start", "date.end"),
                       col_types = cols(
@@ -74,7 +94,7 @@ gw.states <- read_tsv("http://privatewww.essex.ac.uk/~ksg/data/iisystem.dat",
                       ),
                       locale = locale(encoding = "windows-1252"))
 
-gw.microstates <- read_tsv("http://privatewww.essex.ac.uk/~ksg/data/microstatessystem.dat",
+gw.microstates <- read_tsv(here("Data", "data_raw", "Gleditsch Ward", "microstatessystem.dat"),
                            col_names = c("gwcode", "cowc", "country.name",
                                          "date.start", "date.end"),
                            col_types = cols(
@@ -92,26 +112,20 @@ gw.codes <- bind_rows(gw.states, gw.microstates) %>%
   mutate(country.name = recode(country.name,
                                `Vietnam, Democratic Republic of` = "Vietnam",
                                `Yemen (Arab Republic of Yemen)` = "Yemen")) %>%
-  mutate(iso3 = countrycode(country.name, "country.name", "iso3c"),
-         iso2 = countrycode(iso3, "iso3c", "iso2c"),
-         cowcode = countrycode(iso3, "iso3c", "cown")) %>%
-  mutate(iso3 = case_when(
-    .$gwcode == 340 ~ "SRB",
-    .$gwcode == 347 ~ "XKK",
-    TRUE ~ .$iso3
-  )) %>%
-  mutate(iso2 = case_when(
-    .$gwcode == 347 ~ "XK",
-    TRUE ~ .$iso2
-  )) %>%
-  mutate(cowcode = case_when(
-    .$gwcode == 340 ~ as.integer(340),
-    .$gwcode == 347 ~ as.integer(347),
-    TRUE ~ .$cowcode
-  )) %>%
+  mutate(iso3 = countrycode(country.name, "country.name", "iso3c",
+                            custom_match = c(Abkhazia = NA, 
+                                             `South Ossetia` = NA,
+                                             Yugoslavia = "SRB",
+                                             Kosovo = "XKK",
+                                             `Korea, People's Republic of` = NA)),
+         iso2 = countrycode(iso3, "iso3c", "iso2c",
+                            custom_match = c(XKK = "XK")),
+         cowcode = countrycode(iso3, "iso3c", "cown",
+                               custom_match = c(XKK = 347,
+                                                SRB = 340))) %>%
   filter(!is.na(iso3)) %>%
-  mutate(country.name = countrycode(iso3, "iso3c", "country.name"),
-         country.name = ifelse(iso3 == "XKK", "Kosovo", country.name)) %>%
+  mutate(country.name = countrycode(iso3, "iso3c", "country.name",
+                                    custom_match = c(XKK = "Kosovo"))) %>%
   select(country.name, iso3, iso2, gwcode, cowcode)
 
 manual.gw <- tribble(
