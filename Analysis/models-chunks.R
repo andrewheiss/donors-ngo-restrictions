@@ -1,7 +1,7 @@
 # ---- load-libraries ---------------------------------------------------------
-knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
-                      tidy.opts=list(width.cutoff=120),  # For code
-                      options(width=120))  # For output
+knitr::opts_chunk$set(cache = FALSE, fig.retina = 2,
+                      tidy.opts = list(width.cutoff = 120),  # For code
+                      options(width = 120))  # For output
 
 library(tidyverse)
 library(stringr)
@@ -79,8 +79,8 @@ df.country.aid.demean.next_year.all <- df.country.aid.all %>%
   mutate_at(vars(barriers.total, advocacy, entry, funding, 
                  polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre,
                  total.oda_log),
-            funs(between = mean(., na.rm=TRUE),  # meaned
-                 within = . - mean(., na.rm=TRUE))) %>%  # demeaned
+            funs(between = mean(., na.rm = TRUE),  # meaned
+                 within = . - mean(., na.rm = TRUE))) %>%  # demeaned
   ungroup()
 
 df.country.aid.us.demean.next_year.all <- df.country.aid.all %>%
@@ -90,8 +90,8 @@ df.country.aid.us.demean.next_year.all <- df.country.aid.all %>%
   mutate_at(vars(barriers.total, advocacy, entry, funding, 
                  polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre,
                  total.oda_log),
-            funs(between = mean(., na.rm=TRUE),  # meaned
-                 within = . - mean(., na.rm=TRUE))) %>%  # demeaned
+            funs(between = mean(., na.rm = TRUE),  # meaned
+                 within = . - mean(., na.rm = TRUE))) %>%  # demeaned
   ungroup()
 
 # Divide demeaned data into separate data frames: original, imputed (m=5), and imputed (m=10)
@@ -122,8 +122,8 @@ df.country.aid.demean.after_2.both <- df.country.aid.both %>%
   mutate_at(vars(barriers.total, advocacy, entry, funding, 
                  polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre,
                  total.oda_log),
-            funs(between = mean(., na.rm=TRUE),  # meaned
-                 within = . - mean(., na.rm=TRUE))) %>%  # demeaned
+            funs(between = mean(., na.rm = TRUE),  # meaned
+                 within = . - mean(., na.rm = TRUE))) %>%  # demeaned
   ungroup()
 
 df.country.aid.demean.after_2 <- 
@@ -139,8 +139,8 @@ df.country.aid.demean.after_5.both <- df.country.aid.both %>%
   mutate_at(vars(barriers.total, advocacy, entry, funding, 
                  polity, gdp.capita_log, gdp.capita, trade.pct.gdp, corruption, csre,
                  total.oda_log),
-            funs(between = mean(., na.rm=TRUE),  # meaned
-                 within = . - mean(., na.rm=TRUE))) %>%  # demeaned
+            funs(between = mean(., na.rm = TRUE),  # meaned
+                 within = . - mean(., na.rm = TRUE))) %>%  # demeaned
   ungroup()
 
 df.country.aid.demean.after_5 <- 
@@ -152,13 +152,13 @@ df.country.aid.demean.after_5.impute <-
 
 # ---- helpful-functions ------------------------------------------------------
 stars <- function(p) {
-  out <- symnum(p, cutpoints=c(0, 0.01, 0.05, 0.1, 1),
-                symbols=c("***", "**", "*", ""))
+  out <- symnum(p, cutpoints = c(0, 0.01, 0.05, 0.1, 1),
+                symbols = c("***", "**", "*", ""))
   as.character(out)
 }
 
 fixed.digits <- function(x, digits = 2) {
-  formatC(x, digits=digits, format="f")
+  formatC(x, digits = digits, format = "f")
 }
 
 # Use 2 significant digits only on the decimal part of the number, ignoring the
@@ -180,7 +180,7 @@ build.formula <- function(DV, IVs) {
   terms.fixed <- terms.all[!stringr::str_detect(terms.all, "\\|")]
   terms.rand <- sapply(findbars(formula(IVs)),function(x) paste0("(", deparse(x), ")"))
   
-  reformulate(c(terms.fixed, terms.rand), response=DV)
+  reformulate(c(terms.fixed, terms.rand), response = DV)
 }
 
 get.terms <- function(IVs) {
@@ -190,12 +190,12 @@ get.terms <- function(IVs) {
 }
 
 # Meld a bunch of imputed models
-meld.imputed.models <- function(model.data, exponentiate=FALSE) {
+meld.imputed.models <- function(model.data, exponentiate = FALSE) {
   models.df <- model.data$glance[[1]]$df.residual
   
   models.tidy <- model.data %>%
     select(tidy) %>%
-    unnest(.id="imputation")
+    unnest(.id = "imputation")
   
   just.estimates <- models.tidy %>% 
     filter(group == "fixed") %>%
@@ -224,7 +224,7 @@ meld.imputed.models <- function(model.data, exponentiate=FALSE) {
     mutate(statistic = estimate / std.error,
            conf.low = estimate + std.error * qt(0.025, models.df),
            conf.high = estimate + std.error * qt(0.975, models.df),
-           p.value = 2 * pt(abs(statistic), models.df, lower.tail=FALSE),
+           p.value = 2 * pt(abs(statistic), models.df, lower.tail = FALSE),
            stars = stars(p.value))
   
   if (exponentiate) {
@@ -245,7 +245,7 @@ meld.imputed.models <- function(model.data, exponentiate=FALSE) {
       summarise(var.diag = mean(var.diag))
     
     melded.tidy <- melded.tidy %>%
-      left_join(just.var, by="term") %>%
+      left_join(just.var, by = "term") %>%
       mutate(or = exp(estimate),
              or.se = sqrt(or^2 * var.diag),
              or.upper = or + (qnorm(0.975) * or.se),
@@ -258,7 +258,7 @@ meld.imputed.models <- function(model.data, exponentiate=FALSE) {
 # Expects a data frame with a column named tidy.melded and a row for model
 # names. Term names are based on the first model in the data column for each
 # row, and are filtered through stargazer to get the correct row order.
-stargazer.fake <- function(df, caption=NULL, note=NULL, exponentiate=FALSE) {
+stargazer.fake <- function(df, caption = NULL, note = NULL, exponentiate = FALSE) {
   # Create a blank row with a bolded row name
   header.row <- function(header) {
     data_frame(term = paste0("**", header, "**"), 
@@ -294,8 +294,8 @@ stargazer.fake <- function(df, caption=NULL, note=NULL, exponentiate=FALSE) {
   # See http://stackoverflow.com/a/41801861/120898
   capture.output({
     stargazer.coefs <- stargazer::stargazer(coef.order.models, 
-                                            type="text", table.layout="t")
-  }, file="/dev/null")
+                                            type = "text", table.layout = "t")
+  }, file = "/dev/null")
   
   coef.order <- setdiff(stringr::str_extract(stargazer.coefs, "^[\\w\\.]*"), c(""))
   
@@ -319,15 +319,15 @@ stargazer.fake <- function(df, caption=NULL, note=NULL, exponentiate=FALSE) {
   
   fixed.coefs <- fixed.coefs %>%
     select(model.name, term, fancy) %>%
-    spread(model.name, fancy, fill="") %>%
+    spread(model.name, fancy, fill = "") %>%
     # Clean up term names
     mutate(term = stringr::str_replace(term, "TRUE$|FALSE$", ""),
            term = recode(term, `(Intercept)` = "Constant")) %>%
     # Use stargazer's coefficient order
-    mutate(term = factor(term, levels=coef.order, ordered=TRUE)) %>%
+    mutate(term = factor(term, levels = coef.order, ordered = TRUE)) %>%
     arrange(term) %>%
     mutate(term = as.character(term)) %>%
-    left_join(coef.names.all, by="term") %>%
+    left_join(coef.names.all, by = "term") %>%
     mutate(term_clean = ifelse(term == "Constant", "Constant", term_clean)) %>%
     select(-term) %>% rename(term = term_clean) %>%
     select_(.dots = c("term", df$model.name))
@@ -354,13 +354,13 @@ stargazer.fake <- function(df, caption=NULL, note=NULL, exponentiate=FALSE) {
                           ifelse(is.na(sd.random.sd), "NA", fixed.digits(sd.random.sd, 3)),
                           ")")) %>%
     select(model.name, term, fancy) %>%
-    spread(model.name, fancy, fill="") %>%
-    mutate(term = factor(term, levels=random.coef.order, ordered=TRUE)) %>%
+    spread(model.name, fancy, fill = "") %>%
+    mutate(term = factor(term, levels = random.coef.order, ordered = TRUE)) %>%
     arrange(term) %>% mutate(term = as.character(term)) %>%
-    left_join(coef.names.all, by="term") %>%
+    left_join(coef.names.all, by = "term") %>%
     mutate(term_clean = ifelse(term == "Residual", 
                                "Residual random error ($\\sigma$)", term_clean)) %>%
-    select(-term) %>% select(term=term_clean, everything())
+    select(-term) %>% select(term = term_clean, everything())
   
   # Create the bottom half of the table
   # Calculate the average log likelihood for all imputed models
@@ -417,8 +417,8 @@ stargazer.fake <- function(df, caption=NULL, note=NULL, exponentiate=FALSE) {
   
   # All columns are centered except the first
   # TODO: MAYBE: Let this be user configurable
-  table.align <- paste0(c("l", rep("c", length(df$model.name))), collapse="")
+  table.align <- paste0(c("l", rep("c", length(df$model.name))), collapse = "")
   
-  pandoc.table.return(nice.top.bottom, keep.line.breaks=TRUE,
-                      justify=table.align, caption=caption)
+  pandoc.table.return(nice.top.bottom, keep.line.breaks = TRUE,
+                      justify = table.align, caption = caption)
 }

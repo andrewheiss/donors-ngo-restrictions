@@ -9,7 +9,7 @@ mod.h3.barriers.total <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h3.barriers.new <- function(df, outcome) {
@@ -23,7 +23,7 @@ mod.h3.barriers.new <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h3.type.total <- function(df, outcome) {
@@ -39,7 +39,7 @@ mod.h3.type.total <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h3.type.new <- function(df, outcome) {
@@ -53,7 +53,7 @@ mod.h3.type.new <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h3.csre <- function(df, outcome) {
@@ -67,7 +67,7 @@ mod.h3.csre <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 # Foreign proportion models
@@ -82,7 +82,7 @@ mod.h3.foreign.barriers.total <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h3.foreign.barriers.new <- function(df, outcome) {
@@ -96,7 +96,7 @@ mod.h3.foreign.barriers.new <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h3.foreign.type.total <- function(df, outcome) {
@@ -112,7 +112,7 @@ mod.h3.foreign.type.total <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h3.foreign.type.new <- function(df, outcome) {
@@ -126,7 +126,7 @@ mod.h3.foreign.type.new <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h3.foreign.csre <- function(df, outcome) {
@@ -140,5 +140,5 @@ mod.h3.foreign.csre <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }

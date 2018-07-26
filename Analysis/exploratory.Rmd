@@ -18,9 +18,9 @@ output:
 ---
 
 ```{r load-libraries, message=FALSE}
-knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
-                      tidy.opts=list(width.cutoff=120),  # For code
-                      options(width=120))  # For output
+knitr::opts_chunk$set(cache = FALSE, fig.retina = 2,
+                      tidy.opts = list(width.cutoff = 120),  # For code
+                      options(width = 120))  # For output
 
 library(tidyverse)
 library(stringr)
@@ -45,7 +45,7 @@ df.donor.us <- readRDS(file.path(PROJHOME, "Data", "data_clean",
 df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
                                 "df_country.rds"))
 df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                "df_country_aid_no_imputation.rds"))
+                                    "df_country_aid_no_imputation.rds"))
 
 dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
                                            "dcjw_questions.csv"))
@@ -63,13 +63,13 @@ It seems that countries get less aid as they impose more legal barriers on NGOs,
 ```{r avg-barriers-country-year}
 aid.total.restrictions <- df.donor.country %>%
   group_by(barriers.total) %>%
-  summarise(avg.aid = mean(oda, na.rm=TRUE))
+  summarise(avg.aid = mean(oda, na.rm = TRUE))
 
-ggplot(aid.total.restrictions, aes(x=barriers.total, y=avg.aid)) + 
+ggplot(aid.total.restrictions, aes(x = barriers.total, y = avg.aid)) + 
   geom_point() + 
-  geom_smooth(method="loess") + 
-  scale_y_continuous(labels=scales::dollar) + 
-  labs(x="Barriers in a given country-year", y="Average aid") +
+  geom_smooth(method = "loess") + 
+  scale_y_continuous(labels = scales::dollar) + 
+  labs(x = "Barriers in a given country-year", y = "Average aid") +
   theme_donors()
 ```
 
@@ -93,27 +93,27 @@ diff.aid.by.barrier <- df.country.aid %>%
   filter(!is.na(value)) %>%
   group_by(barrier.type, value) %>%
   summarise(n = n(),
-            avg.diff = mean(total.oda_diff, na.rm=TRUE),
-            sd.diff = sd(total.oda_diff, na.rm=TRUE),
+            avg.diff = mean(total.oda_diff, na.rm = TRUE),
+            sd.diff = sd(total.oda_diff, na.rm = TRUE),
             se.diff = sd.diff / sqrt(n),
             upper.diff = avg.diff + (qnorm(0.975) * se.diff),
             lower.diff = avg.diff + (qnorm(0.025) * se.diff)) %>%
   ungroup() %>%
   mutate(value = factor(value, 
-                        levels=levels(df.country.aid$barriers.total_cat),
-                        ordered=TRUE),
+                        levels = levels(df.country.aid$barriers.total_cat),
+                        ordered = TRUE),
          barrier.type = str_replace(barrier.type, "_cat", ""),
          barrier.type = recode(barrier.type, barriers.total = "All barriers"),
-         barrier.type = factor(str_to_title(barrier.type), ordered=TRUE),
+         barrier.type = factor(str_to_title(barrier.type), ordered = TRUE),
          barrier.type = fct_relevel(barrier.type, "All Barriers"))
 
-ggplot(diff.aid.by.barrier, aes(x=value, y=avg.diff)) +
-  geom_hline(yintercept=0, size=0.25) +
-  geom_pointrange(aes(ymin=lower.diff, ymax=upper.diff, colour=value)) + 
-  scale_y_continuous(labels=scales::dollar) + 
-  scale_colour_manual(values=c("#2ECC40", "#AAAAAA", "#FF4136"), guide=FALSE) +
-  labs(x=NULL, y="Change in aid the following year") +
-  facet_wrap(~ barrier.type, scales="free_x") + 
+ggplot(diff.aid.by.barrier, aes(x = value, y = avg.diff)) +
+  geom_hline(yintercept = 0, size = 0.25) +
+  geom_pointrange(aes(ymin = lower.diff, ymax = upper.diff, colour = value)) + 
+  scale_y_continuous(labels = scales::dollar) + 
+  scale_colour_manual(values = c("#2ECC40", "#AAAAAA", "#FF4136"), guide = FALSE) +
+  labs(x = NULL, y = "Change in aid the following year") +
+  facet_wrap(~ barrier.type, scales = "free_x") + 
   theme_donors()
 ```
 
@@ -128,11 +128,11 @@ barriers.df <- tribble(
 ) %>%
   mutate(barrier.clean = ordered(fct_inorder(barrier.clean)),
          diffs.bayes = 
-           map(.x=barrier, 
+           map(.x = barrier, 
                .f = ~ diff.groups.bayes(
-                 form=paste0("total.oda_diff / 100000000 ~ ", .x),
-                 data=df.country.aid,
-                 divide_by=1000000000))) %>%
+                 form = paste0("total.oda_diff / 100000000 ~ ", .x),
+                 data = df.country.aid,
+                 divide_by = 1000000000))) %>%
   mutate(diffs.plot = diffs.bayes %>% map(~ .$plot.group.diffs),
          samples = diffs.bayes %>% map(~ .$samples),
          samples.summary = diffs.bayes %>% map(~ .$samples.summary),
@@ -141,22 +141,22 @@ barriers.df <- tribble(
 barriers.samples <- barriers.df %>%
   unnest(samples.summary) %>%
   mutate(group.name = factor(group.name,
-                             levels=levels(df.country.aid$barriers.total_cat),
-                             ordered=TRUE))
+                             levels = levels(df.country.aid$barriers.total_cat),
+                             ordered = TRUE))
 
-ggplot(barriers.samples, aes(x=group.name, y=mean)) +
-  geom_hline(yintercept=0, size=0.25) +
-  geom_pointrange(aes(ymin=q2.5, ymax=q97.5, colour=group.name)) + 
-  scale_y_continuous(labels=scales::dollar) + 
-  scale_colour_manual(values=c("#2ECC40", "#AAAAAA", "#FF4136"), guide=FALSE) +
-  labs(x=NULL, y="Change in aid the following year") +
-  facet_wrap(~ barrier.clean, scales="free_x") + 
+ggplot(barriers.samples, aes(x = group.name, y = mean)) +
+  geom_hline(yintercept = 0, size = 0.25) +
+  geom_pointrange(aes(ymin = q2.5, ymax = q97.5, colour = group.name)) + 
+  scale_y_continuous(labels = scales::dollar) + 
+  scale_colour_manual(values = c("#2ECC40", "#AAAAAA", "#FF4136"), guide = FALSE) +
+  labs(x = NULL, y = "Change in aid the following year") +
+  facet_wrap(~ barrier.clean, scales = "free_x") + 
   theme_donors()
 
 barriers.samples %>% 
   select(barrier.clean, group.name, mean, q2.5, q97.5, p.greater0) %>%
   mutate_at(vars(mean, q2.5, q97.5), 
-            funs(nice=scales::dollar(.))) %>%
+            funs(nice = scales::dollar(.))) %>%
   select(-c(mean, q2.5, q97.5)) %>%
   mutate(p.greater0 = scales::percent(p.greater0)) %>%
   rename(`Barrier` = barrier.clean, `Change in law` = group.name,

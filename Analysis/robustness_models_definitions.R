@@ -8,7 +8,7 @@ mod.h1.neutral.reg <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence + post.1989 +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h1.neutral.fund <- function(df, outcome) {
@@ -21,7 +21,7 @@ mod.h1.neutral.fund <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence + post.1989 +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h2.neutral.reg <- function(df, outcome) {
@@ -35,7 +35,7 @@ mod.h2.neutral.reg <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence + post.1989 +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h2.neutral.fund <- function(df, outcome) {
@@ -49,7 +49,7 @@ mod.h2.neutral.fund <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence + post.1989 +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h3.dom.neutral.reg <- function(df, outcome) {
@@ -63,7 +63,7 @@ mod.h3.dom.neutral.reg <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h3.dom.neutral.fund <- function(df, outcome) {
@@ -77,7 +77,7 @@ mod.h3.dom.neutral.fund <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h3.for.neutral.reg <- function(df, outcome) {
@@ -91,7 +91,7 @@ mod.h3.for.neutral.reg <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }
 
 mod.h3.for.neutral.fund <- function(df, outcome) {
@@ -105,5 +105,5 @@ mod.h3.for.neutral.fund <- function(df, outcome) {
     internal.conflict.past.5 + natural_disaster.occurrence +
     (1 | cowcode) + (1 | year)
   
-  lmer(build.formula(outcome, indep.vars), data=df)
+  lmer(build.formula(outcome, indep.vars), data = df)
 }

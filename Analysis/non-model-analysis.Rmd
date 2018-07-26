@@ -18,9 +18,9 @@ output:
 ---
 
 ```{r load-libraries, message=FALSE}
-knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
-                      tidy.opts=list(width.cutoff=120),  # For code
-                      options(width=120))  # For output
+knitr::opts_chunk$set(cache = FALSE, fig.retina = 2,
+                      tidy.opts = list(width.cutoff = 120),  # For code
+                      options(width = 120))  # For output
 
 library(tidyverse)
 library(stringr)
@@ -45,7 +45,7 @@ df.donor.us <- readRDS(file.path(PROJHOME, "Data", "data_clean",
 df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
                                 "df_country.rds"))
 df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                "df_country_aid_no_imputation.rds"))
+                                    "df_country_aid_no_imputation.rds"))
 
 dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
                                            "dcjw_questions.csv"))
@@ -78,27 +78,27 @@ vars.summarized <- df.country.aid %>%
   select(one_of(vars.to.summarize$term)) %>%
   mutate(trade.pct.gdp = trade.pct.gdp / 100,  # This is scaled up for modeling
          total.oda = total.oda / 1000000) %>%
-  summarise_each(funs(XXMean = mean(., na.rm=TRUE),
-                      XXSD = sd(., na.rm=TRUE),
-                      XXMedian = median(., na.rm=TRUE),
+  summarise_each(funs(XXMean = mean(., na.rm = TRUE),
+                      XXSD = sd(., na.rm = TRUE),
+                      XXMedian = median(., na.rm = TRUE),
                       XXN = sum(!is.na(.)),
-                      XXMin = min(., na.rm=TRUE),
-                      XXMax = max(., na.rm=TRUE))) %>%
+                      XXMin = min(., na.rm = TRUE),
+                      XXMax = max(., na.rm = TRUE))) %>%
   gather(key, value) %>%
-  separate(key, c("term", "key"), sep="_XX") %>%
+  separate(key, c("term", "key"), sep = "_XX") %>%
   spread(key, value) %>%
-  left_join(vars.to.summarize, by="term") %>%
+  left_join(vars.to.summarize, by = "term") %>%
   arrange(summary_order) %>%
   select(Variable = term_clean_table, Source = source, Mean, SD, Median, Min, Max, N) %>%
   as.data.frame()
 
 caption <- "Summary of all variables included in models {#tbl:var-summary}"
-var.summary <- pandoc.table.return(vars.summarized, keep.line.breaks=TRUE, 
-                                   round=2, big.mark=",",
-                                   justify="llcccccc", caption=caption, style="multiline")
+var.summary <- pandoc.table.return(vars.summarized, keep.line.breaks = TRUE, 
+                                   round = 2, big.mark = ",",
+                                   justify = "llcccccc", caption = caption, style = "multiline")
 
 cat(var.summary)
-cat(var.summary, file=file.path(PROJHOME, "Output", "tbl-var-summary.md"))
+cat(var.summary, file = file.path(PROJHOME, "Output", "tbl-var-summary.md"))
 ```
 
 
@@ -119,10 +119,10 @@ plot.aid <- df.country.aid %>%
   group_by(year) %>%
   summarise(total = sum(total.oda))
 
-fig.oecd.aid <- ggplot(plot.aid, aes(x=year, y=(total / 1000000000))) + 
+fig.oecd.aid <- ggplot(plot.aid, aes(x = year, y = (total / 1000000000))) + 
   geom_line() +
-  labs(x=NULL, y="Total ODA commitments\n(billions of USD)") +
-  scale_y_continuous(labels=scales::dollar) +
+  labs(x = NULL, y = "Total ODA commitments\n(billions of USD)") +
+  scale_y_continuous(labels = scales::dollar) +
   theme_donors()
 fig.oecd.aid
 ```
@@ -136,7 +136,7 @@ df.donor %>%
   summarise(total = sum(oda)) %>%
   mutate(perc = total / sum(total)) %>%
   datatable() %>%
-  formatCurrency("total", "$", digits=0) %>%
+  formatCurrency("total", "$", digits = 0) %>%
   formatPercentage("perc", 2)
 ```
 
@@ -148,10 +148,10 @@ plot.aid.contentiousness <- df.donor %>%
   mutate(perc = total / sum(total)) %>%
   filter(purpose.contentiousness == "High")
 
-fig.oecd.contention <- ggplot(plot.aid.contentiousness, aes(x=year, y=perc)) + 
+fig.oecd.contention <- ggplot(plot.aid.contentiousness, aes(x = year, y = perc)) + 
   geom_line() +
-  scale_y_continuous(labels=scales::percent) + 
-  labs(x=NULL, y="Percent of contentious aid") +
+  scale_y_continuous(labels = scales::percent) + 
+  labs(x = NULL, y = "Percent of contentious aid") +
   theme_donors()
 fig.oecd.contention
 ```
@@ -176,10 +176,10 @@ plot.aid.us <- df.country.aid %>%
   group_by(year) %>%
   summarise(total = sum(oda.us))
 
-fig.us.aid <- ggplot(plot.aid.us, aes(x=year, y=(total / 1000000000))) + 
+fig.us.aid <- ggplot(plot.aid.us, aes(x = year, y = (total / 1000000000))) + 
   geom_line() +
-  labs(x=NULL, y="Total US ODA commitments\n(billions of USD)") +
-  scale_y_continuous(labels=scales::dollar) +
+  labs(x = NULL, y = "Total US ODA commitments\n(billions of USD)") +
+  scale_y_continuous(labels = scales::dollar) +
   theme_donors()
 fig.us.aid
 ```
@@ -197,7 +197,7 @@ df.country.aid %>%
   summarise(total = sum(total.oda.us)) %>%
   mutate(perc = total / usaid.total) %>%
   datatable() %>%
-  formatCurrency("total", "$", digits=0) %>%
+  formatCurrency("total", "$", digits = 0) %>%
   formatPercentage("perc", 2)
 ```
 
@@ -219,17 +219,17 @@ plot.usaid.channel <- df.country.aid %>%
   gather(channel, total.oda.us, c(oda.us.ngo.dom, oda.us.ngo.int, oda.us.ngo.us)) %>%
   group_by(year, channel) %>%
   summarise(total = sum(total.oda.us)) %>%
-  left_join(usaid.total.yearly, by="year") %>%
+  left_join(usaid.total.yearly, by = "year") %>%
   mutate(perc = total / annual.total) %>%
-  left_join(channels.nice, by="channel")
+  left_join(channels.nice, by = "channel")
 
 fig.usaid.channel <- ggplot(plot.usaid.channel, 
-                            aes(x=year, y=perc, colour=channel.clean)) + 
+                            aes(x = year, y = perc, colour = channel.clean)) + 
   geom_line() +
-  scale_y_continuous(labels=scales::percent) + 
-  scale_colour_manual(values=channel.colors) +
-  labs(x=NULL, y="Percent of US aid given through NGOs") +
-  guides(colour=guide_legend(title=NULL, reverse=TRUE)) +
+  scale_y_continuous(labels = scales::percent) + 
+  scale_colour_manual(values = channel.colors) +
+  labs(x = NULL, y = "Percent of US aid given through NGOs") +
+  guides(colour = guide_legend(title = NULL, reverse = TRUE)) +
   theme_donors()
 fig.usaid.channel
 ```
@@ -244,11 +244,11 @@ plot.usaid.channels.all <- df.donor.us %>%
   mutate(channel = ifelse(str_detect(channel_subcategory_name, "NGO"), "NGO", "Other"))
 
 ggplot(plot.usaid.channels.all, 
-       aes(x=year, y=perc, colour=channel_subcategory_name)) + 
+       aes(x = year, y = perc, colour = channel_subcategory_name)) + 
   geom_line() +
-  scale_y_continuous(labels=scales::percent) + 
-  labs(x=NULL, y="Percent of US aid given through different channels") +
-  guides(colour=guide_legend(title=NULL)) +
+  scale_y_continuous(labels = scales::percent) + 
+  labs(x = NULL, y = "Percent of US aid given through different channels") +
+  guides(colour = guide_legend(title = NULL)) +
   theme_donors()
 ```
 
@@ -256,7 +256,7 @@ So we just look at aid after 2000.
 
 ```{r plot-channels-post-2000}
 fig.usaid.channel.trimmed <- fig.usaid.channel +
-  coord_cartesian(xlim=c(2000, 2013))
+  coord_cartesian(xlim = c(2000, 2013))
 fig.usaid.channel.trimmed
 ```
 
@@ -268,16 +268,16 @@ fig.usaid.channel.trimmed
 # http://www.sthda.com/english/wiki/ggplot2-easy-way-to-mix-multiple-graphs-on-the-same-page-r-software-and-data-visualization#change-legend-position
 fig.dvs <- arrangeGrob(fig.oecd.aid, fig.oecd.contention, 
                        fig.us.aid, fig.usaid.channel.trimmed + 
-                         theme(legend.position="none"),
+                         theme(legend.position = "none"),
                        plot.blank, extract_legend(fig.usaid.channel.trimmed), 
-                       ncol=2,
-                       heights=c(1, 1, 0.2))
+                       ncol = 2,
+                       heights = c(1, 1, 0.2))
 
 grid::grid.newpage()
 grid::grid.draw(fig.dvs)
 
-fig.save.cairo(fig.dvs, filename="fig-dvs",
-               width=6, height=5)
+fig.save.cairo(fig.dvs, filename = "fig-dvs",
+               width = 6, height = 5)
 ```
 
 
@@ -290,7 +290,7 @@ Laws requiring NGO registration aren't necessarily a sign of oppression—even t
 ```{r compulsory-vs-burdensome, fig.width=4.5, fig.height=2.5}
 autocracies <- df.country %>%
   group_by(cowcode) %>%
-  summarise(polity.avg = mean(polity, na.rm=TRUE)) %>%
+  summarise(polity.avg = mean(polity, na.rm = TRUE)) %>%
   mutate(autocracy = polity.avg < 7) %>%
   # These countries are missing polity scores
   mutate(autocracy = case_when(
@@ -302,29 +302,29 @@ autocracies <- df.country %>%
   ))
 
 df.regulation <- df.country %>%
-  left_join(autocracies, by="cowcode") %>%
+  left_join(autocracies, by = "cowcode") %>%
   group_by(year, autocracy) %>%
   summarise(`Registration required` = sum(ngo_register) / n(),
             `Registration burdensome` = sum(ngo_register_burden) / n()) %>%
   gather(type.of.law, value, -year, -autocracy) %>%
   mutate(autocracy = 
-           factor(autocracy, levels=c(TRUE, FALSE),
-                  labels=c("Autocracies", "Democracies")))
+           factor(autocracy, levels = c(TRUE, FALSE),
+                  labels = c("Autocracies", "Democracies")))
 
 fig.regulation.burden <- ggplot(df.regulation, 
-                                aes(x=year, y=value, colour=type.of.law)) +
+                                aes(x = year, y = value, colour = type.of.law)) +
   geom_line() + 
-  scale_y_continuous(labels=scales::percent) +
-  coord_cartesian(ylim=c(0, 0.7)) +
-  scale_colour_manual(values=burden.colors) +
-  guides(colour=guide_legend(reverse=TRUE, title=NULL)) +
-  labs(x=NULL, y="Proportion of countries\nwith regulation") +
+  scale_y_continuous(labels = scales::percent) +
+  coord_cartesian(ylim = c(0, 0.7)) +
+  scale_colour_manual(values = burden.colors) +
+  guides(colour = guide_legend(reverse = TRUE, title = NULL)) +
+  labs(x = NULL, y = "Proportion of countries\nwith regulation") +
   theme_donors() +
   facet_wrap(~ autocracy)
 
 fig.regulation.burden
-fig.save.cairo(fig.regulation.burden, filename="fig-regulation-burden",
-               width=4.5, height=2.5)
+fig.save.cairo(fig.regulation.burden, filename = "fig-regulation-burden",
+               width = 4.5, height = 2.5)
 ```
 
 
@@ -336,12 +336,12 @@ dcjw.indexes <- read_csv(file.path(PROJHOME, "Data",
   mutate(Laws = str_replace_all(Laws, "\n", "\n\n"))
 
 caption <- "Description of indexes of NGO barriers {#tbl:ngo-barriers-index}"
-dcjw.index.table <- pandoc.table.return(dcjw.indexes, keep.line.breaks=TRUE, 
-                                        style="grid", justify="lll", caption=caption)
+dcjw.index.table <- pandoc.table.return(dcjw.indexes, keep.line.breaks = TRUE, 
+                                        style = "grid", justify = "lll", caption = caption)
 
 cat(dcjw.index.table)
-cat(dcjw.index.table, file=file.path(PROJHOME, "Output",
-                                     "tbl-ngo-barriers-index.md"))
+cat(dcjw.index.table, file = file.path(PROJHOME, "Output",
+                                       "tbl-ngo-barriers-index.md"))
 ```
 
 
@@ -354,30 +354,30 @@ df.ngo.restrictions.plot <- df.country %>%
   group_by(year, restriction, value) %>%
   summarise(n = n()) %>%
   ungroup() %>%
-  left_join(dcjw.responses.clean, by=c("restriction", "value")) %>%
+  left_join(dcjw.responses.clean, by = c("restriction", "value")) %>%
   mutate(restriction = factor(restriction,
-                              levels=unique(dcjw.responses.clean$restriction),
-                              ordered=TRUE))
+                              levels = unique(dcjw.responses.clean$restriction),
+                              ordered = TRUE))
 
 plot.dcjw <- function(df) {
   df.levels <- dcjw.responses.clean %>%
     filter(restriction == df$restriction[[1]]) %>%
-    left_join(dcjw.questions.clean, by=c("restriction" = "question_clean"))
+    left_join(dcjw.questions.clean, by = c("restriction" = "question_clean"))
   
   plot.title <- df.levels$question_display
   num.countries <- max(df.ngo.restrictions.plot$n)
   
   df.leveled <- df %>%
-    mutate(value_clean = factor(value_clean, levels=df.levels$value_clean, 
-                                ordered=TRUE))
-
-  ggplot(df.leveled, aes(x=year, y=n, colour=value_clean)) + 
+    mutate(value_clean = factor(value_clean, levels = df.levels$value_clean, 
+                                ordered = TRUE))
+  
+  ggplot(df.leveled, aes(x = year, y = n, colour = value_clean)) + 
     geom_line() + 
-    labs(x=NULL, y=NULL, title=plot.title) +
-    coord_cartesian(ylim=c(0, num.countries)) +
+    labs(x = NULL, y = NULL, title = plot.title) +
+    coord_cartesian(ylim = c(0, num.countries)) +
     scale_y_continuous(sec.axis = sec_axis(~ . / num.countries,
-                                           labels=scales::percent)) +
-    guides(colour=guide_legend(title=NULL)) +
+                                           labels = scales::percent)) +
+    guides(colour = guide_legend(title = NULL)) +
     theme_donors(8)
 }
 
@@ -385,7 +385,7 @@ plot.all.dcjw.raw <- df.ngo.restrictions.plot %>%
   split(.$restriction) %>%
   map(plot.dcjw)
 
-plot.all.dcjw <- arrangeGrob(grobs=plot.all.dcjw.raw, ncol=3)
+plot.all.dcjw <- arrangeGrob(grobs = plot.all.dcjw.raw, ncol = 3)
 grid::grid.draw(plot.all.dcjw)
 ```
 
@@ -399,20 +399,20 @@ df.restrictions.type <- df.country %>%
   by_slice(~ mean_cl_normal(.x$value)) %>%
   unnest() %>%
   mutate(barrier = factor(barrier, 
-                          levels=unique(dcjw.questions.clean$barrier),
-                          labels=unique(dcjw.questions.clean$barrier_display),
-                          ordered=TRUE))
+                          levels = unique(dcjw.questions.clean$barrier),
+                          labels = unique(dcjw.questions.clean$barrier_display),
+                          ordered = TRUE))
 
-fig.ngo.barriers <- ggplot(df.restrictions.type, aes(x=year, y=y, colour=barrier)) +
-  geom_ribbon(aes(ymin=ymin, ymax=ymax, fill=barrier), alpha=0.3, colour=NA) +
-  geom_line(aes(linetype=barrier)) +
-  labs(y="Average number of barriers", x=NULL) +
-  scale_colour_manual(values=barrier.colors) +
-  scale_fill_manual(values=barrier.colors) +
-  scale_linetype_manual(values=c("solid", "solid", "dashed", "dashed")) +
-  guides(colour=guide_legend(title=NULL),
-         fill=guide_legend(title=NULL),
-         linetype=guide_legend(title=NULL)) +
+fig.ngo.barriers <- ggplot(df.restrictions.type, aes(x = year, y = y, colour = barrier)) +
+  geom_ribbon(aes(ymin = ymin, ymax = ymax, fill = barrier), alpha = 0.3, colour = NA) +
+  geom_line(aes(linetype = barrier)) +
+  labs(y = "Average number of barriers", x = NULL) +
+  scale_colour_manual(values = barrier.colors) +
+  scale_fill_manual(values = barrier.colors) +
+  scale_linetype_manual(values = c("solid", "solid", "dashed", "dashed")) +
+  guides(colour = guide_legend(title = NULL),
+         fill = guide_legend(title = NULL),
+         linetype = guide_legend(title = NULL)) +
   theme_donors()
 fig.ngo.barriers
 ```
@@ -426,10 +426,10 @@ df.csre.plot <- df.country %>%
   by_slice(~ mean_cl_normal(.x$csre)) %>%
   unnest()
 
-fig.csre <- ggplot(df.csre.plot, aes(x=year, y=y)) +
-  geom_ribbon(aes(ymin=ymin, ymax=ymax), alpha=0.2) +
+fig.csre <- ggplot(df.csre.plot, aes(x = year, y = y)) +
+  geom_ribbon(aes(ymin = ymin, ymax = ymax), alpha = 0.2) +
   geom_line() +
-  labs(y="Average civil society regulatory environment", x=NULL) +
+  labs(y = "Average civil society regulatory environment", x = NULL) +
   theme_donors()
 fig.csre
 ```
@@ -437,17 +437,17 @@ fig.csre
 ### NGO barriers combined (for paper)
 
 ```{r plot-all-ngo-barriers, fig.width=6}
-fig.barriers <- arrangeGrob(fig.ngo.barriers + theme(legend.position="none"), 
+fig.barriers <- arrangeGrob(fig.ngo.barriers + theme(legend.position = "none"), 
                             fig.csre, 
                             extract_legend(fig.ngo.barriers), plot.blank,  
-                            ncol=2,
-                            heights=c(2, 0.2))
+                            ncol = 2,
+                            heights = c(2, 0.2))
 
 grid::grid.newpage()
 grid::grid.draw(fig.barriers)
 
-fig.save.cairo(fig.barriers, filename="fig-barriers",
-               width=6, height=3)
+fig.save.cairo(fig.barriers, filename = "fig-barriers",
+               width = 6, height = 3)
 ```
 
 
@@ -458,15 +458,15 @@ fig.save.cairo(fig.barriers, filename="fig-barriers",
 ```{r aid-by-donor}
 aid.donor.type.time <- df.donor.country %>%
   group_by(year, donor.type.collapsed) %>%
-  summarise(total.aid = sum(oda, na.rm=TRUE))
+  summarise(total.aid = sum(oda, na.rm = TRUE))
 
-ggplot(aid.donor.type.time, aes(x=year, y=total.aid / 1000000000,
-                                colour=donor.type.collapsed)) +
+ggplot(aid.donor.type.time, aes(x = year, y = total.aid / 1000000000,
+                                colour = donor.type.collapsed)) +
   geom_line() +
-  labs(x=NULL, y="Billions of USD",
-       caption="Source: OECD and AidData. 2011 dollars.") +
-  guides(colour=guide_legend(title=NULL)) +
-  scale_y_continuous(labels=scales::dollar) + 
+  labs(x = NULL, y = "Billions of USD",
+       caption = "Source: OECD and AidData. 2011 dollars.") +
+  guides(colour = guide_legend(title = NULL)) +
+  scale_y_continuous(labels = scales::dollar) + 
   theme_donors()
 ```
 
@@ -475,14 +475,14 @@ ggplot(aid.donor.type.time, aes(x=year, y=total.aid / 1000000000,
 ```{r aid-by-contention}
 aid.contention.time <- df.donor.country %>%
   group_by(year, purpose.contentiousness) %>%
-  summarise(total.aid = sum(oda, na.rm=TRUE))
+  summarise(total.aid = sum(oda, na.rm = TRUE))
 
-ggplot(aid.contention.time, aes(x=year, y=total.aid / 1000000000,
-                                colour=purpose.contentiousness)) +
+ggplot(aid.contention.time, aes(x = year, y = total.aid / 1000000000,
+                                colour = purpose.contentiousness)) +
   geom_line() +
-  labs(x=NULL, y="Billions of USD",
-       caption="Source: OECD and AidData. 2011 dollars.") +
-  guides(colour=guide_legend(title=NULL)) +
-  scale_y_continuous(labels=scales::dollar) + 
+  labs(x = NULL, y = "Billions of USD",
+       caption = "Source: OECD and AidData. 2011 dollars.") +
+  guides(colour = guide_legend(title = NULL)) +
+  scale_y_continuous(labels = scales::dollar) + 
   theme_donors()
 ```

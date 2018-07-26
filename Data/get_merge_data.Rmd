@@ -17,9 +17,9 @@ output:
 ---
 
 ```{r load-libraries, message=FALSE}
-knitr::opts_chunk$set(cache=FALSE, fig.retina=2,
-                      tidy.opts=list(width.cutoff=120),  # For code
-                      options(width=120))  # For output
+knitr::opts_chunk$set(cache = FALSE, fig.retina = 2,
+                      tidy.opts = list(width.cutoff = 120),  # For code
+                      options(width = 120))  # For output
 
 library(tidyverse)
 library(stringr)
@@ -62,28 +62,28 @@ Also, [following Gleditsch and Ward](http://privatewww.essex.ac.uk/~ksg/data/iis
 # Gleditsch Ward codes
 gw.date <- "%d:%m:%Y"
 gw.states <- read_tsv("http://privatewww.essex.ac.uk/~ksg/data/iisystem.dat",
-                      col_names=c("gwcode", "cowc", "country.name",
-                                  "date.start", "date.end"),
-                      col_types=cols(
+                      col_names = c("gwcode", "cowc", "country.name",
+                                    "date.start", "date.end"),
+                      col_types = cols(
                         gwcode = col_integer(),
                         cowc = col_character(),
                         country.name = col_character(),
-                        date.start = col_date(format=gw.date),
-                        date.end = col_date(format=gw.date)
+                        date.start = col_date(format = gw.date),
+                        date.end = col_date(format = gw.date)
                       ),
-                      locale=locale(encoding="windows-1252"))
+                      locale = locale(encoding = "windows-1252"))
 
 gw.microstates <- read_tsv("http://privatewww.essex.ac.uk/~ksg/data/microstatessystem.dat",
-                           col_names=c("gwcode", "cowc", "country.name",
-                                       "date.start", "date.end"),
-                           col_types=cols(
+                           col_names = c("gwcode", "cowc", "country.name",
+                                         "date.start", "date.end"),
+                           col_types = cols(
                              gwcode = col_integer(),
                              cowc = col_character(),
                              country.name = col_character(),
-                             date.start = col_date(format=gw.date),
-                             date.end = col_date(format=gw.date)
+                             date.start = col_date(format = gw.date),
+                             date.end = col_date(format = gw.date)
                            ),
-                           locale=locale(encoding="windows-1252"))
+                           locale = locale(encoding = "windows-1252"))
 
 gw.codes <- bind_rows(gw.states, gw.microstates) %>%
   filter(date.end > ymd("2000-01-01")) %>%
@@ -159,20 +159,20 @@ aiddata.final.name <- "AidDataCoreDonorRecipientYearPurpose_ResearchRelease_Leve
 if (!file.exists(file.path(aiddata.path, aiddata.final.name))) {
   aiddata.get <- GET(aiddata.url, 
                      write_disk(file.path(aiddata.path, aiddata.zip.name),
-                                overwrite=TRUE), 
+                                overwrite = TRUE), 
                      progress())
-  unzip(file.path(aiddata.path, aiddata.zip.name), exdir=aiddata.path)
+  unzip(file.path(aiddata.path, aiddata.zip.name), exdir = aiddata.path)
   
   # Clean up zip file and unnecessary CSV files
   file.remove(file.path(aiddata.path, aiddata.zip.name))
-  list.files(aiddata.path, pattern="csv", full.names=TRUE) %>%
+  list.files(aiddata.path, pattern = "csv", full.names = TRUE) %>%
     map(~ ifelse(str_detect(.x, "DonorRecipientYearPurpose"), 0,
                  file.remove(file.path(.x))))
 }
 
 # Clean up AidData data
 aiddata.raw <- read_csv(file.path(aiddata.path, aiddata.final.name),
-                        col_types=cols(
+                        col_types = cols(
                           donor = col_character(),
                           recipient = col_character(),
                           year = col_integer(),
@@ -185,7 +185,7 @@ aiddata.clean <- aiddata.raw %>%
   # Get rid of non-country recipients
   filter(!str_detect(recipient,
                      regex("regional|unspecified|multi|value|global|commission", 
-                           ignore_case=TRUE))) %>%
+                           ignore_case = TRUE))) %>%
   filter(year < 9999) %>%
   mutate(purpose.code.short = as.integer(str_sub(coalesced_purpose_code, 1, 3)))
 
@@ -229,7 +229,7 @@ recipients <- aiddata.clean %>%
     .$recipient == "Serbia and Montenegro" ~ "YUG",
     TRUE ~ .$iso3
   )) %>%
-  left_join(gw.codes, by="iso3") %>%
+  left_join(gw.codes, by = "iso3") %>%
   # Get rid of tiny countries
   filter(!is.na(gwcode))
 
@@ -256,8 +256,8 @@ general.codes <- purpose.codes %>%
   mutate(purpose.category.clean = str_replace(purpose.category.name,
                                               "\\d\\.\\d ", "")) %>%
   separate(purpose.category.clean,
-           into=c("purpose.sector", "purpose.category"), 
-           sep=", ") %>%
+           into = c("purpose.sector", "purpose.category"), 
+           sep = ", ") %>%
   mutate_at(vars(c(purpose.sector, purpose.category)), funs(str_to_title(.))) %>%
   select(-purpose.category.name)
 
@@ -289,9 +289,9 @@ purpose.codes.contentiousness <- read_csv(file.path(PROJHOME, "Data", "data_clea
                                                     "purpose_codes_contention.csv"))
 
 aiddata.final <- aiddata.clean %>%
-  left_join(donors, by="donor") %>%
-  left_join(recipients, by="recipient") %>%
-  left_join(purpose.codes.contentiousness, by="purpose.code.short") %>%
+  left_join(donors, by = "donor") %>%
+  left_join(recipients, by = "recipient") %>%
+  left_join(purpose.codes.contentiousness, by = "purpose.code.short") %>%
   mutate(donor.type.collapsed = ifelse(donor.type == "Country", "Country",
                                        "IGO, Multilateral, or Private")) %>%
   select(donor, donor.type, donor.type.collapsed,
@@ -304,10 +304,10 @@ aiddata.final <- aiddata.clean %>%
   arrange(cowcode, year)
 
 ever.dac.eligible <- read_csv(file.path(PROJHOME, "Data", "data_clean", 
-                                    "oecd_dac_countries.csv")) %>%
+                                        "oecd_dac_countries.csv")) %>%
   # Ignore High Income Countries and More Advanced Developing Countries
   filter(!(dac_abbr %in% c("HIC", "ADC"))) %>%
-  left_join(gw.codes, by="iso3") %>%
+  left_join(gw.codes, by = "iso3") %>%
   select(cowcode) %>% unlist() %>% c() %>% unique()
 ```
 
@@ -348,14 +348,14 @@ usaid.name <- basename(usaid.url)
 if (!file.exists(file.path(usaid.path, usaid.name))) {
   usaid.get <- GET(usaid.url, 
                    write_disk(file.path(usaid.path, usaid.name),
-                              overwrite=TRUE), 
+                              overwrite = TRUE), 
                    progress())
 }
 
 # Clean up USAID data
 usaid.raw <- read_csv(file.path(usaid.path, usaid.name),
                       na = c("", "NA", "NULL"),
-                      col_types=cols(
+                      col_types = cols(
                         country_id = col_integer(),
                         country_code = col_character(),
                         country_name = col_character(),
@@ -414,7 +414,7 @@ usaid.clean <- usaid.raw %>%
   # Remove regions and World
   filter(!str_detect(country_name, "Region")) %>%
   filter(!(country_name %in% c("World"))) %>%
-  left_join(gw.codes, by=c("country_code" = "iso3")) %>%
+  left_join(gw.codes, by = c("country_code" = "iso3")) %>%
   # Get rid of tiny and old states
   filter(!is.na(cowcode)) %>%
   select(cowcode, year = numeric_year, 
@@ -463,7 +463,7 @@ channels <- usaid.clean %>%
   count(channel_category_name, channel_subcategory_name) %>%
   filter(!is.na(channel_category_name))
 
-channels %>% datatable(options=list(pageLength=20))
+channels %>% datatable(options = list(pageLength = 20))
 ```
 
 #### Summary of clean data
@@ -524,11 +524,11 @@ dcjw <- read_excel(dcjw.path)[,1:50] %>%
 
 potential.dcjw.panel.question <- dcjw %>%
   tidyr::expand(Country, question, 
-                year = min(.$year, na.rm=TRUE):2015)
+                year = min(.$year, na.rm = TRUE):2015)
 
 dcjw.panel.all.laws <- dcjw %>%
   right_join(potential.dcjw.panel.question,
-             by=c("Country", "question", "year"))
+             by = c("Country", "question", "year"))
 
 # Suparna Chaudry updated the original DCJW data, but wants the data embargoed 
 # until some of her dissertation is published. To prevent data leakage onto the
@@ -541,7 +541,7 @@ if (all.na.means.zero) {
   dcjw.panel.all.laws <- dcjw.panel.all.laws %>%
     group_by(Country, question) %>%
     # Bring most recent legislation forward
-    mutate(value = zoo::na.locf(value, na.rm=FALSE)) %>%
+    mutate(value = zoo::na.locf(value, na.rm = FALSE)) %>%
     ungroup() %>%
     # Set defaults for columns that aren't all NA
     # I could be fancy and consolidate these conditionals into just one, but this
@@ -572,7 +572,7 @@ if (all.na.means.zero) {
   dcjw.panel.all.laws <- dcjw.panel.all.laws %>%
     group_by(Country, question) %>%
     # Bring most recent legislation forward
-    mutate(value = zoo::na.locf(value, na.rm=FALSE)) %>%
+    mutate(value = zoo::na.locf(value, na.rm = FALSE)) %>%
     mutate(not.all.na = !all(is.na(value))) %>%
     ungroup() %>%
     # Set defaults for columns that aren't all NA
@@ -604,13 +604,13 @@ if (all.na.means.zero) {
 
 potential.dcjw.panel.barrier <- potential.dcjw.panel.question %>%
   mutate(question_cat = as.integer(substr(question, 3, 3))) %>%
-  left_join(dcjw.barriers.clean, by="question_cat") %>%
+  left_join(dcjw.barriers.clean, by = "question_cat") %>%
   distinct(Country, year, barrier)
 
 dcjw.panel.barriers <- dcjw.panel.all.laws %>%
   gather(question, value, -Country, -year) %>%
   mutate(question_cat = as.integer(substr(question, 3, 3))) %>%
-  left_join(dcjw.barriers.clean, by="question_cat") %>%
+  left_join(dcjw.barriers.clean, by = "question_cat") %>%
   # Make an index for each type of barrier
   mutate(value = as.numeric(value)) %>%
   mutate(value = case_when(
@@ -632,20 +632,20 @@ dcjw.panel.barriers <- dcjw.panel.all.laws %>%
     TRUE ~ .$value
   )) %>%
   # Ignore neutral indexes, like basic registration requirements
-  left_join(dcjw.barriers.ignore, by="question") %>%
+  left_join(dcjw.barriers.ignore, by = "question") %>%
   mutate(value_restrictive = ifelse(ignore_in_index, 0, value)) %>%
   group_by(Country, year, barrier) %>%
   # Add up all the barriers for each country year
   # Use a floor of zero to account for negative values
-  summarise(all = sum(value, na.rm=TRUE),
-            restrictive = sum(value_restrictive, na.rm=TRUE)) %>%
+  summarise(all = sum(value, na.rm = TRUE),
+            restrictive = sum(value_restrictive, na.rm = TRUE)) %>%
   mutate_at(vars(all, restrictive),
             funs(ifelse(. < 0, as.integer(0), .))) %>%
   # Join with full possible panel
   right_join(potential.dcjw.panel.barrier,
-             by=c("Country", "barrier", "year")) %>%
+             by = c("Country", "barrier", "year")) %>%
   gather(temp, value, all, restrictive) %>%
-  unite(temp1, barrier, temp, sep="_") %>%
+  unite(temp1, barrier, temp, sep = "_") %>%
   spread(temp1, value) %>%
   ungroup() %>%
   rename_(.dots = setNames(paste0(unique(dcjw.questions.raw$barrier), "_restrictive"), 
@@ -659,7 +659,7 @@ dcjw.panel.barriers <- dcjw.panel.all.laws %>%
          barriers.std.total = advocacy.std + association.std + entry.std + funding.std)
 
 dcjw.full <- dcjw.panel.all.laws %>%
-  left_join(dcjw.panel.barriers, by=c("Country", "year")) %>%
+  left_join(dcjw.panel.barriers, by = c("Country", "year")) %>%
   # Lop off the ancient observations
   filter(year > 1980) %>%
   # Rename q_* variables
@@ -677,15 +677,15 @@ Chaudhry's data augments Christensen and Weinstein's data substantially. Christe
 In addition to panel data on the presence or absence of specific NGO regulations, we create several indexes for each of the categories of regulation, [following Christensen and Weinstein's classification](https://darinchristensen.github.io/Data/DCJW_Codebook.pdf):
 
 - `association` (Q1a, Q1b; 2 points maximum): barriers to associational rights
-    - Q1a and Q1b are reversed, so *not* having the constitutional right to assembly earns 1 point. 
+- Q1a and Q1b are reversed, so *not* having the constitutional right to assembly earns 1 point. 
 - `entry` (Q2b, Q2c, Q2d; 3 points maximum): barriers to entry
-    - Q2c is reversed, so *not* being allowed to appeal registration status earns 1 point.
-    - Q2a is omitted because it's benign
+- Q2c is reversed, so *not* being allowed to appeal registration status earns 1 point.
+- Q2a is omitted because it's benign
 - `funding` (Q3b, Q3c, Q3d, Q3e, Q3f; 5 points maximum): barriers to funding
-    - Q3s id omitted because it's benign
-    - Scores that range between 0–2 are rescaled to 0–1 (so 1 becomes 1.5)
+- Q3s id omitted because it's benign
+- Scores that range between 0–2 are rescaled to 0–1 (so 1 becomes 1.5)
 - `advocacy` (Q4a, Q4b, Q4c; 3 points maximum): barriers to advocacy
-    - Scores that range between 0–2 are rescaled to 0–1 (so 1 becomes 1.5)
+- Scores that range between 0–2 are rescaled to 0–1 (so 1 becomes 1.5)
 - `barriers.total` (13 points maximum, though actual max is `r max(dcjw.full$barriers.total)`): sum of all four indexes
 
 These indexes are also standardized by dividing by the maximum, yielding the following variables:
@@ -719,29 +719,29 @@ While the main focus of this paper is donor response to new *legislation*, we al
 # either bump up that threshold, or prespecify column types, using col_double
 # as the default type.
 vdem.raw <- read_csv(file.path(PROJHOME, "Data", "data_raw", 
-                                    "V-Dem", "v6.2",
-                                    "V-Dem-DS-CY+Others-v6.2.csv"),
-                  col_types=cols(
-                              country_name = col_character(),
-                              country_id = col_integer(),
-                              country_text_id = col_character(),
-                              year = col_integer(),
-                              historical_date = col_date(format=""),
-                              codingstart = col_integer(),
-                              gapstart = col_integer(),
-                              gapend = col_integer(),
-                              codingend = col_integer(),
-                              COWcode = col_integer(),
-                              v2elregnam = col_character(),
-                              v2ellocnam = col_character(),
-                              v2exnamhos = col_character(),
-                              v2extithos = col_character(),
-                              v2lgnamelo = col_character(),
-                              v2lgnameup = col_character(),
-                              v2exnamhog = col_character(),
-                              v2extithog = col_character(),
-                              .default = col_double()
-                            )) %>%
+                               "V-Dem", "v6.2",
+                               "V-Dem-DS-CY+Others-v6.2.csv"),
+                     col_types = cols(
+                       country_name = col_character(),
+                       country_id = col_integer(),
+                       country_text_id = col_character(),
+                       year = col_integer(),
+                       historical_date = col_date(format = ""),
+                       codingstart = col_integer(),
+                       gapstart = col_integer(),
+                       gapend = col_integer(),
+                       codingend = col_integer(),
+                       COWcode = col_integer(),
+                       v2elregnam = col_character(),
+                       v2ellocnam = col_character(),
+                       v2exnamhos = col_character(),
+                       v2extithos = col_character(),
+                       v2lgnamelo = col_character(),
+                       v2lgnameup = col_character(),
+                       v2exnamhog = col_character(),
+                       v2extithog = col_character(),
+                       .default = col_double()
+                     )) %>%
   # Missing COW codes
   mutate(COWcode = case_when(
     .$country_text_id == "SML" ~ as.integer(521),
@@ -760,9 +760,9 @@ vdem.cso <- vdem.raw %>% select(country_name, year, cowcode = COWcode,
                                 starts_with("v2csgender"), 
                                 starts_with("v2csantimv")) %>%
   mutate(v2csreprss_ord = factor(v2csreprss_ord, 
-                                 labels=c("Severely", "Substantially", 
-                                          "Moderately", "Weakly", "No"),
-                                 ordered=TRUE),
+                                 labels = c("Severely", "Substantially", 
+                                            "Moderately", "Weakly", "No"),
+                                 ordered = TRUE),
          csre = v2csreprss + v2cseeorgs) %>%
   filter(year > 1980)
 ```
@@ -775,7 +775,7 @@ vdem.cso.min <- vdem.cso %>%
          starts_with("v2csreprss"), starts_with("v2cseeorgs")) %>%
   arrange(cowcode, year)
 
-vdem.cso.min %>% head(100) %>% datatable(extensions="Responsive")
+vdem.cso.min %>% head(100) %>% datatable(extensions = "Responsive")
 ```
 
 #### Summary of clean data
@@ -797,11 +797,11 @@ distance.folder <- file.path(PROJHOME, "Data", "data_raw", "Country distances")
 read_distances <- function(type, year) {
   stopifnot(year >= 1980, year <= 2015)
   stopifnot(type %in% c("capital", "cent", "min"))
-
+  
   # Read in the RDS file for the type and year
   matrix.raw <- readRDS(file.path(distance.folder,
                                   paste0(type, "_", year, "-01-01.rds")))
-
+  
   # Convert distance matrix to long dataframe
   df.clean <- as.data.frame(matrix.raw) %>%
     mutate(gwcode = rownames(.)) %>%
@@ -820,10 +820,10 @@ read_distances <- function(type, year) {
     group_by(gwcode) %>%
     mutate(distance.std = distance.inv / sum(distance.inv)) %>%
     ungroup() %>%
-    left_join(gw.codes, by="gwcode") %>%
-    left_join(gw.codes, by=c("gwcode.other"="gwcode"),
-              suffix=c(".self", ".other"))
-
+    left_join(gw.codes, by = "gwcode") %>%
+    left_join(gw.codes, by = c("gwcode.other" = "gwcode"),
+              suffix = c(".self", ".other"))
+  
   return(df.clean)
 }
 
@@ -831,7 +831,7 @@ read_distances <- function(type, year) {
 # also do "cent" or "capital")
 all.distances <- expand.grid(year = 1980:2015,
                              type = "min",
-                             stringsAsFactors=FALSE) %>%
+                             stringsAsFactors = FALSE) %>%
   rowwise() %>% do(read_distances(.$type, .$year)) %>% ungroup()
 
 all.distances %>% glimpse()
@@ -843,17 +843,17 @@ all.distances %>% glimpse()
 There are a bunch of reasons why overall aid flows might change over time. We controle for these alternative hypotheses:
 
 - **Regime type**: donors likely give less aid to democracies
-    - Polity IV: `polity` (imputed 0-10 Polity score from V-Dem, originally `e_fh_ipolity2`)
+- Polity IV: `polity` (imputed 0-10 Polity score from V-Dem, originally `e_fh_ipolity2`)
 - **Wealth**: donors likely give less aid to richer countries
-    - GDP per capita: `gdp.capita` (GDP per capita (constant 2011 USD) from WDI)
-    - Trade as % of GDP: `trade.pct.gdp` (from WDI)
-    - Aid dependency: `aid.pct.gdp` (Constant 2011 ODA as percent of constant 2011 GDP from AidData and WDI)
+- GDP per capita: `gdp.capita` (GDP per capita (constant 2011 USD) from WDI)
+- Trade as % of GDP: `trade.pct.gdp` (from WDI)
+- Aid dependency: `aid.pct.gdp` (Constant 2011 ODA as percent of constant 2011 GDP from AidData and WDI)
 - **Government capacity**: donors likely give more aid to NGOs in countries with weak institutions (and perhaps less aid overall?)
-    - Corruption: `corruption` (0-10 scale from V-Dem: public sector + executive + + legislative + judicial corruption, originally `v2x_corr` on 0-1)
-    - **BAD VARIABLE, almost 50% missing; sadface** Quality of governance: `govt.effectiveness` (≈-2 to 2 scale from V-Dem and WBGI, originally `e_wbgi_gee`)
+- Corruption: `corruption` (0-10 scale from V-Dem: public sector + executive + + legislative + judicial corruption, originally `v2x_corr` on 0-1)
+- **BAD VARIABLE, almost 50% missing; sadface** Quality of governance: `govt.effectiveness` (≈-2 to 2 scale from V-Dem and WBGI, originally `e_wbgi_gee`)
 - **Bad stuff**: donors likely give more aid to countries when bad things happen like wars and natural disasters
-    - Internal conflict: `internal.conflict.past.5` (binary indicator variable if there was a conflict in that year or in the previous 5 years from UCDP/PRIO)
-    - Disasters: `natural_disaster.affected`, `natural_disaster.deaths`, `natural_disaster.occurrence`, and `natural_disaster.total.affected`, among others (from EM-DAT)
+- Internal conflict: `internal.conflict.past.5` (binary indicator variable if there was a conflict in that year or in the previous 5 years from UCDP/PRIO)
+- Disasters: `natural_disaster.affected`, `natural_disaster.deaths`, `natural_disaster.occurrence`, and `natural_disaster.total.affected`, among others (from EM-DAT)
 
 
 ### World Bank development indicators
@@ -875,24 +875,24 @@ un.gdp.raw <- read_csv(file.path(PROJHOME, "Data", "data_raw", "UN data",
 
 # http://data.un.org/Data.aspx?q=gdp&d=SNAAMA&f=grID%3a101%3bcurrID%3aUSD%3bpcFlag%3a0
 un.gdp.current.raw <- read_csv(file.path(PROJHOME, "Data", "data_raw", "UN data",
-                                 "UNdata_Export_20170125_063718499.csv")) %>%
+                                         "UNdata_Export_20170125_063718499.csv")) %>%
   rename(un_code = `Country or Area Code`) %>%
   mutate(value.type = "Current")
 
 # https://esa.un.org/unpd/wpp/Download/Standard/Population/
 un.pop.raw <- read_excel(file.path(PROJHOME, "Data", "data_raw", "UN data",
                                    "WPP2015_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES.xls"),
-                         skip=16)
+                         skip = 16)
 
 un.pop <- un.pop.raw %>%
   filter((`Country code` %in% un.codes$un_code)) %>%
   select(-c(Index, Variant, Notes, `Major area, region, country or area *`), 
          un_code = `Country code`) %>%
   gather(year, population, -un_code) %>%
-  left_join(un.codes, by="un_code") %>% filter(!is.na(iso3)) %>%
+  left_join(un.codes, by = "un_code") %>% filter(!is.na(iso3)) %>%
   mutate(year = as.integer(year),
          un.population = population * 1000) %>%  # Values are in 1000s
-  left_join(gw.codes, by="iso3") %>%
+  left_join(gw.codes, by = "iso3") %>%
   # Get rid of tiny countries
   filter(!is.na(cowcode)) %>%
   select(cowcode, year, un.population)
@@ -903,7 +903,7 @@ un.gdp <- bind_rows(un.gdp.raw, un.gdp.current.raw) %>%
   filter(Item %in% c("Gross Domestic Product (GDP)",
                      "Exports of goods and services",
                      "Imports of goods and services")) %>%
-  left_join(un.codes, by="un_code") %>%
+  left_join(un.codes, by = "un_code") %>%
   # Fix weird edge cases with country names
   # Get rid of Former Netherlands Antilles, Zanzibar, Former Czechoslovakia,
   # Former Yugoslavia, and Former USSR
@@ -940,7 +940,7 @@ un.gdp.clean <- un.gdp %>%
   # Add consolidated Yemens and Ethiopias
   bind_rows(un.gdp.yemen) %>%
   bind_rows(un.gdp.ethiopia) %>%
-  left_join(gw.codes, by="iso3") %>%
+  left_join(gw.codes, by = "iso3") %>%
   # Get rid of tiny places
   filter(!is.na(cowcode))
 
@@ -965,7 +965,7 @@ un.gdp.wide <- un.gdp.clean %>%
 un.gdp.rescaled <- un.gdp.wide %>%
   left_join(select(filter(un.gdp.wide, year == 2011),
                    cowcode, deflator.target.year = gdp.deflator),
-            by="cowcode") %>%
+            by = "cowcode") %>%
   mutate(un.gdp = gdp.current * (deflator.target.year / gdp.deflator),
          un.trade.pct.gdp = (imports.current + exports.current) / gdp.current)
 
@@ -974,7 +974,7 @@ un.gdp.final <- un.gdp.rescaled %>%
   group_by(cowcode, year) %>%
   slice(1) %>% ungroup()
 
-un.gdp.final %>% head(100) %>% datatable(extensions="Responsive")
+un.gdp.final %>% head(100) %>% datatable(extensions = "Responsive")
 
 un.gdp.final %>% glimpse()
 ```
@@ -993,8 +993,8 @@ if (!file.exists(wdi.path)) {
   # Get all countries and regions because the World Bank chokes on ISO codes like
   # XK for Kosovo, even though it returns data for Kosovo with the XK code
   # ¯\_(ツ)_/¯
-  wdi.raw <- WDI(country="all", wdi.indicators,
-                 extra=FALSE, start=1980, end=2015)
+  wdi.raw <- WDI(country = "all", wdi.indicators,
+                 extra = FALSE, start = 1980, end = 2015)
   
   saveRDS(wdi.raw, wdi.path)
 } else {
@@ -1017,15 +1017,15 @@ wdi.clean.intermediate <- wdi.raw %>%
 wdi.rescaled <- wdi.clean.intermediate %>%
   left_join(select(filter(wdi.clean.intermediate, year == 2011), 
                    iso2c, deflator.target.year = gdp.deflator), 
-            by="iso2c") %>%
+            by = "iso2c") %>%
   mutate(gdp = gdp.current * (deflator.target.year / gdp.deflator))
 
 wdi.clean <- wdi.rescaled %>%
-  left_join(select(gw.codes, iso2, cowcode), by=c("iso2c" = "iso2")) %>%
+  left_join(select(gw.codes, iso2, cowcode), by = c("iso2c" = "iso2")) %>%
   select(-c(gdp.capita.2010, gdp.current, gdp.2010, 
             gdp.deflator, deflator.target.year))
 
-wdi.clean %>% head(100) %>% datatable(extensions="Responsive")
+wdi.clean %>% head(100) %>% datatable(extensions = "Responsive")
 
 wdi.clean %>% glimpse()
 ```
@@ -1053,15 +1053,15 @@ col.full.path <- file.path(col.path, "ICOW Colonial History 1.0",
 if (!file.exists(col.full.path)) {
   col.get <- GET(col.url, 
                  write_disk(file.path(col.path, col.zip.name),
-                            overwrite=TRUE), 
+                            overwrite = TRUE), 
                  progress())
-  unzip(file.path(col.path, col.zip.name), exdir=col.path)
+  unzip(file.path(col.path, col.zip.name), exdir = col.path)
   
   file.remove(file.path(col.path, col.zip.name))
 }
 
-col.raw <- read_csv(col.full.path, na="-9",
-                    col_types=cols(
+col.raw <- read_csv(col.full.path, na = "-9",
+                    col_types = cols(
                       State = col_integer(),
                       Name = col_character(),
                       ColRuler = col_integer(),
@@ -1088,15 +1088,15 @@ col.clean <- col.raw %>%
                                 paste0(0, IndDate.clean), IndDate.clean)) %>%
   mutate(IndDate = ymd(paste0(IndDate.clean, "01"))) %>%
   left_join(select(gw.codes, iso3, cowcode, country.name),
-            by=c("State" = "cowcode")) %>%
+            by = c("State" = "cowcode")) %>%
   left_join(select(gw.codes, col.ruler.cowcode = cowcode, 
                    col.ruler.iso3 = iso3, 
                    col.ruler.country.name = country.name),
-            by=c("ColRuler" = "col.ruler.cowcode")) %>%
+            by = c("ColRuler" = "col.ruler.cowcode")) %>%
   left_join(select(gw.codes, ind.from.cowcode = cowcode,
                    ind.from.iso3 = iso3, 
                    ind.from.country.name = country.name),
-            by=c("IndFrom" = "ind.from.cowcode")) %>%
+            by = c("IndFrom" = "ind.from.cowcode")) %>%
   select(cowcode = State, country.name, col.ind.date = IndDate,
          col.ruler.country.name, col.ruler.cowcode = ColRuler, col.ruler.iso3,
          ind.from.country.name, ind.from.cowcode = IndFrom, ind.from.iso3) %>%
@@ -1107,8 +1107,8 @@ col.clean <- col.raw %>%
                                          "Austria-Hungary",
                                          col.ruler.country.name),
          col.ruler.iso3 = ifelse(col.ruler.cowcode == 300, 
-                                         "AUH",
-                                         col.ruler.country.name)) %>%
+                                 "AUH",
+                                 col.ruler.country.name)) %>%
   mutate(ind.from.country.name = case_when(
     .$ind.from.cowcode == 89 ~ "United Provinces of Central America",
     .$ind.from.cowcode == 300 ~ "Austria-Hungary",
@@ -1149,7 +1149,7 @@ col.clean <- col.raw %>%
   bind_rows(filter(., cowcode == 344) %>% 
               mutate(cowcode = 340, country.name = "Serbia"))
 
-col.clean %>% datatable(extensions="Responsive")
+col.clean %>% datatable(extensions = "Responsive")
 
 col.clean %>% glimpse()
 ```
@@ -1165,8 +1165,8 @@ The [UCDP/PRIO Armed Conflict Dataset](http://ucdp.uu.se/downloads/) tracks a to
 # conflicts <- read_tsv(file.path(PROJHOME, "Data", "data_raw", "External", 
 #                                 "Uppsala", "ywd_dataset.csv")) %>%
 #   mutate(intensity = factor(intensity, 
-#                             levels=c("No", "Minor", "Intermediate", "War"), 
-#                             ordered=TRUE))
+#                             levels = c("No", "Minor", "Intermediate", "War"), 
+#                             ordered = TRUE))
 conflicts.raw <- read_csv("http://ucdp.uu.se/downloads/ucdpprio/ucdp-prio-acd-4-2016.csv")
 
 conflicts <- conflicts.raw %>%
@@ -1175,7 +1175,7 @@ conflicts <- conflicts.raw %>%
   group_by(gwcode, Year) %>%
   summarise(conflict.internal = n() > 0) %>%
   ungroup() %>%
-  left_join(gw.codes, by="gwcode") %>%
+  left_join(gw.codes, by = "gwcode") %>%
   filter(!is.na(cowcode))
 
 glimpse(conflicts)
@@ -1200,8 +1200,8 @@ EM-DAT does not provide a single link to download their data. Instead, you have 
 # Disaster classification
 disaster.classification.raw <- "http://www.emdat.be/classification" %>%
   read_html() %>%
-  html_nodes(xpath='//*[@id="article-14627"]/div/div/div/div/table[1]') %>%
-  html_table(header=TRUE)
+  html_nodes(xpath = '//*[@id="article-14627"]/div/div/div/div/table[1]') %>%
+  html_table(header = TRUE)
 
 # For whatever reason, the downloaded data treats technological subgroups as
 # main types (e.g. "industrial accident" is listed as a disaster type, not
@@ -1234,14 +1234,14 @@ disaster.classification <- disaster.classification.raw[[1]] %>%
 
 disasters.raw <- read_csv(file.path(PROJHOME, "Data", "data_raw", 
                                     "Disasters", "data.csv"),
-                          skip=1)  # First row is junk
+                          skip = 1)  # First row is junk
 
 # Read in disaster data and join with classification data
 disasters <- disasters.raw %>%
   mutate(`disaster type` = str_trim(str_to_lower(`disaster type`))) %>%
   mutate(`disaster type` = ifelse(`disaster type` == "mass movement (dry)",
                                   "mass movement", `disaster type`)) %>%
-  left_join(disaster.classification, by=c("disaster type"="Actual Type")) %>%
+  left_join(disaster.classification, by = c("disaster type" = "Actual Type")) %>%
   mutate(iso = str_to_upper(iso), 
          cowcode = countrycode(iso, "iso3c", "cown")) %>%
   mutate(cowcode = case_when(
@@ -1284,16 +1284,16 @@ disaster.vars <- vars(disaster.occurrence, disaster.deaths, disaster.injured,
 
 disasters.groups <- disasters %>%
   group_by(cowcode, year, disaster.group) %>%
-  summarise_at(disaster.vars, funs(sum(., na.rm=TRUE))) %>%
+  summarise_at(disaster.vars, funs(sum(., na.rm = TRUE))) %>%
   ungroup() %>%
   gather(key, value, disaster.occurrence, disaster.deaths, disaster.injured, 
-                      disaster.affected, disaster.homeless, disaster.total.affected,
-                      disaster.total.damage) %>%
+         disaster.affected, disaster.homeless, disaster.total.affected,
+         disaster.total.damage) %>%
   unite(key, disaster.group, key) %>%
   spread(key, value) %>%
   filter(year > 1980, year < 2016)
 
-disasters.groups %>% head(100) %>% datatable(extensions="Responsive")
+disasters.groups %>% head(100) %>% datatable(extensions = "Responsive")
 ```
 
 ```{r}
@@ -1324,13 +1324,13 @@ fake.codes <- donor.level.data.raw %>%
          fake.donor.iso3 = paste0("Z", str_sub(fake.donor.cowcode, 3)))
 
 donor.level.data <- donor.level.data.raw %>%
-  left_join(fake.codes, by="donor") %>%
+  left_join(fake.codes, by = "donor") %>%
   mutate(donor.cowcode = ifelse(is.na(donor.cowcode), 
-                                      fake.donor.cowcode, 
-                                      donor.cowcode),
+                                fake.donor.cowcode, 
+                                donor.cowcode),
          donor.iso3 = ifelse(is.na(donor.iso3), 
-                                      fake.donor.iso3, 
-                                      donor.iso3)) %>%
+                             fake.donor.iso3, 
+                             donor.iso3)) %>%
   select(-starts_with("fake"))
 
 
@@ -1343,7 +1343,7 @@ donor.level.data <- donor.level.data.raw %>%
 # Current aid in year_t * (deflator in year_target / deflator in year_t)
 usaid.deflator.2011 <- usaid.clean %>%
   filter(year == 2011) %>%
-  summarise(deflator.target.year = median(aid.deflator, na.rm=TRUE)) %>%
+  summarise(deflator.target.year = median(aid.deflator, na.rm = TRUE)) %>%
   as.numeric()
 
 donor.level.data.usaid <- usaid.clean %>%
@@ -1354,18 +1354,18 @@ donor.level.data.usaid <- usaid.clean %>%
 
 usaid.by.country.total <- donor.level.data.usaid %>%
   group_by(cowcode, year) %>%
-  summarise(oda.us = sum(oda.us.2011, na.rm=TRUE))
+  summarise(oda.us = sum(oda.us.2011, na.rm = TRUE))
 
 usaid.by.country.channel <- donor.level.data.usaid %>%
   gather(key, value, c(channel.ngo.us, channel.ngo.int, channel.ngo.dom)) %>%
   group_by(cowcode, year, key, value) %>%
-  summarise(total.oda.us = sum(oda.us.2011, na.rm=TRUE)) %>%
+  summarise(total.oda.us = sum(oda.us.2011, na.rm = TRUE)) %>%
   ungroup() %>%
   unite(channel, key, value) %>%
   filter(str_detect(channel, "TRUE")) %>%
   mutate(channel = str_replace(channel, "channel", "oda.us"),
          channel = str_replace(channel, "_TRUE", "")) %>%
-  spread(channel, total.oda.us, fill=0)
+  spread(channel, total.oda.us, fill = 0)
 
 
 # Country data
@@ -1374,31 +1374,31 @@ country.level.data <- dcjw.full %>%
   mutate(ever.dac.eligible = cowcode %in% ever.dac.eligible) %>%
   left_join(select(vdem.cso, year, cowcode, csre, 
                    polity = e_fh_ipolity2, 
-                   corruption=v2x_corr, 
-                   govt.effectiveness=e_wbgi_gee),
-            by=c("cowcode", "year")) %>%
+                   corruption = v2x_corr, 
+                   govt.effectiveness = e_wbgi_gee),
+            by = c("cowcode", "year")) %>%
   mutate(corruption = corruption * 10) %>%
-  left_join(select(wdi.clean, -c(iso2c, country)), by=c("cowcode", "year")) %>%
-    # Bring in UN population data
-  left_join(un.pop, by=c("cowcode", "year")) %>%
+  left_join(select(wdi.clean, -c(iso2c, country)), by = c("cowcode", "year")) %>%
+  # Bring in UN population data
+  left_join(un.pop, by = c("cowcode", "year")) %>%
   # Prefer UN population data, but use World Bank if missing
   mutate(population = ifelse(is.na(un.population), population, un.population)) %>%
   # Bring in UN GDP data
   # Prefer UN GDP data, but use World Bank if missing
-  left_join(un.gdp.final, by=c("cowcode", "year")) %>%
+  left_join(un.gdp.final, by = c("cowcode", "year")) %>%
   mutate(un.trade.pct.gdp = un.trade.pct.gdp * 100) %>%
   mutate(gdp = ifelse(is.na(un.gdp), gdp, un.gdp),
          trade.pct.gdp = ifelse(is.na(un.trade.pct.gdp), 
                                 trade.pct.gdp, un.trade.pct.gdp)) %>%
   select(-starts_with("un.")) %>%
-  left_join(select(col.clean, -country.name), by=c("cowcode")) %>%
+  left_join(select(col.clean, -country.name), by = c("cowcode")) %>%
   left_join(select(disasters.groups, cowcode, year, starts_with("natural_")), 
-            by=c("cowcode", "year")) %>%
+            by = c("cowcode", "year")) %>%
   # NAs in disasters are really 0, especially when occurrence is 0
   mutate_at(vars(starts_with("natural_")), funs(ifelse(is.na(.), 0, .))) %>%
   # Treat NAs in conflicts as FALSE
-  left_join(select(conflicts, cowcode, year=Year, conflict.internal),
-            by=c("cowcode", "year")) %>%
+  left_join(select(conflicts, cowcode, year = Year, conflict.internal),
+            by = c("cowcode", "year")) %>%
   mutate(conflict.internal = ifelse(is.na(conflict.internal),
                                     FALSE, conflict.internal)) %>%
   # Add indicator for post-Cold War, since all the former Soviet republics have
@@ -1409,7 +1409,7 @@ testthat::expect_equal(nrow(country.level.data), nrow(dcjw.full))
 # Combine country and donor data
 donor.country.data <- donor.level.data %>%
   left_join(select(country.level.data, -country.name),
-            by=c("year", "cowcode")) %>%
+            by = c("year", "cowcode")) %>%
   mutate(former.colony = donor.cowcode == col.ruler.cowcode | 
            donor.cowcode == ind.from.cowcode) %>%
   arrange(donor, year)
@@ -1418,12 +1418,12 @@ testthat::expect_equal(nrow(donor.country.data), nrow(donor.level.data))
 # Calculate different versions of aid variables
 aid.by.country.total <- donor.country.data %>%
   group_by(cowcode, year) %>%
-  summarise(total.oda = sum(oda, na.rm=TRUE))
+  summarise(total.oda = sum(oda, na.rm = TRUE))
 
 aid.by.country.purpose <- donor.country.data %>%
   group_by(cowcode, year, purpose.contentiousness) %>%
-  summarise(total.oda = sum(oda, na.rm=TRUE)) %>%
-  spread(purpose.contentiousness, total.oda, fill=0) %>%
+  summarise(total.oda = sum(oda, na.rm = TRUE)) %>%
+  spread(purpose.contentiousness, total.oda, fill = 0) %>%
   rename(oda.contentious.high = High, 
          oda.contentious.low = Low)
 
@@ -1432,14 +1432,14 @@ aid.by.country.purpose <- donor.country.data %>%
 # average aid to neighboring countries
 neighbor.oda <- all.distances %>%
   filter(is.rough.neighbor) %>%
-  left_join(aid.by.country.total, by=c("cowcode.other" = "cowcode",
-                                       "year")) %>%
+  left_join(aid.by.country.total, by = c("cowcode.other" = "cowcode",
+                                         "year")) %>%
   filter(cowcode.self != cowcode.other) %>%
   group_by(year, cowcode.self) %>%
   summarise_at(vars(total.oda), 
-               funs(nb_oda.sum = sum(., na.rm=TRUE),
-                    nb_oda.avg = mean(., na.rm=TRUE),
-                    nb_oda.sd = sd(., na.rm=TRUE),
+               funs(nb_oda.sum = sum(., na.rm = TRUE),
+                    nb_oda.avg = mean(., na.rm = TRUE),
+                    nb_oda.sd = sd(., na.rm = TRUE),
                     nb_oda.n = n())) %>%
   rename(cowcode = cowcode.self) %>%
   filter(year < 2014) %>%
@@ -1502,11 +1502,11 @@ if (file.exists(imputation.rds)) {
   # Combine aid data with country data
   country.aid.data.pre.transformation <- country.level.data %>%
     filter(year < 2014) %>%  # There's no aid data after 2013
-    left_join(aid.by.country.total, by=c("cowcode", "year")) %>%
-    left_join(aid.by.country.purpose, by=c("cowcode", "year")) %>%
-    left_join(neighbor.oda, by=c("cowcode", "year")) %>%
-    left_join(usaid.by.country.total, by=c("cowcode", "year")) %>%
-    left_join(usaid.by.country.channel, by=c("cowcode", "year")) %>%
+    left_join(aid.by.country.total, by = c("cowcode", "year")) %>%
+    left_join(aid.by.country.purpose, by = c("cowcode", "year")) %>%
+    left_join(neighbor.oda, by = c("cowcode", "year")) %>%
+    left_join(usaid.by.country.total, by = c("cowcode", "year")) %>%
+    left_join(usaid.by.country.channel, by = c("cowcode", "year")) %>%
     mutate_at(vars(contains("oda")), funs(ifelse(is.na(.), 0, .)))
   
   # Missing Polity values are easy—most are just one-year gaps with the same
@@ -1520,7 +1520,7 @@ if (file.exists(imputation.rds)) {
   
   country.aid.data.pre.amelia <- country.aid.data.pre.transformation %>% 
     select(-polity) %>% 
-    left_join(polity.imputed, by=c("cowcode", "year"))
+    left_join(polity.imputed, by = c("cowcode", "year"))
   
   # Select the variables to not include in the imputation model. Left join this
   # data frame later with the imputed data
@@ -1546,22 +1546,22 @@ if (file.exists(imputation.rds)) {
   # Run imputation model
   set.seed(my.seed)
   country.aid.data.amelia <- amelia(country.aid.data.to.impute,
-                                    m=10, ts="year", cs="cowcode", 
-                                    intercs=TRUE,
-                                    empri=0.03 * nrow(country.aid.data.to.impute),
-                                    p2s=1, 
-                                    lags=vars.to.lag.lead,
-                                    leads=vars.to.lag.lead,
-                                    logs=vars.to.log)
+                                    m = 10, ts = "year", cs = "cowcode", 
+                                    intercs = TRUE,
+                                    empri = 0.03 * nrow(country.aid.data.to.impute),
+                                    p2s = 1, 
+                                    lags = vars.to.lag.lead,
+                                    leads = vars.to.lag.lead,
+                                    logs = vars.to.log)
   
   # Append list of imputed datasets to original in a long data frame and bring
   # back the omitted variables
   country.aid.data.imputed.long <- 
-    bind_rows(mutate(country.aid.data.to.impute, m="original"),
-              bind_rows(country.aid.data.amelia$imputations, .id="m")) %>%
+    bind_rows(mutate(country.aid.data.to.impute, m = "original"),
+              bind_rows(country.aid.data.amelia$imputations, .id = "m")) %>%
     select(m, everything()) %>%
     left_join(select(country.aid.data.pre.amelia, 
-                     -one_of(vars.to.include.sans.ids)), by=c("cowcode", "year"))
+                     -one_of(vars.to.include.sans.ids)), by = c("cowcode", "year"))
   
   saveRDS(country.aid.data.imputed.long, file.path(PROJHOME, "Data", "data_cache",
                                                    "country_aid_data_imputed_long.rds"))
@@ -1579,33 +1579,33 @@ if (file.exists(imputation.rds)) {
 check_last_k <- function(x, k) {
   # This creates a matrix with a column for each lag value (e.g. column 1 = lag
   # 0, column 2 = lag 1, etc.)
-  all.lags <- sapply(0:k, FUN=function(k) lag(x, k))
-
+  all.lags <- sapply(0:k, FUN = function(k) lag(x, k))
+  
   # Marke TRUE if any of the columns have TRUE in them
-  any.true.in.window <- apply(all.lags, MARGIN=1, FUN=any, na.rm=TRUE)
+  any.true.in.window <- apply(all.lags, MARGIN = 1, FUN = any, na.rm = TRUE)
   return(any.true.in.window)
 }
 
 country.aid.data <- country.aid.data.imputed.long %>%
   mutate(gdp.capita = gdp / population) %>%
-  mutate_at(vars(gdp.capita, gdp, population), funs(log=log1p)) %>%
+  mutate_at(vars(gdp.capita, gdp, population), funs(log = log1p)) %>%
   # Calculate prop.contentious here since there should be some missing values
   # (since there are country-years where there's no ODA)
   mutate(prop.contentious = oda.contentious.high / 
            (oda.contentious.low + oda.contentious.high)) %>%
   mutate(prop.contentious = ifelse(is.nan(prop.contentious), 
                                    NA, prop.contentious)) %>%
-  mutate(prop.contentious_logit = car::logit(prop.contentious, adjust=.001)) %>%
+  mutate(prop.contentious_logit = car::logit(prop.contentious, adjust = .001)) %>%
   # Calculate prop.ngo* here since there should also be some missing values
   mutate(prop.ngo.int = oda.us.ngo.int / oda.us,
          prop.ngo.us = oda.us.ngo.us / oda.us,
          prop.ngo.dom = oda.us.ngo.dom / oda.us,
          prop.ngo.foreign = (oda.us.ngo.int + oda.us.ngo.us) / oda.us) %>%
-         # prop.ngo.dom.foreign = oda.us.ngo.dom / (oda.us.ngo.int + oda.us.ngo.us)) %>%
+  # prop.ngo.dom.foreign = oda.us.ngo.dom / (oda.us.ngo.int + oda.us.ngo.us)) %>%
   mutate_at(vars(starts_with("prop.ngo")),
             funs(ifelse(is.nan(.), NA, .))) %>%
   mutate_at(vars(starts_with("prop.ngo")),
-            funs(logit = car::logit(., adjust=.001))) %>%
+            funs(logit = car::logit(., adjust = .001))) %>%
   mutate_at(vars(total.oda, oda.contentious.high, oda.contentious.low, oda.us,
                  nb_oda.sum, nb_oda.avg, nb_oda.sd),
             funs(log = log1p(.))) %>%
@@ -1635,10 +1635,10 @@ country.aid.data <- country.aid.data.imputed.long %>%
             funs(new = . - lag(.),
                  worse = (. - lag(.)) > 0,
                  cat = cut(. - lag(.),
-                           breaks=c(-Inf, -1, 0, Inf),
-                           labels=c("New better law", "No new laws",
-                                    "New worse law"),
-                           ordered_result=TRUE))) %>%
+                           breaks = c(-Inf, -1, 0, Inf),
+                           labels = c("New better law", "No new laws",
+                                      "New worse law"),
+                           ordered_result = TRUE))) %>%
   # Determine if there was conflict in the past 5 years
   mutate(internal.conflict.past.5 = check_last_k(conflict.internal, 5)) %>%
   ungroup()
@@ -1650,7 +1650,7 @@ country.aid.data.m10 <- country.aid.data
 country.aid.data <- country.aid.data %>%
   filter(!(m %in% paste0("imp", 6:10)))
 
-country.aid.data %>% head(100) %>% datatable(extensions="Responsive")
+country.aid.data %>% head(100) %>% datatable(extensions = "Responsive")
 
 country.aid.data %>% glimpse()
 ```
@@ -1668,22 +1668,22 @@ Final, clean country- and donor-level datasets are available in `Data/data_clean
 
 ```{r save-final-data, echo=FALSE}
 saveRDS(filter(country.aid.data, m == "original"),
-        file=file.path(PROJHOME, "Data", "data_clean",
-                       "df_country_aid_no_imputation.rds"))
+        file = file.path(PROJHOME, "Data", "data_clean",
+                         "df_country_aid_no_imputation.rds"))
 
 saveRDS(filter(country.aid.data, m != "original"),
-        file=file.path(PROJHOME, "Data", "data_clean",
-                       "df_country_aid_imputation.rds"))
+        file = file.path(PROJHOME, "Data", "data_clean",
+                         "df_country_aid_imputation.rds"))
 
 saveRDS(filter(country.aid.data.m10, m != "original"),
-        file=file.path(PROJHOME, "Data", "data_clean",
-                       "df_country_aid_imputation_m10.rds"))
+        file = file.path(PROJHOME, "Data", "data_clean",
+                         "df_country_aid_imputation_m10.rds"))
 
 saveRDS(donor.level.data,
-        file=file.path(PROJHOME, "Data", "data_clean",
-                       "df_donor.rds"))
+        file = file.path(PROJHOME, "Data", "data_clean",
+                         "df_donor.rds"))
 
 saveRDS(donor.level.data.usaid,
-        file=file.path(PROJHOME, "Data", "data_clean",
-                       "df_donor_usaid.rds"))
+        file = file.path(PROJHOME, "Data", "data_clean",
+                         "df_donor_usaid.rds"))
 ```

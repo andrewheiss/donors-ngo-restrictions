@@ -70,25 +70,25 @@ Here's proof of how it works in some simple models. Model 1 is a basic OLS with 
 mod.test.fe <- lm(total.oda_log_next_year ~ 
                     barriers.total + polity + gdp.capita_log + 
                     as.factor(cowcode),
-                  data=df.country.aid.demean.next_year)
+                  data = df.country.aid.demean.next_year)
 
 mod.test.re <- lmer(total.oda_log_next_year ~ 
-                    barriers.total + polity + gdp.capita_log + 
-                    (1 | cowcode),
-                  data=df.country.aid.demean.next_year)
+                      barriers.total + polity + gdp.capita_log + 
+                      (1 | cowcode),
+                    data = df.country.aid.demean.next_year)
 
 mod.test.re.fancy <- lmer(total.oda_log_next_year ~ 
                             barriers.total_between + barriers.total_within +
                             polity_between + polity_within + 
                             gdp.capita_log_between + gdp.capita_log_within +
                             (1 | cowcode),
-                          data=df.country.aid.demean.next_year)
+                          data = df.country.aid.demean.next_year)
 
 stargazer(mod.test.fe, mod.test.re, mod.test.re.fancy,
-          type="html", omit="factor", 
-          add.lines=list(c("Country effects",
-                           c("Fixed", "Random", "Random"))),
-          keep.stat=c("n"))
+          type = "html", omit = "factor", 
+          add.lines = list(c("Country effects",
+                             c("Fixed", "Random", "Random"))),
+          keep.stat = c("n"))
 ```
 
 \
@@ -100,8 +100,8 @@ mod.test.no.oda <- lmer(total.oda_log_next_year ~
                           polity_between + polity_within + 
                           gdp.capita_log_between + gdp.capita_log_within +
                           (1 | cowcode) + (1 | year),
-                        data=filter(df.country.aid.demean.next_year.impute,
-                                    m == "imp1"))
+                        data = filter(df.country.aid.demean.next_year.impute,
+                                      m == "imp1"))
 
 mod.test.oda.split <- lmer(total.oda_log_next_year ~ 
                              barriers.total_between + barriers.total_within +
@@ -109,8 +109,8 @@ mod.test.oda.split <- lmer(total.oda_log_next_year ~
                              total.oda_log_between + total.oda_log_within +
                              gdp.capita_log_between + gdp.capita_log_within +
                              (1 | cowcode) + (1 | year),
-                           data=filter(df.country.aid.demean.next_year.impute,
-                                       m == "imp1"))
+                           data = filter(df.country.aid.demean.next_year.impute,
+                                         m == "imp1"))
 
 mod.test.oda.nosplit <- lmer(total.oda_log_next_year ~ 
                                barriers.total_between + barriers.total_within +
@@ -118,11 +118,11 @@ mod.test.oda.nosplit <- lmer(total.oda_log_next_year ~
                                total.oda_log +
                                gdp.capita_log_between + gdp.capita_log_within +
                                (1 | cowcode) + (1 | year),
-                             data=filter(df.country.aid.demean.next_year.impute,
-                                         m == "imp1"))
+                             data = filter(df.country.aid.demean.next_year.impute,
+                                           m == "imp1"))
 
-resid.no.oda <- acf(residuals(mod.test.no.oda), plot=FALSE)
-resid.oda <- acf(residuals(mod.test.oda.nosplit), plot=FALSE)
+resid.no.oda <- acf(residuals(mod.test.no.oda), plot = FALSE)
+resid.oda <- acf(residuals(mod.test.oda.nosplit), plot = FALSE)
 
 ci.line <- qnorm((1 + 0.95) / 2) / sqrt(resid.no.oda$n.used)
 
@@ -133,11 +133,11 @@ acf.plot.data <- bind_rows(
              model = "Current year’s ODA")
 )
 
-ggplot(acf.plot.data, aes(x=Lag, y=ACF, fill=model)) +
-  geom_bar(stat="identity", position=position_dodge(width=1), width=0.5) +
-  geom_hline(yintercept=0, size=1) +
-  geom_hline(yintercept=c(ci.line, -ci.line), size=0.5, linetype="dashed") +
-  guides(fill=guide_legend(title=NULL)) +
+ggplot(acf.plot.data, aes(x = Lag, y = ACF, fill = model)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 1), width = 0.5) +
+  geom_hline(yintercept = 0, size = 1) +
+  geom_hline(yintercept = c(ci.line, -ci.line), size = 0.5, linetype = "dashed") +
+  guides(fill = guide_legend(title = NULL)) +
   theme_donors()
 ```
 
@@ -145,11 +145,11 @@ Not splitting current ODA into within and between also fixes another sticky math
 
 ```{r h1-table-results, results="asis"}
 stargazer(mod.test.oda.split, mod.test.oda.nosplit,
-          type="html", keep.stat=c("n"))
+          type = "html", keep.stat = c("n"))
 
 bind_rows(
-  as.data.frame(VarCorr(mod.test.oda.split)) %>% mutate(model="(1)"),
-  as.data.frame(VarCorr(mod.test.oda.nosplit)) %>% mutate(model="(2)")
+  as.data.frame(VarCorr(mod.test.oda.split)) %>% mutate(model = "(1)"),
+  as.data.frame(VarCorr(mod.test.oda.nosplit)) %>% mutate(model = "(2)")
 ) %>% 
   mutate(grp = ordered(fct_inorder(grp))) %>%
   select(`Random variable` = grp, sdcor, model) %>%
@@ -171,12 +171,12 @@ findings.summary <- read_csv(file.path(PROJHOME, "Data", "data_clean",
                                        "findings_summary.csv"))
 
 caption <- "Summary of findings {#tbl:findings-summary}"
-findings.summary.table <- pandoc.table.return(findings.summary, justify="lll",
-                                              caption=caption)
+findings.summary.table <- pandoc.table.return(findings.summary, justify = "lll",
+                                              caption = caption)
 
 cat(findings.summary.table)
-cat(findings.summary.table, file=file.path(PROJHOME, "Output",
-                                           "tbl-findings-summary.md"))
+cat(findings.summary.table, file = file.path(PROJHOME, "Output",
+                                             "tbl-findings-summary.md"))
 ```
 
 ---
@@ -201,7 +201,7 @@ mods.robust.check.m.next_year.raw <- df.country.aid.demean.next_year.all %>%
 mods.robust.check.m.next_year <- mods.robust.check.m.next_year.raw %>%
   gather(model.name, model, -m, -data) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE))
+         tidy = model %>% map(broom::tidy, conf.int = TRUE))
 
 # Meld the imputed models
 mods.robust.check.m.next_year.melded.original <- mods.robust.check.m.next_year %>%
@@ -228,7 +228,7 @@ mods.robust.check.m.next_year.melded.all <- bind_rows(
   mods.robust.check.m.next_year.melded.m10
 ) %>%
   mutate(imputations = data %>% map_dbl(~ nrow(.)),
-         model.name = paste(model.name, imputations, sep="_"))
+         model.name = paste(model.name, imputations, sep = "_"))
 ```
 
 ```{r tbl-show-imputations, results="asis"}
@@ -264,12 +264,12 @@ mods.robust.neutral.regs.raw.h3 <- df.country.aid.us.demean.next_year.both %>%
 mods.robust.neutral.regs <- mods.robust.neutral.regs.raw %>%
   gather(model.name, model, -m, -data) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE))
+         tidy = model %>% map(broom::tidy, conf.int = TRUE))
 
 mods.robust.neutral.regs.h3 <- mods.robust.neutral.regs.raw.h3 %>%
   gather(model.name, model, -m, -data) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE))
+         tidy = model %>% map(broom::tidy, conf.int = TRUE))
 
 # Meld the imputed models
 mods.robust.neutral.regs.melded.h1 <- mods.robust.neutral.regs %>%
@@ -282,20 +282,20 @@ mods.robust.neutral.regs.melded.h2 <- mods.robust.neutral.regs %>%
   filter(m != "original", str_detect(model.name, "h2")) %>%
   group_by(model.name) %>%
   nest() %>%
-  mutate(tidy.melded = data %>% map(~ meld.imputed.models(., exponentiate=TRUE)))
+  mutate(tidy.melded = data %>% map(~ meld.imputed.models(., exponentiate = TRUE)))
 
 mods.robust.neutral.regs.melded.h3 <- mods.robust.neutral.regs.h3 %>%
   filter(m != "original") %>%
   group_by(model.name) %>%
   nest() %>%
-  mutate(tidy.melded = data %>% map(~ meld.imputed.models(., exponentiate=TRUE)))
+  mutate(tidy.melded = data %>% map(~ meld.imputed.models(., exponentiate = TRUE)))
 ```
 
 #### Neutral regulations and overall aid (H1)
 
 ```{r tbl-show-neutral-h1, results="asis"}
 table.robust.neutral.regs.h1 <- mods.robust.neutral.regs.melded.h1 %>%
-  stargazer.fake(exponentiate=FALSE) %>%
+  stargazer.fake(exponentiate = FALSE) %>%
   cat()
 ```
 
@@ -304,7 +304,7 @@ table.robust.neutral.regs.h1 <- mods.robust.neutral.regs.melded.h1 %>%
 ```{r tbl-show-neutral-h2, results="asis"}
 table.robust.neutral.regs.h2 <- mods.robust.neutral.regs.melded.h2 %>%
   filter(str_detect(model.name, "h2")) %>%
-  stargazer.fake(exponentiate=TRUE) %>%
+  stargazer.fake(exponentiate = TRUE) %>%
   cat()
 ```
 
@@ -312,7 +312,7 @@ table.robust.neutral.regs.h2 <- mods.robust.neutral.regs.melded.h2 %>%
 
 ```{r tbl-show-neutral-h3, results="asis"}
 table.robust.neutral.regs.h3 <- mods.robust.neutral.regs.melded.h3 %>%
-  stargazer.fake(exponentiate=TRUE) %>%
+  stargazer.fake(exponentiate = TRUE) %>%
   cat()
 ```
 
@@ -339,7 +339,7 @@ mods.h1.after_2.raw <- df.country.aid.demean.after_2.impute %>%
 mods.h1.after_2 <- mods.h1.after_2.raw %>%
   gather(model.name, model, -m, -data) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE))
+         tidy = model %>% map(broom::tidy, conf.int = TRUE))
 
 # Meld the imputed models
 mods.h1.after_2.melded <- mods.h1.after_2 %>%
@@ -367,7 +367,7 @@ mods.h1.after_5.raw <- df.country.aid.demean.after_5.impute %>%
 mods.h1.after_5 <- mods.h1.after_5.raw %>%
   gather(model.name, model, -m, -data) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, conf.int=TRUE))
+         tidy = model %>% map(broom::tidy, conf.int = TRUE))
 
 # Meld the imputed models
 mods.h1.after_5.melded <- mods.h1.after_5 %>%

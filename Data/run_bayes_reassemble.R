@@ -19,10 +19,10 @@ h1.5 <- readRDS(file.path(PROJHOME, "Data", "data_cache", "h1_5.rds")) %>%
   select(-data)
 
 mods.h1.next_year.raw.bayes <- h1.1 %>%
-  left_join(h1.2, by="m") %>%
-  left_join(h1.3, by="m") %>%
-  left_join(h1.4, by="m") %>%
-  left_join(h1.5, by="m")
+  left_join(h1.2, by = "m") %>%
+  left_join(h1.3, by = "m") %>%
+  left_join(h1.4, by = "m") %>%
+  left_join(h1.5, by = "m")
 
 saveRDS(mods.h1.next_year.raw.bayes,
         file.path(PROJHOME, "Data", "data_cache", "models_bayes_h1.rds"))
@@ -45,10 +45,10 @@ h2.5 <- readRDS(file.path(PROJHOME, "Data", "data_cache", "h2_5.rds")) %>%
   select(-data)
 
 mods.h2.next_year.raw.bayes <- h2.1 %>%
-  left_join(h2.2, by="m") %>%
-  left_join(h2.3, by="m") %>%
-  left_join(h2.4, by="m") %>%
-  left_join(h2.5, by="m")
+  left_join(h2.2, by = "m") %>%
+  left_join(h2.3, by = "m") %>%
+  left_join(h2.4, by = "m") %>%
+  left_join(h2.5, by = "m")
 
 saveRDS(mods.h2.next_year.raw.bayes,
         file.path(PROJHOME, "Data", "data_cache", "models_bayes_h2.rds"))
@@ -71,10 +71,10 @@ h3_dom.5 <- readRDS(file.path(PROJHOME, "Data", "data_cache", "h3_dom_5.rds")) %
   select(-data)
 
 mods.h3.dom.next_year.bayes <- h3_dom.1 %>%
-  left_join(h3_dom.2, by="m") %>%
-  left_join(h3_dom.3, by="m") %>%
-  left_join(h3_dom.4, by="m") %>%
-  left_join(h3_dom.5, by="m")
+  left_join(h3_dom.2, by = "m") %>%
+  left_join(h3_dom.3, by = "m") %>%
+  left_join(h3_dom.4, by = "m") %>%
+  left_join(h3_dom.5, by = "m")
 
 saveRDS(mods.h3.dom.next_year.bayes,
         file.path(PROJHOME, "Data", "data_cache", "models_bayes_h3_domestic.rds"))
@@ -97,10 +97,10 @@ h3_foreign.5 <- readRDS(file.path(PROJHOME, "Data", "data_cache", "h3_foreign_5.
   select(-data)
 
 mods.h3.foreign.next_year.bayes <- h3_foreign.1 %>%
-  left_join(h3_foreign.2, by="m") %>%
-  left_join(h3_foreign.3, by="m") %>%
-  left_join(h3_foreign.4, by="m") %>%
-  left_join(h3_foreign.5, by="m")
-  
+  left_join(h3_foreign.2, by = "m") %>%
+  left_join(h3_foreign.3, by = "m") %>%
+  left_join(h3_foreign.4, by = "m") %>%
+  left_join(h3_foreign.5, by = "m")
+
 saveRDS(mods.h3.foreign.next_year.bayes,
         file.path(PROJHOME, "Data", "data_cache", "models_bayes_h3_foreign.rds"))

@@ -40,12 +40,12 @@ if (file.exists(oecd.rds)) {
   
   oecd.datatype <- oecd.structure$DATATYPE
   
-  oecd.filter <- paste(paste(oecd.recipients$id, collapse="+"),
-                       paste(oecd.donors$id, collapse="+"),
-                       paste(oecd.part$id, collapse="+"),
-                       paste(oecd.aidtype$id, collapse="+"),
-                       paste(oecd.datatype$id, collapse="+"),
-                       sep=".")
+  oecd.filter <- paste(paste(oecd.recipients$id, collapse = "+"),
+                       paste(oecd.donors$id, collapse = "+"),
+                       paste(oecd.part$id, collapse = "+"),
+                       paste(oecd.aidtype$id, collapse = "+"),
+                       paste(oecd.datatype$id, collapse = "+"),
+                       sep = ".")
   
   # OECD::get_dataset() technically creates a correct API call, but the 
   # underlying rsdmx::readSDMX() is **incredibly** slow and hard to debug, so
@@ -54,8 +54,8 @@ if (file.exists(oecd.rds)) {
   # call rsdmx::readSDMX() manually, and then save and cache the final data
   # frame so this whole convoluted process doesn't have to happen again.
   
-  # df.oecd <- get_dataset(dataset=dataset, filter=oecd.filter, 
-  #                        pre_formatted=TRUE)
+  # df.oecd <- get_dataset(dataset = dataset, filter = oecd.filter, 
+  #                        pre_formatted = TRUE)
   
   oecd.url <- paste0("http://stats.oecd.org/restsdmx/sdmx.ashx/GetData/",
                      oecd.dataset, "/", oecd.filter, 
@@ -65,11 +65,11 @@ if (file.exists(oecd.rds)) {
                              "tmp", "oecd.xml")
   
   oecd.get <- GET(oecd.url, 
-                  write_disk(oecd.raw.file, overwrite=TRUE), 
+                  write_disk(oecd.raw.file, overwrite = TRUE), 
                   progress())
   
   # This takes sooooooo long
-  df.oecd <- as.data.frame(rsdmx::readSDMX(oecd.raw.file, isURL=FALSE))
+  df.oecd <- as.data.frame(rsdmx::readSDMX(oecd.raw.file, isURL = FALSE))
   
   # Save this all to disk so it never has to happen again ever ever
   write_csv(df.oecd, file.path(PROJHOME, "Data", "data_raw",

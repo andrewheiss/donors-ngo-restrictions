@@ -29,21 +29,21 @@ library(parallel)
 get.distances <- function(year.to.get) {
   year.to.get <- as.Date(paste0(year.to.get, "-01-01"))
   
-  dmat.min <- cshapes::distmatrix(year.to.get, type="mindist", useGW=TRUE)
+  dmat.min <- cshapes::distmatrix(year.to.get, type = "mindist", useGW = TRUE)
   saveRDS(dmat.min, paste0("min_", year.to.get, ".rds"))
   
-  dmat.capital <- cshapes::distmatrix(year.to.get, type="capdist", useGW=TRUE)
+  dmat.capital <- cshapes::distmatrix(year.to.get, type = "capdist", useGW = TRUE)
   saveRDS(dmat.capital, paste0("capital_", year.to.get, ".rds"))
   
-  dmat.centdist <- cshapes::distmatrix(year.to.get, type="centdist", useGW=TRUE)
-  saveRDS(dmat.capital, paste0("cent_", year.to.get, ".rds"))
+  dmat.centdist <- cshapes::distmatrix(year.to.get, type = "centdist", useGW = TRUE)
+  saveRDS(dmat.centdist, paste0("cent_", year.to.get, ".rds"))
 }
 
 # Calculate the number of cores
 n.cores <- detectCores()
 
 # Initiate cluster
-cl <- makeCluster(n.cores, type="FORK")
+cl <- makeCluster(n.cores, type = "FORK")
 
 # Calculate all three distances for each year
 parSapply(cl, 1990:2015, get.distances)

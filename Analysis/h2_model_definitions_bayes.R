@@ -63,9 +63,9 @@ mod.h2.barriers.total.bayes <- function(df, outcome) {
   cat("#####\n")
   
   stan_glmer(build.formula(outcome, ivs.h2.barriers.total),
-             data=df, family=gaussian(),
-             prior=normal(), prior_intercept=normal(),
-             chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
+             data = df, family = gaussian(),
+             prior = normal(), prior_intercept = normal(),
+             chains = CHAINS, iter = ITER, warmup = WARMUP, seed = BAYES.SEED)
 }
 
 mod.h2.barriers.new.bayes <- function(df, outcome) {
@@ -74,9 +74,9 @@ mod.h2.barriers.new.bayes <- function(df, outcome) {
   cat("#####\n")
   
   stan_glmer(build.formula(outcome, ivs.h2.barriers.new),
-             data=df, family=gaussian(),
-             prior=normal(), prior_intercept=normal(),
-             chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
+             data = df, family = gaussian(),
+             prior = normal(), prior_intercept = normal(),
+             chains = CHAINS, iter = ITER, warmup = WARMUP, seed = BAYES.SEED)
 }
 
 mod.h2.type.total.bayes <- function(df, outcome) {
@@ -85,9 +85,9 @@ mod.h2.type.total.bayes <- function(df, outcome) {
   cat("#####\n")
   
   stan_glmer(build.formula(outcome, ivs.h2.type.total),
-             data=df, family=gaussian(),
-             prior=normal(), prior_intercept=normal(),
-             chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
+             data = df, family = gaussian(),
+             prior = normal(), prior_intercept = normal(),
+             chains = CHAINS, iter = ITER, warmup = WARMUP, seed = BAYES.SEED)
 }
 
 mod.h2.type.new.bayes <- function(df, outcome) { 
@@ -96,9 +96,9 @@ mod.h2.type.new.bayes <- function(df, outcome) {
   cat("#####\n")
   
   stan_glmer(build.formula(outcome, ivs.h2.type.new),
-             data=df, family=gaussian(),
-             prior=normal(), prior_intercept=normal(),
-             chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
+             data = df, family = gaussian(),
+             prior = normal(), prior_intercept = normal(),
+             chains = CHAINS, iter = ITER, warmup = WARMUP, seed = BAYES.SEED)
 }
 
 mod.h2.csre.bayes <- function(df, outcome) {  
@@ -107,7 +107,7 @@ mod.h2.csre.bayes <- function(df, outcome) {
   cat("#####\n")
   
   stan_glmer(build.formula(outcome, ivs.h2.csre),
-             data=df, family=gaussian(),
-             prior=normal(), prior_intercept=normal(),
-             chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
+             data = df, family = gaussian(),
+             prior = normal(), prior_intercept = normal(),
+             chains = CHAINS, iter = ITER, warmup = WARMUP, seed = BAYES.SEED)
 }

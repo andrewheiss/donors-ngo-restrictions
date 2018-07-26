@@ -9,9 +9,9 @@ mod.h1.advocacy.total.bayes <- function(df, outcome) {
     (1 | cowcode) + (1 | year)
   
   stan_glmer(build.formula(outcome, indep.vars),
-             data=df, family=gaussian(),
-             prior=normal(), prior_intercept=normal(),
-             chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
+             data = df, family = gaussian(),
+             prior = normal(), prior_intercept = normal(),
+             chains = CHAINS, iter = ITER, warmup = WARMUP, seed = BAYES.SEED)
 }
 
 mod.h1.entry.total.bayes <- function(df, outcome) {
@@ -25,9 +25,9 @@ mod.h1.entry.total.bayes <- function(df, outcome) {
     (1 | cowcode) + (1 | year)
   
   stan_glmer(build.formula(outcome, indep.vars),
-             data=df, family=gaussian(),
-             prior=normal(), prior_intercept=normal(),
-             chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
+             data = df, family = gaussian(),
+             prior = normal(), prior_intercept = normal(),
+             chains = CHAINS, iter = ITER, warmup = WARMUP, seed = BAYES.SEED)
 }
 
 mod.h1.funding.total.bayes <- function(df, outcome) {
@@ -41,7 +41,7 @@ mod.h1.funding.total.bayes <- function(df, outcome) {
     (1 | cowcode) + (1 | year)
   
   stan_glmer(build.formula(outcome, indep.vars),
-             data=df, family=gaussian(),
-             prior=normal(), prior_intercept=normal(),
-             chains=CHAINS, iter=ITER, warmup=WARMUP, seed=BAYES.SEED)
+             data = df, family = gaussian(),
+             prior = normal(), prior_intercept = normal(),
+             chains = CHAINS, iter = ITER, warmup = WARMUP, seed = BAYES.SEED)
 }

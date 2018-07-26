@@ -82,7 +82,7 @@ We look at NGO legislation in a few different ways:
 mods.h1.next_year.bayes <- mods.h1.next_year.raw.bayes %>%
   gather(model.name, model, -m) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
+         tidy = model %>% map(broom::tidy, intervals = TRUE, prob = 0.95),
          augment = model %>% map(broom::augment)) %>%
   filter(m != "original")
 ```
@@ -101,14 +101,14 @@ model.to.check <- mods.h1.next_year.bayes %>%
 How well does the posterior predictive distribution fit the observed outcome? Not great, but not perfectly. The actual distribution is bimodal, with a bunch of zeros, and the model gets the two peaks, but they're shallow. We can live with it, though.
 
 ```{r h1-diag-density}
-pp_check(model.to.check, plotfun="ppc_dens_overlay", nreps=5) + 
+pp_check(model.to.check, plotfun = "ppc_dens_overlay", nreps = 5) + 
   theme_donors()
 ```
 
 What about chain convergence? These should look like tops if everything converges, with no observations at 0 in the mean Metropolis-Hastings aceptance panel.
 
 ```{r h1-diag-divergence}
-rstan::stan_diag(model.to.check, information="divergence")
+rstan::stan_diag(model.to.check, information = "divergence")
 ```
 
 
@@ -144,8 +144,8 @@ mods.h1.melded <- bayes.meld(mods.h1.next_year.bayes,
                              vars.to.plot)$melded.summary
 
 plot.data <- mods.h1.melded %>%
-  left_join(coef.names.all, by="term") %>%
-  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  left_join(coef.names.all, by = "term") %>%
+  mutate(term = factor(term, levels = vars.to.plot, ordered = TRUE)) %>%
   arrange(desc(term)) %>%
   mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
   mutate(coef.type = case_when(
@@ -153,34 +153,34 @@ plot.data <- mods.h1.melded %>%
     str_detect(.$term, "_between") ~ "Between",
     TRUE ~ "Not split"
   )) %>% 
-  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
-                            ordered=TRUE)) %>%
-  mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
+  mutate(coef.type = factor(coef.type, levels = c("Within", "Between", "Not split"),
+                            ordered = TRUE)) %>%
+  mutate(model.name = factor(model.name, levels = rev(unique(model.name)), ordered = TRUE))
 
-fig.coefs.h1 <- ggplot(plot.data, aes(x=med, y=term_plot, 
-                                      xmin=`2.5%`, xmax=`97.5%`, colour=model.name)) +
-  geom_vline(xintercept=0) +
+fig.coefs.h1 <- ggplot(plot.data, aes(x = med, y = term_plot, 
+                                      xmin = `2.5%`, xmax = `97.5%`, colour = model.name)) +
+  geom_vline(xintercept = 0) +
   geom_pointrangeh() +
-  labs(x="Posterior median change in log ODA in following year", y=NULL) +
-  scale_colour_manual(values=model.colors) +
-  guides(color=FALSE) +
-  theme_donors() + theme(axis.text.x=element_text(angle=45, hjust=1)) +
-  facet_wrap(~ coef.type, scales="free")
+  labs(x = "Posterior median change in log ODA in following year", y = NULL) +
+  scale_colour_manual(values = model.colors) +
+  guides(color = FALSE) +
+  theme_donors() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~ coef.type, scales = "free")
 fig.coefs.h1
 
-fig.save.cairo(fig.coefs.h1, filename="fig-coefs-h1-bayes",
-               width=7, height=2.5)
+fig.save.cairo(fig.coefs.h1, filename = "fig-coefs-h1-bayes",
+               width = 7, height = 2.5)
 ```
 
 ```{r h1-table, results="asis", warning=FALSE}
 caption <- "The effect of anti-NGO legislation on OECD overseas development assistance (ODA) in the following year (H~1~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than zero. {#tbl:h1-coefs}"
 note <- c("Dependent variable log transformed.")
 table.h1 <- bayesgazer(mods.h1.next_year.bayes,
-                       caption=caption, note=note)
+                       caption = caption, note = note)
 
 cat(table.h1)
-cat(table.h1, file=file.path(PROJHOME, "Output",
-                             "tbl-h1-coefs-bayes.md"))
+cat(table.h1, file = file.path(PROJHOME, "Output",
+                               "tbl-h1-coefs-bayes.md"))
 ```
 
 
@@ -202,24 +202,24 @@ model <- mods.h1.next_year.bayes %>%
 # model, not just the model matrix, when calling object$data. model.frame()
 # chokes on object$formula because of (1 | x) grouping terms, but
 # get_all_vars() works.
-new.data <- get_all_vars(model$formula, data=model$data) %>%
+new.data <- get_all_vars(model$formula, data = model$data) %>%
   select(-c(barriers.total_within, year, cowcode)) %>%
-    summarise_all(typical) %>%
-    mutate(id = 1) %>%
-    right_join(expand.grid(barriers.total_within = seq(-3, 4, 0.5),
-                           cowcode = 1000:1049,
-                           year = 1981:2012,
-                           id = 1), by="id") %>% select(-id)
+  summarise_all(typical) %>%
+  mutate(id = 1) %>%
+  right_join(expand.grid(barriers.total_within = seq(-3, 4, 0.5),
+                         cowcode = 1000:1049,
+                         year = 1981:2012,
+                         id = 1), by = "id") %>% select(-id)
 
-cluster <- create_cluster(cores=cores)
+cluster <- create_cluster(cores = cores)
 
 predicted.h1.barriers.total <- new.data %>%
   nest(-cowcode) %>%
-  partition(cowcode, cluster=cluster) %>%
+  partition(cowcode, cluster = cluster) %>%
   cluster_library("tidyverse") %>%
   cluster_assign_value("model", model) %>%
   cluster_assign_value("generate_predictions", generate_predictions) %>%
-  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  mutate(predicted = map(.x = data, ~ generate_predictions(.x))) %>%
   collect() %>%
   unnest()
 
@@ -231,7 +231,7 @@ df.plot.data <- predicted.h1.barriers.total %>%
 df.plot.data.mean <- df.plot.data %>%
   group_by(barriers.total_within) %>%
   summarise(predicted = mean(predicted)) %>%
-  mutate(cowcode=1)  # Fake country so the line plots
+  mutate(cowcode = 1)  # Fake country so the line plots
 ```
 
 ```{r h1-predict-individual, warning=FALSE, message=FALSE}
@@ -246,44 +246,44 @@ model <- mods.h1.next_year.bayes %>%
   filter(m == "imp1", model.name == "mod.h1.type.total") %>%
   select(model) %>% .[[1]] %>% .[[1]]
 
-hypothetical.bounds <- get_all_vars(model$formula, data=model$data) %>%
-    select(advocacy_within, entry_within, funding_within) %>%
-    summarise_all(funs(min, max)) %>%
-    gather(key, value) %>%
-    mutate(value = round(value, 0)) %>%
-    # Have to separate on _m because of multiple _s, then re-add the m
-    separate(key, into=c("term", "variable"), sep="_m") %>%
-    mutate(variable = paste0("m", variable)) %>%
-    spread(variable, value)
+hypothetical.bounds <- get_all_vars(model$formula, data = model$data) %>%
+  select(advocacy_within, entry_within, funding_within) %>%
+  summarise_all(funs(min, max)) %>%
+  gather(key, value) %>%
+  mutate(value = round(value, 0)) %>%
+  # Have to separate on _m because of multiple _s, then re-add the m
+  separate(key, into = c("term", "variable"), sep = "_m") %>%
+  mutate(variable = paste0("m", variable)) %>%
+  spread(variable, value)
 
 new.data.hypothetical.nested <- hypothetical.bounds %>%
-    nest(-term) %>%
-    mutate(newdata = map2(.x=data, .y=term,
-                          ~ expand.grid(term = seq(.x$min, .x$max, by=0.5),
-                                        cowcode = 1000:1049,
-                                        year = 1981:2012,
-                                        id = 1) %>%
-                            # Rename the term column to the actual term name
-                            magrittr::set_colnames(c(.y, colnames(.)[-1]))))
-  
+  nest(-term) %>%
+  mutate(newdata = map2(.x = data, .y = term,
+                        ~ expand.grid(term = seq(.x$min, .x$max, by = 0.5),
+                                      cowcode = 1000:1049,
+                                      year = 1981:2012,
+                                      id = 1) %>%
+                          # Rename the term column to the actual term name
+                          magrittr::set_colnames(c(.y, colnames(.)[-1]))))
+
 new.data.hypothetical <- as_tibble(bind_rows(new.data.hypothetical.nested$newdata)) %>%
   mutate_at(vars(contains("within")), funs(ifelse(is.na(.), 0, .)))
-  
-new.data <- get_all_vars(model$formula, data=model$data) %>%
+
+new.data <- get_all_vars(model$formula, data = model$data) %>%
   select(-c(advocacy_within, entry_within, funding_within, year, cowcode)) %>%
   summarise_all(typical) %>%
   mutate(id = 1) %>%
-  right_join(new.data.hypothetical, by="id") %>% select(-id)
+  right_join(new.data.hypothetical, by = "id") %>% select(-id)
 
-cluster <- create_cluster(cores=cores)
+cluster <- create_cluster(cores = cores)
 
 predicted.h1.barriers.individual <- new.data %>%
   nest(-cowcode) %>%
-  partition(cowcode, cluster=cluster) %>%
+  partition(cowcode, cluster = cluster) %>%
   cluster_library("tidyverse") %>%
   cluster_assign_value("model", model) %>%
   cluster_assign_value("generate_predictions", generate_predictions) %>%
-  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  mutate(predicted = map(.x = data, ~ generate_predictions(.x))) %>%
   collect() %>%
   unnest()
 
@@ -291,13 +291,13 @@ df.plot.data.indiv <- predicted.h1.barriers.individual %>%
   gather(barrier, barrier.value, c(advocacy_within, entry_within, funding_within)) %>%
   group_by(cowcode, barrier.value, barrier) %>%
   summarise_at(vars(predicted), funs(mean(.))) %>%
-  left_join(barriers.indiv.clean.names, by="barrier")
+  left_join(barriers.indiv.clean.names, by = "barrier")
 
 df.plot.data.mean.indiv <- df.plot.data.indiv %>%
   group_by(barrier, barrier.value) %>%
   summarise(predicted = mean(predicted)) %>%
-  mutate(cowcode=1) %>%  # Fake country so the line plots
-  left_join(barriers.indiv.clean.names, by="barrier")
+  mutate(cowcode = 1) %>%  # Fake country so the line plots
+  left_join(barriers.indiv.clean.names, by = "barrier")
 ```
 
 ```{r h1-predict-both, warning=FALSE, fig.width=6.5, fig.height=4}
@@ -320,31 +320,31 @@ df.panel.highlight <- df.plot.data.both %>%
   distinct(barrier.clean, highlight)
 
 fig.predicted.h1.barriers.both <- ggplot(df.plot.data.both, 
-                                         aes(x=barrier.value, y=expm1(predicted), 
-                                             group=cowcode)) + 
-  geom_rect(data=df.panel.highlight, 
-            aes(fill=highlight, x=NULL, y=NULL, group=NULL),
-            xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf, alpha=0.15) +
-  geom_vline(xintercept=0, size=0.5) +
-  geom_smooth(method="lm", size=0.1, alpha=0.1, colour=simulation.individual) +
-  geom_smooth(data=df.plot.data.mean.both, size=1.5, method="lm", colour=simulation.mean) +
-  labs(x="Difference from average number of anti-NGO barriers in country\n(within effects)",
-       y="Predicted ODA in the following year") +
-  scale_y_continuous(labels=scales::dollar, trans=scales::log1p_trans()) +
-  scale_fill_manual(values=c(NA, "grey50"), guide=FALSE) +
-  facet_wrap(~ barrier.clean, scales="free_x") +
+                                         aes(x = barrier.value, y = expm1(predicted), 
+                                             group = cowcode)) + 
+  geom_rect(data = df.panel.highlight, 
+            aes(fill = highlight, x = NULL, y = NULL, group = NULL),
+            xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, alpha = 0.15) +
+  geom_vline(xintercept = 0, size = 0.5) +
+  geom_smooth(method = "lm", size = 0.1, alpha = 0.1, colour = simulation.individual) +
+  geom_smooth(data = df.plot.data.mean.both, size = 1.5, method = "lm", colour = simulation.mean) +
+  labs(x = "Difference from average number of anti-NGO barriers in country\n(within effects)",
+       y = "Predicted ODA in the following year") +
+  scale_y_continuous(labels = scales::dollar, trans = scales::log1p_trans()) +
+  scale_fill_manual(values = c(NA, "grey50"), guide = FALSE) +
+  facet_wrap(~ barrier.clean, scales = "free_x") +
   theme_donors()
 
 fig.display.both <- fig.predicted.h1.barriers.both + 
-  labs(title="Donors reduce aid more in response to\nadditional advocacy-focused anti-NGO laws",
-       subtitle="Predicted foreign aid (ODA) across range of differences from the average number of\nanti-NGO laws in a hypothetical average country; dark line shows average of\n500 draws from posterior distribution",
-       caption="Chaudhry and Heiss (2017)") + 
+  labs(title = "Donors reduce aid more in response to\nadditional advocacy-focused anti-NGO laws",
+       subtitle = "Predicted foreign aid (ODA) across range of differences from the average number of\nanti-NGO laws in a hypothetical average country; dark line shows average of\n500 draws from posterior distribution",
+       caption = "Chaudhry and Heiss (2017)") + 
   theme_donors(11)
 
 fig.predicted.h1.barriers.both
 
-fig.save.cairo(fig.predicted.h1.barriers.both, filename="fig-predicted-h1",
-               width=6.5, height=4)
+fig.save.cairo(fig.predicted.h1.barriers.both, filename = "fig-predicted-h1",
+               width = 6.5, height = 4)
 ```
 
 
@@ -371,7 +371,7 @@ We look at NGO legislation in the same ways as H~1~ and use the same controls.
 mods.h2.next_year.bayes <- mods.h2.next_year.raw.bayes %>%
   gather(model.name, model, -m) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
+         tidy = model %>% map(broom::tidy, intervals = TRUE, prob = 0.95),
          augment = model %>% map(broom::augment)) %>%
   filter(m != "original")
 ```
@@ -390,14 +390,14 @@ model.to.check <- mods.h2.next_year.bayes %>%
 Posterior predictive distribution vs. observed outcome?
 
 ```{r h2-diag-density}
-pp_check(model.to.check, plotfun="ppc_dens_overlay", nreps=5) + 
+pp_check(model.to.check, plotfun = "ppc_dens_overlay", nreps = 5) + 
   theme_donors()
 ```
 
 Chain convergence:
 
 ```{r h2-diag-divergence}
-rstan::stan_diag(model.to.check, information="divergence")
+rstan::stan_diag(model.to.check, information = "divergence")
 ```
 
 
@@ -413,11 +413,11 @@ vars.to.plot <- c("barriers.total_within", "barriers.total_between",
                   "csre_within", "csre_between")
 
 mods.h2.melded <- bayes.meld(mods.h2.next_year.bayes,
-                             vars.to.plot, exponentiate=TRUE)$melded.summary
+                             vars.to.plot, exponentiate = TRUE)$melded.summary
 
 plot.data <- mods.h2.melded %>%
-  left_join(coef.names.all, by="term") %>%
-  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  left_join(coef.names.all, by = "term") %>%
+  mutate(term = factor(term, levels = vars.to.plot, ordered = TRUE)) %>%
   arrange(desc(term)) %>%
   mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
   mutate(coef.type = case_when(
@@ -425,34 +425,34 @@ plot.data <- mods.h2.melded %>%
     str_detect(.$term, "_between") ~ "Between",
     TRUE ~ "Not split"
   )) %>% 
-  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
-                            ordered=TRUE)) %>%
-  mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
+  mutate(coef.type = factor(coef.type, levels = c("Within", "Between", "Not split"),
+                            ordered = TRUE)) %>%
+  mutate(model.name = factor(model.name, levels = rev(unique(model.name)), ordered = TRUE))
 
-fig.coefs.h2 <- ggplot(plot.data, aes(x=med, y=term_plot, colour=model.name)) +
-  geom_vline(xintercept=1, colour="grey50", size=0.5) + 
-  geom_pointrangeh(aes(xmin=`2.5%`, xmax=`97.5%`), size=0.5) + 
-  labs(x="Odds ratio", y=NULL) +
-  scale_colour_manual(values=model.colors) +
-  guides(color=FALSE) +
+fig.coefs.h2 <- ggplot(plot.data, aes(x = med, y = term_plot, colour = model.name)) +
+  geom_vline(xintercept = 1, colour = "grey50", size = 0.5) + 
+  geom_pointrangeh(aes(xmin = `2.5%`, xmax = `97.5%`), size = 0.5) + 
+  labs(x = "Odds ratio", y = NULL) +
+  scale_colour_manual(values = model.colors) +
+  guides(color = FALSE) +
   theme_donors() + 
-  facet_wrap(~ coef.type, scales="free")
+  facet_wrap(~ coef.type, scales = "free")
 fig.coefs.h2
 
-fig.save.cairo(fig.coefs.h2, filename="fig-coefs-h2-bayes",
-               width=7, height=2.5)
+fig.save.cairo(fig.coefs.h2, filename = "fig-coefs-h2-bayes",
+               width = 7, height = 2.5)
 ```
 
 ```{r h2-table, results="asis", warning=FALSE}
 caption <- "The effect of anti-NGO legislation on the proportion of OECD overseas development assistance (ODA) committed to contentious purposes in the following year (H~2~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one. {#tbl:h2-coefs}"
 note <- c("Logit-linear models. Odds ratios reported.")
 
-table.h2 <- bayesgazer(mods.h2.next_year.bayes, exponentiate=TRUE,
-                       caption=caption, note=note)
+table.h2 <- bayesgazer(mods.h2.next_year.bayes, exponentiate = TRUE,
+                       caption = caption, note = note)
 
 cat(table.h2)
-cat(table.h2, file=file.path(PROJHOME, "Output",
-                             "tbl-h2-coefs-bayes.md"))
+cat(table.h2, file = file.path(PROJHOME, "Output",
+                               "tbl-h2-coefs-bayes.md"))
 ```
 
 
@@ -466,24 +466,24 @@ model <- mods.h2.next_year.bayes %>%
   filter(m == "imp1", model.name == "mod.h2.type.total") %>%
   select(model) %>% .[[1]] %>% .[[1]]
 
-new.data <- get_all_vars(model$formula, data=model$data) %>%
+new.data <- get_all_vars(model$formula, data = model$data) %>%
   select(-c(advocacy_within, year, cowcode)) %>%
-    summarise_all(typical) %>%
-    mutate(id = 1) %>%
-    right_join(expand.grid(advocacy_within = seq(-1, 2, 0.5),
-                           cowcode = 1000:1049,
-                           year = 1981:2012,
-                           id = 1), by="id") %>% select(-id)
+  summarise_all(typical) %>%
+  mutate(id = 1) %>%
+  right_join(expand.grid(advocacy_within = seq(-1, 2, 0.5),
+                         cowcode = 1000:1049,
+                         year = 1981:2012,
+                         id = 1), by = "id") %>% select(-id)
 
-cluster <- create_cluster(cores=cores)
+cluster <- create_cluster(cores = cores)
 
 predicted.h2.advocacy <- new.data %>%
   nest(-cowcode) %>%
-  partition(cowcode, cluster=cluster) %>%
+  partition(cowcode, cluster = cluster) %>%
   cluster_library("tidyverse") %>%
   cluster_assign_value("model", model) %>%
   cluster_assign_value("generate_predictions", generate_predictions) %>%
-  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  mutate(predicted = map(.x = data, ~ generate_predictions(.x))) %>%
   collect() %>%
   unnest()
 
@@ -492,24 +492,24 @@ model <- mods.h2.next_year.bayes %>%
   filter(m == "imp1", model.name == "mod.h2.csre") %>%
   select(model) %>% .[[1]] %>% .[[1]]
 
-new.data <- get_all_vars(model$formula, data=model$data) %>%
+new.data <- get_all_vars(model$formula, data = model$data) %>%
   select(-c(csre_within, year, cowcode)) %>%
-    summarise_all(typical) %>%
-    mutate(id = 1) %>%
-    right_join(expand.grid(csre_within = seq(-5, 5, 0.5),
-                           cowcode = 1000:1049,
-                           year = 1981:2012,
-                           id = 1), by="id") %>% select(-id)
+  summarise_all(typical) %>%
+  mutate(id = 1) %>%
+  right_join(expand.grid(csre_within = seq(-5, 5, 0.5),
+                         cowcode = 1000:1049,
+                         year = 1981:2012,
+                         id = 1), by = "id") %>% select(-id)
 
-cluster <- create_cluster(cores=cores)
+cluster <- create_cluster(cores = cores)
 
 predicted.h2.csre <- new.data %>%
   nest(-cowcode) %>%
-  partition(cowcode, cluster=cluster) %>%
+  partition(cowcode, cluster = cluster) %>%
   cluster_library("tidyverse") %>%
   cluster_assign_value("model", model) %>%
   cluster_assign_value("generate_predictions", generate_predictions) %>%
-  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  mutate(predicted = map(.x = data, ~ generate_predictions(.x))) %>%
   collect() %>%
   unnest()
 
@@ -518,7 +518,7 @@ df.plot.h2.advocacy <- predicted.h2.advocacy %>%
   group_by(cowcode, advocacy_within) %>%
   summarise_at(vars(predicted), funs(mean(.))) %>%
   ungroup() %>%
-  mutate(value.fixed = inv.logit(predicted, a=0.001),
+  mutate(value.fixed = inv.logit(predicted, a = 0.001),
          variable.clean = "Barriers to advocacy") %>%
   rename(variable = advocacy_within)
 
@@ -526,7 +526,7 @@ df.plot.h2.csre <- predicted.h2.csre %>%
   group_by(cowcode, csre_within) %>%
   summarise_at(vars(predicted), funs(mean(.))) %>%
   ungroup() %>%
-  mutate(value.fixed = inv.logit(predicted, a=0.001),
+  mutate(value.fixed = inv.logit(predicted, a = 0.001),
          variable.clean = "Civil society regulatory environment") %>%
   rename(variable = csre_within)
 
@@ -535,23 +535,23 @@ df.plot.data <- bind_rows(df.plot.h2.advocacy, df.plot.h2.csre)
 df.plot.data.mean <- df.plot.data %>%
   group_by(variable.clean, variable) %>%
   summarise(predicted = mean(predicted)) %>%
-  mutate(value.fixed = inv.logit(predicted, a=0.001)) %>%
-  mutate(cowcode=1)  # Fake country so the line plots
+  mutate(value.fixed = inv.logit(predicted, a = 0.001)) %>%
+  mutate(cowcode = 1)  # Fake country so the line plots
 
-fig.predicted.h2.barriers <- ggplot(df.plot.data, aes(x=variable, 
-                                                      y=value.fixed, group=cowcode)) + 
-  geom_vline(xintercept=0, size=0.5) +
-  geom_smooth(method="lm", size=0.1, alpha=0.1, colour=simulation.individual) +
-  geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour=simulation.mean) +
-  labs(x="Difference from average level of NGO legislation in country\n(within effect)",
-       y="Predicted proportion of\ncontentious aid in the following year") +
-  scale_y_continuous(labels=scales::percent) +
-  facet_wrap(~ variable.clean, scales="free_x") +
+fig.predicted.h2.barriers <- ggplot(df.plot.data, aes(x = variable, 
+                                                      y = value.fixed, group = cowcode)) + 
+  geom_vline(xintercept = 0, size = 0.5) +
+  geom_smooth(method = "lm", size = 0.1, alpha = 0.1, colour = simulation.individual) +
+  geom_smooth(data = df.plot.data.mean, size = 1.5, method = "lm", colour = simulation.mean) +
+  labs(x = "Difference from average level of NGO legislation in country\n(within effect)",
+       y = "Predicted proportion of\ncontentious aid in the following year") +
+  scale_y_continuous(labels = scales::percent) +
+  facet_wrap(~ variable.clean, scales = "free_x") +
   theme_donors()
 fig.predicted.h2.barriers
 
-fig.save.cairo(fig.predicted.h2.barriers, filename="fig-predicted-h2",
-               width=6.5, height=2.5)
+fig.save.cairo(fig.predicted.h2.barriers, filename = "fig-predicted-h2",
+               width = 6.5, height = 2.5)
 ```
 
 
@@ -576,7 +576,7 @@ Again, we use the same NGO legislation variables as H~1~ and H~2~ and use the sa
 mods.h3.dom.next_year.bayes <- mods.h3.dom.next_year.raw %>%
   gather(model.name, model, -m) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
+         tidy = model %>% map(broom::tidy, intervals = TRUE, prob = 0.95),
          augment = model %>% map(broom::augment)) %>%
   filter(m != "original")
 ```
@@ -586,7 +586,7 @@ mods.h3.dom.next_year.bayes <- mods.h3.dom.next_year.raw %>%
 mods.h3.foreign.next_year.bayes <- mods.h3.foreign.next_year.raw %>%
   gather(model.name, model, -m) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, intervals=TRUE, prob=0.95),
+         tidy = model %>% map(broom::tidy, intervals = TRUE, prob = 0.95),
          augment = model %>% map(broom::augment)) %>%
   filter(m != "original")
 ```
@@ -604,14 +604,14 @@ model.to.check <- mods.h3.dom.next_year.bayes %>%
 Posterior predictive distribution vs. observed outcome?
 
 ```{r h3-diag-density}
-pp_check(model.to.check, plotfun="ppc_dens_overlay", nreps=5) + 
+pp_check(model.to.check, plotfun = "ppc_dens_overlay", nreps = 5) + 
   theme_donors()
 ```
 
 Chain convergence:
 
 ```{r h3-diag-divergence}
-rstan::stan_diag(model.to.check, information="divergence")
+rstan::stan_diag(model.to.check, information = "divergence")
 ```
 
 
@@ -624,11 +624,11 @@ caption <- "The effect of anti-NGO legislation on the proportion of US aid chann
 note <- c("Logit-linear models. Odds ratios reported.")
 
 table.h3.domestic <- bayesgazer(mods.h3.dom.next_year.bayes,
-                                caption=caption, note=note, exponentiate=TRUE)
+                                caption = caption, note = note, exponentiate = TRUE)
 
 cat(table.h3.domestic)
-cat(table.h3.domestic, file=file.path(PROJHOME, "Output",
-                                      "tbl-h3-domestic-coefs-bayes.md"))
+cat(table.h3.domestic, file = file.path(PROJHOME, "Output",
+                                        "tbl-h3-domestic-coefs-bayes.md"))
 ```
 
 #### Proportion to foreign NGOs
@@ -638,11 +638,11 @@ caption <- "The effect of anti-NGO legislation on the proportion of US aid chann
 note <- c("Logit-linear models. Odds ratios reported.")
 
 table.h3.domestic <- bayesgazer(mods.h3.foreign.next_year.bayes,
-                                caption=caption, note=note, exponentiate=TRUE)
+                                caption = caption, note = note, exponentiate = TRUE)
 
 cat(table.h3.domestic)
-cat(table.h3.domestic, file=file.path(PROJHOME, "Output",
-                                      "tbl-h3-foreign-coefs-bayes.md"))
+cat(table.h3.domestic, file = file.path(PROJHOME, "Output",
+                                        "tbl-h3-foreign-coefs-bayes.md"))
 ```
 
 #### Both
@@ -657,11 +657,11 @@ vars.to.plot <- c("barriers.total_within", "barriers.total_between",
                   "csre_within", "csre_between")
 
 mods.h3.dom.melded <- bayes.meld(mods.h3.dom.next_year.bayes,
-                                 vars.to.plot, exponentiate=TRUE)$melded.summary
+                                 vars.to.plot, exponentiate = TRUE)$melded.summary
 
 coefs.raw.h3.dom <- mods.h3.dom.melded %>%
-  left_join(coef.names.all, by="term") %>%
-  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  left_join(coef.names.all, by = "term") %>%
+  mutate(term = factor(term, levels = vars.to.plot, ordered = TRUE)) %>%
   arrange(desc(term)) %>%
   mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
   mutate(coef.type = case_when(
@@ -669,16 +669,16 @@ coefs.raw.h3.dom <- mods.h3.dom.melded %>%
     str_detect(.$term, "_between") ~ "Between",
     TRUE ~ "Not split"
   )) %>% 
-  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
-                            ordered=TRUE)) %>%
-  mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
+  mutate(coef.type = factor(coef.type, levels = c("Within", "Between", "Not split"),
+                            ordered = TRUE)) %>%
+  mutate(model.name = factor(model.name, levels = rev(unique(model.name)), ordered = TRUE))
 
 mods.h3.foreign.melded <- bayes.meld(mods.h3.foreign.next_year.bayes,
-                                     vars.to.plot, exponentiate=TRUE)$melded.summary
+                                     vars.to.plot, exponentiate = TRUE)$melded.summary
 
 coefs.raw.h3.foreign <- mods.h3.foreign.melded %>%
-  left_join(coef.names.all, by="term") %>%
-  mutate(term = factor(term, levels=vars.to.plot, ordered=TRUE)) %>%
+  left_join(coef.names.all, by = "term") %>%
+  mutate(term = factor(term, levels = vars.to.plot, ordered = TRUE)) %>%
   arrange(desc(term)) %>%
   mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
   mutate(coef.type = case_when(
@@ -686,28 +686,28 @@ coefs.raw.h3.foreign <- mods.h3.foreign.melded %>%
     str_detect(.$term, "_between") ~ "Between",
     TRUE ~ "Not split"
   )) %>% 
-  mutate(coef.type = factor(coef.type, levels=c("Within", "Between", "Not split"),
-                            ordered=TRUE)) %>%
-  mutate(model.name = factor(model.name, levels=rev(unique(model.name)), ordered=TRUE))
+  mutate(coef.type = factor(coef.type, levels = c("Within", "Between", "Not split"),
+                            ordered = TRUE)) %>%
+  mutate(model.name = factor(model.name, levels = rev(unique(model.name)), ordered = TRUE))
 
 coefs.h3.both <- bind_rows(`Domestic NGOs` = coefs.raw.h3.dom,
                            `Foreign NGOs` = coefs.raw.h3.foreign,
-                           .id="channel")
+                           .id = "channel")
 
-fig.coefs.h3 <- ggplot(coefs.h3.both, aes(y=term_plot, x=med, 
-                                          colour=interaction(model.name, channel))) + 
-  geom_vline(xintercept=1, colour="grey50", size=1) + 
-  geom_pointrangeh(aes(xmin=`2.5%`, xmax=`97.5%`, shape=channel), size=0.5,
-                   position=position_dodgev(height=0.5)) + 
-  labs(x="Odds ratio", y=NULL) +
-  scale_colour_manual(values=c(model.colors, model.colors)) +
-  guides(color=FALSE, shape=guide_legend(title=NULL, reverse=TRUE)) +
+fig.coefs.h3 <- ggplot(coefs.h3.both, aes(y = term_plot, x = med, 
+                                          colour = interaction(model.name, channel))) + 
+  geom_vline(xintercept = 1, colour = "grey50", size = 1) + 
+  geom_pointrangeh(aes(xmin = `2.5%`, xmax = `97.5%`, shape = channel), size = 0.5,
+                   position = position_dodgev(height = 0.5)) + 
+  labs(x = "Odds ratio", y = NULL) +
+  scale_colour_manual(values = c(model.colors, model.colors)) +
+  guides(color = FALSE, shape = guide_legend(title = NULL, reverse = TRUE)) +
   theme_donors() +
-  facet_wrap(~ coef.type, scales="free")
+  facet_wrap(~ coef.type, scales = "free")
 fig.coefs.h3
 
-fig.save.cairo(fig.coefs.h3, filename="fig-coefs-h3-bayes",
-               width=7, height=3)
+fig.save.cairo(fig.coefs.h3, filename = "fig-coefs-h3-bayes",
+               width = 7, height = 3)
 ```
 
 ### Model diagnostics
@@ -721,24 +721,24 @@ model <- mods.h3.foreign.next_year.bayes %>%
   filter(m == "imp1", model.name == "mod.h3.foreign.type.total") %>%
   select(model) %>% .[[1]] %>% .[[1]]
 
-new.data <- get_all_vars(model$formula, data=model$data) %>%
+new.data <- get_all_vars(model$formula, data = model$data) %>%
   select(-c(funding_within, year, cowcode)) %>%
-    summarise_all(typical) %>%
-    mutate(id = 1) %>%
-    right_join(expand.grid(funding_within = seq(-2, 3, 0.5),
-                           cowcode = 1000:1049,
-                           year = 1981:2012,
-                           id = 1), by="id") %>% select(-id)
+  summarise_all(typical) %>%
+  mutate(id = 1) %>%
+  right_join(expand.grid(funding_within = seq(-2, 3, 0.5),
+                         cowcode = 1000:1049,
+                         year = 1981:2012,
+                         id = 1), by = "id") %>% select(-id)
 
-cluster <- create_cluster(cores=cores)
+cluster <- create_cluster(cores = cores)
 
 predicted.h3.foreign <- new.data %>%
   nest(-cowcode) %>%
-  partition(cowcode, cluster=cluster) %>%
+  partition(cowcode, cluster = cluster) %>%
   cluster_library("tidyverse") %>%
   cluster_assign_value("model", model) %>%
   cluster_assign_value("generate_predictions", generate_predictions) %>%
-  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  mutate(predicted = map(.x = data, ~ generate_predictions(.x))) %>%
   collect() %>%
   unnest()
 
@@ -747,24 +747,24 @@ model <- mods.h3.dom.next_year.bayes %>%
   filter(m == "imp1", model.name == "mod.h3.type.total") %>%
   select(model) %>% .[[1]] %>% .[[1]]
 
-new.data <- get_all_vars(model$formula, data=model$data) %>%
+new.data <- get_all_vars(model$formula, data = model$data) %>%
   select(-c(funding_within, year, cowcode)) %>%
-    summarise_all(typical) %>%
-    mutate(id = 1) %>%
-    right_join(expand.grid(funding_within = seq(-2, 3, 0.5),
-                           cowcode = 1000:1049,
-                           year = 1981:2012,
-                           id = 1), by="id") %>% select(-id)
+  summarise_all(typical) %>%
+  mutate(id = 1) %>%
+  right_join(expand.grid(funding_within = seq(-2, 3, 0.5),
+                         cowcode = 1000:1049,
+                         year = 1981:2012,
+                         id = 1), by = "id") %>% select(-id)
 
-cluster <- create_cluster(cores=cores)
+cluster <- create_cluster(cores = cores)
 
 predicted.h3.domestic <- new.data %>%
   nest(-cowcode) %>%
-  partition(cowcode, cluster=cluster) %>%
+  partition(cowcode, cluster = cluster) %>%
   cluster_library("tidyverse") %>%
   cluster_assign_value("model", model) %>%
   cluster_assign_value("generate_predictions", generate_predictions) %>%
-  mutate(predicted = map(.x=data, ~ generate_predictions(.x))) %>%
+  mutate(predicted = map(.x = data, ~ generate_predictions(.x))) %>%
   collect() %>%
   unnest()
 
@@ -773,7 +773,7 @@ df.plot.h3.foreign <- predicted.h3.foreign %>%
   group_by(cowcode, funding_within) %>%
   summarise_at(vars(predicted), funs(mean(.))) %>%
   ungroup() %>%
-  mutate(value.fixed = inv.logit(predicted, a=0.001),
+  mutate(value.fixed = inv.logit(predicted, a = 0.001),
          variable.clean = "Aid through foreign NGOs") %>%
   rename(variable = funding_within)
 
@@ -781,7 +781,7 @@ df.plot.h3.domestic <- predicted.h3.domestic %>%
   group_by(cowcode, funding_within) %>%
   summarise_at(vars(predicted), funs(mean(.))) %>%
   ungroup() %>%
-  mutate(value.fixed = inv.logit(predicted, a=0.001),
+  mutate(value.fixed = inv.logit(predicted, a = 0.001),
          variable.clean = "Aid through domestic NGOs") %>%
   rename(variable = funding_within)
 
@@ -790,21 +790,21 @@ df.plot.data <- bind_rows(df.plot.h3.foreign, df.plot.h3.domestic)
 df.plot.data.mean <- df.plot.data %>%
   group_by(variable.clean, variable) %>%
   summarise(predicted = mean(predicted)) %>%
-  mutate(value.fixed = inv.logit(predicted, a=0.001)) %>%
-  mutate(cowcode=1)  # Fake country so the line plots
+  mutate(value.fixed = inv.logit(predicted, a = 0.001)) %>%
+  mutate(cowcode = 1)  # Fake country so the line plots
 
-fig.predicted.h3.barriers <- ggplot(df.plot.data, aes(x=variable, 
-                                                      y=value.fixed, group=cowcode)) + 
-  geom_vline(xintercept=0, size=0.5) +
-  geom_smooth(method="lm", size=0.1, alpha=0.1, colour=simulation.individual) +
-  geom_smooth(data=df.plot.data.mean, size=1.5, method="lm", colour=simulation.mean) +
-  labs(x="Difference from average number of barriers to funding\n(within effect)",
-       y="Predicted proportion of aid to\ntype of NGO in the following year") +
-  scale_y_continuous(labels=scales::percent) +
-  facet_wrap(~ variable.clean, scales="free_x") +
+fig.predicted.h3.barriers <- ggplot(df.plot.data, aes(x = variable, 
+                                                      y = value.fixed, group = cowcode)) + 
+  geom_vline(xintercept = 0, size = 0.5) +
+  geom_smooth(method = "lm", size = 0.1, alpha = 0.1, colour = simulation.individual) +
+  geom_smooth(data = df.plot.data.mean, size = 1.5, method = "lm", colour = simulation.mean) +
+  labs(x = "Difference from average number of barriers to funding\n(within effect)",
+       y = "Predicted proportion of aid to\ntype of NGO in the following year") +
+  scale_y_continuous(labels = scales::percent) +
+  facet_wrap(~ variable.clean, scales = "free_x") +
   theme_donors()
 fig.predicted.h3.barriers
 
-fig.save.cairo(fig.predicted.h3.barriers, filename="fig-predicted-h3",
-               width=6.5, height=2.5)
+fig.save.cairo(fig.predicted.h3.barriers, filename = "fig-predicted-h3",
+               width = 6.5, height = 2.5)
 ```
