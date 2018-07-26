@@ -26,31 +26,25 @@ library(tidyverse)
 library(stringr)
 library(forcats)
 library(DT)
+library(here)
 
-source(file.path(PROJHOME, "lib", "graphics.R"))
-source(file.path(PROJHOME, "lib", "pandoc.R"))
-source(file.path(PROJHOME, "lib", "bayes.R"))
+source(here("lib", "graphics.R"))
+source(here("lib", "pandoc.R"))
+source(here("lib", "bayes.R"))
 
 my.seed <- 1234
 set.seed(my.seed)
 ```
 
 ```{r load-data, cache=TRUE, message=FALSE}
-df.donor.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                      "df_donor_country.rds"))
-df.donor <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                              "df_donor.rds"))
-df.donor.us <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                 "df_donor_usaid.rds"))
-df.country <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                "df_country.rds"))
-df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                    "df_country_aid_no_imputation.rds"))
+df.donor.country <- readRDS(here("Data", "data_clean", "df_donor_country.rds"))
+df.donor <- readRDS(here("Data", "data_clean", "df_donor.rds"))
+df.donor.us <- readRDS(here("Data", "data_clean", "df_donor_usaid.rds"))
+df.country <- readRDS(here("Data", "data_clean", "df_country.rds"))
+df.country.aid <- readRDS(here("Data", "data_clean", "df_country_aid_no_imputation.rds"))
 
-dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
-                                           "dcjw_questions.csv"))
-dcjw.responses.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
-                                           "dcjw_responses.csv"))
+dcjw.questions.clean <- read_csv(here("Data", "data_clean", "dcjw_questions.csv"))
+dcjw.responses.clean <- read_csv(here("Data", "data_clean", "dcjw_responses.csv"))
 ```
 
 

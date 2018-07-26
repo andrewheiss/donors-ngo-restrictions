@@ -22,9 +22,9 @@ output:
 # http://zevross.com/blog/2014/07/09/making-use-of-external-r-code-in-knitr-and-r-markdown/
 # Except @knitr was replaced with four dashes because of RStudio section folding
 if (isTRUE(getOption('knitr.in.progress'))) {
-  knitr::read_chunk(file.path(PROJHOME, "Analysis", "models-chunks.R"))
+  knitr::read_chunk(here("Analysis", "models-chunks.R"))
 } else {
-  source(file.path(PROJHOME, "Analysis", "models-chunks.R"))
+  source(here("Analysis", "models-chunks.R"))
 }
 ```
 
@@ -167,16 +167,14 @@ The results of all models can be found in the ["Bayesian models" notebook](model
 ## Summary of hypotheses
 
 ```{r hypotheses-summary, results="asis", message=FALSE, warning=FALSE}
-findings.summary <- read_csv(file.path(PROJHOME, "Data", "data_clean", 
-                                       "findings_summary.csv"))
+findings.summary <- read_csv(here("Data", "data_clean", "findings_summary.csv"))
 
 caption <- "Summary of findings {#tbl:findings-summary}"
 findings.summary.table <- pandoc.table.return(findings.summary, justify = "lll",
                                               caption = caption)
 
 cat(findings.summary.table)
-cat(findings.summary.table, file = file.path(PROJHOME, "Output",
-                                             "tbl-findings-summary.md"))
+cat(findings.summary.table, file = here("Output", "tbl-findings-summary.md"))
 ```
 
 ---

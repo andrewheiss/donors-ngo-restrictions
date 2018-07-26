@@ -1,17 +1,17 @@
 # devtools::install_github("robertzk/s3mpi@0.2.31")
 # nohup Rscript run_bayes_remote.R > bayes.log 2>&1 &
 print("Loading data")
-source(file.path(PROJHOME, "Analysis", "models-chunks.R"))
+source(here("Analysis", "models-chunks.R"))
 
-source(file.path(PROJHOME, "Analysis", "h1_model_definitions_bayes.R"))
-source(file.path(PROJHOME, "Analysis", "h2_model_definitions_bayes.R"))
-source(file.path(PROJHOME, "Analysis", "h3_model_definitions_bayes.R"))
+source(here("Analysis", "h1_model_definitions_bayes.R"))
+source(here("Analysis", "h2_model_definitions_bayes.R"))
+source(here("Analysis", "h3_model_definitions_bayes.R"))
 
-raw.dir <- file.path(PROJHOME, "Data", "data_cache")
+raw.dir <- here("Data", "data_cache")
 
 # H1 ---------------------------------------------------------------------
 print("Running H1 models")
-h1.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h1.rds")
+h1.raw.path <- here("Data", "data_cache", "models_bayes_h1.rds")
 
 if (file.exists(h1.raw.path)) {
   mods.h1.next_year.raw.bayes <- readRDS(h1.raw.path)
@@ -51,7 +51,7 @@ if (file.exists(h1.raw.path)) {
 
 # H2 ---------------------------------------------------------------------
 print("Running H2 models")
-h2.raw.path <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h2.rds")
+h2.raw.path <- here("Data", "data_cache", "models_bayes_h2.rds")
 
 if (file.exists(h2.raw.path)) {
   mods.h2.next_year.raw.bayes <- readRDS(h2.raw.path)
@@ -91,8 +91,8 @@ if (file.exists(h2.raw.path)) {
 
 # H3 ---------------------------------------------------------------------
 print("Running H3 domestic models")
-h3.domestic.raw.path <- file.path(PROJHOME, "Data", "data_cache",
-                                  "models_bayes_h3_domestic.rds")
+h3.domestic.raw.path <- here("Data", "data_cache",
+                             "models_bayes_h3_domestic.rds")
 
 if (file.exists(h3.domestic.raw.path)) {
   mods.h3.dom.next_year.raw <- readRDS(h3.domestic.raw.path)
@@ -130,8 +130,8 @@ if (file.exists(h3.domestic.raw.path)) {
 }
 
 print("Running H3 foreign models")
-h3.foreign.raw.path <- file.path(PROJHOME, "Data", "data_cache",
-                                 "models_bayes_h3_foreign.rds")
+h3.foreign.raw.path <- here("Data", "data_cache",
+                            "models_bayes_h3_foreign.rds")
 
 if (file.exists(h3.foreign.raw.path)) {
   mods.h3.foreign.next_year.raw <- readRDS(h3.foreign.raw.path)

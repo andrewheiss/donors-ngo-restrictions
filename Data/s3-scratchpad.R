@@ -14,16 +14,16 @@ df.country.aid.impute.m10 <- s3read("df_country_aid_imputation_m10")
 
 # Save locally (on remote)
 saveRDS(df.country.aid, 
-        file.path(PROJHOME, "Data", "data_clean",
-                  "df_country_aid_no_imputation.rds"))
+        here("Data", "data_clean",
+             "df_country_aid_no_imputation.rds"))
 
 saveRDS(df.country.aid.impute, 
-        file.path(PROJHOME, "Data", "data_clean",
-                  "df_country_aid_imputation.rds"))
+        here("Data", "data_clean",
+             "df_country_aid_imputation.rds"))
 
 saveRDS(df.country.aid.impute.m10, 
-        file.path(PROJHOME, "Data", "data_clean",
-                  "df_country_aid_imputation_m10.rds"))
+        here("Data", "data_clean",
+             "df_country_aid_imputation_m10.rds"))
 
 # Save models in S3
 s3store(mod.h1.barriers.total.bayes)

@@ -20,9 +20,9 @@ output:
 
 ```{r echo=FALSE}
 if (isTRUE(getOption('knitr.in.progress'))) {
-  knitr::read_chunk(file.path(PROJHOME, "Analysis", "models-chunks.R"))
+  knitr::read_chunk(here("Analysis", "models-chunks.R"))
 } else {
-  source(file.path(PROJHOME, "Analysis", "models-chunks.R"))
+  source(here("Analysis", "models-chunks.R"))
 }
 ```
 
@@ -33,10 +33,10 @@ if (isTRUE(getOption('knitr.in.progress'))) {
 ```
 
 ```{r load-bayesian-models}
-h1.raw <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h1.rds")
-h2.raw <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h2.rds")
-h3.domestic.raw <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h3_domestic.rds")
-h3.foreign.raw <- file.path(PROJHOME, "Data", "data_cache", "models_bayes_h3_foreign.rds")
+h1.raw <- here("Data", "data_cache", "models_bayes_h1.rds")
+h2.raw <- here("Data", "data_cache", "models_bayes_h2.rds")
+h3.domestic.raw <- here("Data", "data_cache", "models_bayes_h3_domestic.rds")
+h3.foreign.raw <- here("Data", "data_cache", "models_bayes_h3_foreign.rds")
 
 if (file.exists(h1.raw) & file.exists(h2.raw) & 
     file.exists(h3.domestic.raw) & file.exists(h3.foreign.raw)) {
@@ -179,8 +179,7 @@ table.h1 <- bayesgazer(mods.h1.next_year.bayes,
                        caption = caption, note = note)
 
 cat(table.h1)
-cat(table.h1, file = file.path(PROJHOME, "Output",
-                               "tbl-h1-coefs-bayes.md"))
+cat(table.h1, file = here("Output", "tbl-h1-coefs-bayes.md"))
 ```
 
 
@@ -451,8 +450,7 @@ table.h2 <- bayesgazer(mods.h2.next_year.bayes, exponentiate = TRUE,
                        caption = caption, note = note)
 
 cat(table.h2)
-cat(table.h2, file = file.path(PROJHOME, "Output",
-                               "tbl-h2-coefs-bayes.md"))
+cat(table.h2, file = here("Output", "tbl-h2-coefs-bayes.md"))
 ```
 
 
@@ -627,8 +625,7 @@ table.h3.domestic <- bayesgazer(mods.h3.dom.next_year.bayes,
                                 caption = caption, note = note, exponentiate = TRUE)
 
 cat(table.h3.domestic)
-cat(table.h3.domestic, file = file.path(PROJHOME, "Output",
-                                        "tbl-h3-domestic-coefs-bayes.md"))
+cat(table.h3.domestic, file = here("Output", "tbl-h3-domestic-coefs-bayes.md"))
 ```
 
 #### Proportion to foreign NGOs
@@ -641,8 +638,7 @@ table.h3.domestic <- bayesgazer(mods.h3.foreign.next_year.bayes,
                                 caption = caption, note = note, exponentiate = TRUE)
 
 cat(table.h3.domestic)
-cat(table.h3.domestic, file = file.path(PROJHOME, "Output",
-                                        "tbl-h3-foreign-coefs-bayes.md"))
+cat(table.h3.domestic, file = here("Output", "tbl-h3-foreign-coefs-bayes.md"))
 ```
 
 #### Both

@@ -55,7 +55,7 @@ extract_legend <- function(a.gplot) {
 }
 
 # Save Cairo PDF and PNG at the same time
-fig.save.cairo <- function(fig, filepath = file.path(PROJHOME, "Output"), 
+fig.save.cairo <- function(fig, filepath = here("Output"), 
                            filename, width, height, units = "in", ...) {
   ggsave(fig, filename = file.path(filepath, paste0(filename, ".pdf")),
          width = width, height = height, units = units, device = cairo_pdf, ...)

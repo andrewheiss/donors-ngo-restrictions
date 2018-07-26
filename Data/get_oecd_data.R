@@ -1,6 +1,7 @@
 library(tidyverse)
 library(httr)
 library(OECD)
+library(here)
 
 # Download and parse data from the OECD
 
@@ -9,14 +10,13 @@ oecd.dataset <- "TABLE2A"
 oecd.start <- 2006
 oecd.end <- 2015
 
-oecd.rds <- file.path(PROJHOME, "Data", "data_raw",
-                      "OECD", paste0(oecd.dataset, ".rds"))
+oecd.rds <- here("Data", "data_raw", "OECD", paste0(oecd.dataset, ".rds"))
 
 if (file.exists(oecd.rds)) {
   # The data was cached; read it in
   df.oecd <- readRDS(oecd.rds)
-  oecd.structure <- file.path(PROJHOME, "Data", "data_raw", "OECD",
-                              paste0(oecd.dataset, "_structure.rds"))
+  oecd.structure <- here("Data", "data_raw", "OECD",
+                         paste0(oecd.dataset, "_structure.rds"))
   
   # TODO: Clean up the OECD data, merging it with human readable columns
 } else {
@@ -61,8 +61,7 @@ if (file.exists(oecd.rds)) {
                      oecd.dataset, "/", oecd.filter, 
                      "/all?startTime=", oecd.start, "&endTime=", oecd.end)
   
-  oecd.raw.file <- file.path(PROJHOME, "Data", "data_raw", 
-                             "tmp", "oecd.xml")
+  oecd.raw.file <- here("Data", "data_raw", "tmp", "oecd.xml")
   
   oecd.get <- GET(oecd.url, 
                   write_disk(oecd.raw.file, overwrite = TRUE), 
@@ -72,10 +71,10 @@ if (file.exists(oecd.rds)) {
   df.oecd <- as.data.frame(rsdmx::readSDMX(oecd.raw.file, isURL = FALSE))
   
   # Save this all to disk so it never has to happen again ever ever
-  write_csv(df.oecd, file.path(PROJHOME, "Data", "data_raw",
-                               "OECD", paste0(oecd.dataset, ".csv")))
-  saveRDS(df.oecd, file.path(PROJHOME, "Data", "data_raw",
-                             "OECD", paste0(oecd.dataset, ".rds")))
-  saveRDS(oecd.structure, file.path(PROJHOME, "Data", "data_raw", "OECD",
-                                    paste0(oecd.dataset, "_structure.rds")))
+  write_csv(df.oecd, here("Data", "data_raw",
+                          "OECD", paste0(oecd.dataset, ".csv")))
+  saveRDS(df.oecd, here("Data", "data_raw",
+                        "OECD", paste0(oecd.dataset, ".rds")))
+  saveRDS(oecd.structure, here("Data", "data_raw", "OECD",
+                               paste0(oecd.dataset, "_structure.rds")))
 }

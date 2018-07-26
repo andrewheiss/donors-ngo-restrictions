@@ -34,9 +34,10 @@ library(xml2)
 library(ggstance)
 library(Amelia)
 library(imputeTS)
+library(here)
 
-source(file.path(PROJHOME, "lib", "graphics.R"))
-source(file.path(PROJHOME, "lib", "pandoc.R"))
+source(here("lib", "graphics.R"))
+source(here("lib", "pandoc.R"))
 
 all.na.means.zero <- TRUE
 
@@ -149,7 +150,7 @@ So, we look at ODA *commitments*.
 
 ```{r load-aiddata, message=FALSE, warning=FALSE}
 aiddata.url <- "https://github.com/AidData-WM/public_datasets/releases/download/v3.0/AidDataCore_ResearchRelease_Level1_v3.0.zip"
-aiddata.path <- file.path(PROJHOME, "Data", "data_raw", "AidData")
+aiddata.path <- here("Data", "data_raw", "AidData")
 aiddata.zip.name <- basename(aiddata.url)
 aiddata.name <- tools::file_path_sans_ext(aiddata.zip.name)
 
@@ -282,11 +283,11 @@ purpose.codes.clean <- general.codes %>%
 
 # Manually code contentiousness of purposes
 write_csv(purpose.codes.clean,
-          file.path(PROJHOME, "Data", "data_clean",
-                    "purpose_codes_contention_WILL_BE_OVERWRITTEN.csv"))
+          here("Data", "data_clean",
+               "purpose_codes_contention_WILL_BE_OVERWRITTEN.csv"))
 
-purpose.codes.contentiousness <- read_csv(file.path(PROJHOME, "Data", "data_clean",
-                                                    "purpose_codes_contention.csv"))
+purpose.codes.contentiousness <- read_csv(here("Data", "data_clean",
+                                               "purpose_codes_contention.csv"))
 
 aiddata.final <- aiddata.clean %>%
   left_join(donors, by = "donor") %>%
@@ -303,8 +304,8 @@ aiddata.final <- aiddata.clean %>%
          coalesced_purpose_code, coalesced_purpose_name) %>%
   arrange(cowcode, year)
 
-ever.dac.eligible <- read_csv(file.path(PROJHOME, "Data", "data_clean", 
-                                        "oecd_dac_countries.csv")) %>%
+ever.dac.eligible <- read_csv(here("Data", "data_clean", 
+                                   "oecd_dac_countries.csv")) %>%
   # Ignore High Income Countries and More Advanced Developing Countries
   filter(!(dac_abbr %in% c("HIC", "ADC"))) %>%
   left_join(gw.codes, by = "iso3") %>%
@@ -341,7 +342,7 @@ USAID provides the complete dataset for its [Foreign Aid Explorer](https://explo
 
 ```{r load-usaid, message=FALSE, cache=TRUE}
 usaid.url <- "https://explorer.usaid.gov/prepared/us_foreign_aid_complete.csv"
-usaid.path <- file.path(PROJHOME, "Data", "data_raw", "USAID")
+usaid.path <- here("Data", "data_raw", "USAID")
 usaid.name <- basename(usaid.url)
 
 # Download USAID data if needed
@@ -483,8 +484,7 @@ The code below will still work on the original Christensen and Weinstein data, b
 
 ```{r load-dcjw, warning=FALSE, message=FALSE}
 # Original DCJW data
-dcjw.orig.path <- file.path(PROJHOME, "Data", "data_raw", "DCJW NGO Laws",
-                            "DCJW_NGO_Laws.xlsx")
+dcjw.orig.path <- here("Data", "data_raw", "DCJW NGO Laws", "DCJW_NGO_Laws.xlsx")
 
 dcjw.orig <- read_excel(dcjw.orig.path)[,1:50] %>%
   select(-c(dplyr::contains("source"), dplyr::contains("burden"), 
@@ -492,11 +492,9 @@ dcjw.orig <- read_excel(dcjw.orig.path)[,1:50] %>%
 
 
 # Tidy DCJW data
-dcjw.path <- file.path(PROJHOME, "Data", "data_raw", "DCJW NGO Laws",
-                       "Admn Crackdown_updated.xlsx")
+dcjw.path <- here("Data", "data_raw", "DCJW NGO Laws", "Admn Crackdown_updated.xlsx")
 
-dcjw.questions.raw <- read_csv(file.path(PROJHOME, "Data", "data_clean",
-                                         "dcjw_questions.csv"))
+dcjw.questions.raw <- read_csv(here("Data", "data_clean", "dcjw_questions.csv"))
 
 dcjw.barriers.clean <- dcjw.questions.raw %>%
   distinct(question_cat, barrier)
@@ -534,8 +532,7 @@ dcjw.panel.all.laws <- dcjw %>%
 # until some of her dissertation is published. To prevent data leakage onto the
 # internet, minor manual adjustments are included in a hidden file here instead
 # of this main file.
-source(file.path(PROJHOME, "Data", "data_raw", "DCJW NGO Laws",
-                 "chaudhry_manual_changes.R"))
+source(here("Data", "data_raw", "DCJW NGO Laws", "chaudhry_manual_changes.R"))
 
 if (all.na.means.zero) {
   dcjw.panel.all.laws <- dcjw.panel.all.laws %>%
@@ -712,15 +709,14 @@ While the main focus of this paper is donor response to new *legislation*, we al
 # There's no direct link for V-Dem data, since it's behind a contact
 # information form. So, download the 6.2 version of the "Country-Year: V-Dem +
 # other" dataset from https://www.v-dem.net/en/data/data-version-6-2/ and place
-# it in PROJHOME/Data/data_raw/V-Dem/v6.2
+# it in Data/data_raw/V-Dem/v6.2
 #
 # readr likes to incorrectly guess that most col_double columns are
 # col_integer, mostly because of the low default max_guess threshold. You can
 # either bump up that threshold, or prespecify column types, using col_double
 # as the default type.
-vdem.raw <- read_csv(file.path(PROJHOME, "Data", "data_raw", 
-                               "V-Dem", "v6.2",
-                               "V-Dem-DS-CY+Others-v6.2.csv"),
+vdem.raw <- read_csv(here("Data", "data_raw", "V-Dem", "v6.2",
+                          "V-Dem-DS-CY+Others-v6.2.csv"),
                      col_types = cols(
                        country_name = col_character(),
                        country_id = col_integer(),
@@ -787,12 +783,12 @@ vdem.cso.min %>% glimpse()
 
 ## Neighboring states
 
-Calculate three types of distance between all countries with the [`CShapes` R package](https://cran.r-project.org/package=cshapes): mimimum distance, capital distance, and centroid distance. Because this takes a really long time, it's best to run `PROJHOME/Data/get_distances.R` separately elsewhere first (like on a VPS) and then save the resulting `.rds` files in `PROJHOME/Data/data_raw/Country Distances`. 
+Calculate three types of distance between all countries with the [`CShapes` R package](https://cran.r-project.org/package=cshapes): mimimum distance, capital distance, and centroid distance. Because this takes a really long time, it's best to run `Data/get_distances.R` separately elsewhere first (like on a VPS) and then save the resulting `.rds` files in `Data/data_raw/Country Distances`. 
 
 The `all.distances` data frame below contains all three distance types between every country and every other country in 2012 (though it could potentially include distances from 1991–2015). This is used later to weight variables by distance. It also includes an indicator variable called `is.rough.neighbor` that is true if the two countries are less than 900 km apart, which captures neighbor relationships better than simple contiguous borders.
 
 ```{r load-cshapes, message=FALSE, cache=TRUE}
-distance.folder <- file.path(PROJHOME, "Data", "data_raw", "Country distances")
+distance.folder <- here("Data", "data_raw", "Country distances")
 
 read_distances <- function(type, year) {
   stopifnot(year >= 1980, year <= 2015)
@@ -862,26 +858,25 @@ The World Bank has a fantastic API for [their statistical indicators](http://dat
 
 ```{r load-un, message=FALSE}
 # UN country codes
-un.codes <- read_csv(file.path(PROJHOME, "Data",
-                               "data_clean", "un_codes.csv")) %>%
+un.codes <- read_csv(here("Data", "data_clean", "un_codes.csv")) %>%
   select(un_code, iso3)
 
 # GDP by Type of Expenditure at constant (2005) prices - US dollars
 # http://data.un.org/Data.aspx?q=gdp&d=SNAAMA&f=grID%3a102%3bcurrID%3aUSD%3bpcFlag%3a0
-un.gdp.raw <- read_csv(file.path(PROJHOME, "Data", "data_raw", "UN data",
-                                 "UNdata_Export_20170125_042818046.csv")) %>%
+un.gdp.raw <- read_csv(here("Data", "data_raw", "UN data",
+                            "UNdata_Export_20170125_042818046.csv")) %>%
   rename(un_code = `Country or Area Code`) %>%
   mutate(value.type = "Constant")
 
 # http://data.un.org/Data.aspx?q=gdp&d=SNAAMA&f=grID%3a101%3bcurrID%3aUSD%3bpcFlag%3a0
-un.gdp.current.raw <- read_csv(file.path(PROJHOME, "Data", "data_raw", "UN data",
-                                         "UNdata_Export_20170125_063718499.csv")) %>%
+un.gdp.current.raw <- read_csv(here("Data", "data_raw", "UN data",
+                                    "UNdata_Export_20170125_063718499.csv")) %>%
   rename(un_code = `Country or Area Code`) %>%
   mutate(value.type = "Current")
 
 # https://esa.un.org/unpd/wpp/Download/Standard/Population/
-un.pop.raw <- read_excel(file.path(PROJHOME, "Data", "data_raw", "UN data",
-                                   "WPP2015_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES.xls"),
+un.pop.raw <- read_excel(here("Data", "data_raw", "UN data",
+                              "WPP2015_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES.xls"),
                          skip = 16)
 
 un.pop <- un.pop.raw %>%
@@ -987,7 +982,7 @@ wdi.indicators <- c("NY.GDP.PCAP.KD",        # GDP per capita (constant 2010 USD
                     "SP.POP.TOTL",           # Population, total
                     "NE.TRD.GNFS.ZS")        # Trade as % of GDP
 
-wdi.path <- file.path(PROJHOME, "data", "data_cache", "wdi.rds")
+wdi.path <- here("data", "data_cache", "wdi.rds")
 
 if (!file.exists(wdi.path)) {
   # Get all countries and regions because the World Bank chokes on ISO codes like
@@ -1041,7 +1036,7 @@ Because there are so many columns, the data below has been horizontally collapse
 
 ```{r load-colonial-status, message=FALSE, cache=TRUE}
 col.url <- "http://www.paulhensel.org/Data/colhist.zip"
-col.path <- file.path(PROJHOME, "Data", "data_raw")
+col.path <- here("Data", "data_raw")
 col.zip.name <- basename(col.url)
 col.name <- tools::file_path_sans_ext(col.zip.name)
 
@@ -1162,7 +1157,7 @@ The [UCDP/PRIO Armed Conflict Dataset](http://ucdp.uu.se/downloads/) tracks a to
 ```{r load-conflict, message=FALSE}
 # Uppsala conflict data
 # http://www.pcr.uu.se/research/ucdp/datasets/generate_your_own_datasets/dynamic_datasets/
-# conflicts <- read_tsv(file.path(PROJHOME, "Data", "data_raw", "External", 
+# conflicts <- read_tsv(here("Data", "data_raw", "External", 
 #                                 "Uppsala", "ywd_dataset.csv")) %>%
 #   mutate(intensity = factor(intensity, 
 #                             levels = c("No", "Minor", "Intermediate", "War"), 
@@ -1193,7 +1188,7 @@ EM-DAT does not provide a single link to download their data. Instead, you have 
 - Select all countries from up to 2016
 - Select all three disaster classification groups (natural, technological, complex)
 - Group results by country name, year, and disaster type
-- Download CSV and save in `PROJHOME/Data/data_raw/Disasters/Data.csv`
+- Download CSV and save in `Data/data_raw/Disasters/Data.csv`
 
 
 ```{r load-disasters, message=FALSE}
@@ -1230,10 +1225,9 @@ disaster.classification <- disaster.classification.raw[[1]] %>%
 # Select all countries from whenever to 2016
 # Select all three disaster classification groups (natural, technological, complex)
 # Group results by country name, year, and disaster type
-# Download CSV and save in PROJHOME/Data/data_raw/Disasters
+# Download CSV and save in Data/data_raw/Disasters
 
-disasters.raw <- read_csv(file.path(PROJHOME, "Data", "data_raw", 
-                                    "Disasters", "data.csv"),
+disasters.raw <- read_csv(here("Data", "data_raw", "Disasters", "data.csv"),
                           skip = 1)  # First row is junk
 
 # Read in disaster data and join with classification data
@@ -1490,12 +1484,11 @@ We estimate models for each of the imputed datasets and recombine their results.
 We varied the number of datasets we imputed (*m* = 5 and *m* = 10) and [found only trivial differences in coefficients between 5 and 10 datasets](../Analysis/models.html#imputation) (as predicted by King et al.). In the interest of computational efficiency and speed, we only use 5 imputed datasets. To avoid needing to recreate both 5 and 10 datasets, we impute 10, but only use the first 5 for analysis.
 
 ```{r impute-missing-data}
-imputation.rds <- file.path(PROJHOME, "Data", "data_cache",
-                            "country_aid_data_imputed_long.rds")
+imputation.rds <- here("Data", "data_cache", "country_aid_data_imputed_long.rds")
 
 if (file.exists(imputation.rds)) {
-  country.aid.data.imputed.long <- readRDS(file.path(PROJHOME, "Data", "data_cache",
-                                                     "country_aid_data_imputed_long.rds"))
+  country.aid.data.imputed.long <- readRDS(here("Data", "data_cache",
+                                                "country_aid_data_imputed_long.rds"))
 } else {
   # THIS TAKES SO LONG.
   #
@@ -1563,8 +1556,8 @@ if (file.exists(imputation.rds)) {
     left_join(select(country.aid.data.pre.amelia, 
                      -one_of(vars.to.include.sans.ids)), by = c("cowcode", "year"))
   
-  saveRDS(country.aid.data.imputed.long, file.path(PROJHOME, "Data", "data_cache",
-                                                   "country_aid_data_imputed_long.rds"))
+  saveRDS(country.aid.data.imputed.long, here("Data", "data_cache",
+                                              "country_aid_data_imputed_long.rds"))
 }
 ```
 
@@ -1668,22 +1661,17 @@ Final, clean country- and donor-level datasets are available in `Data/data_clean
 
 ```{r save-final-data, echo=FALSE}
 saveRDS(filter(country.aid.data, m == "original"),
-        file = file.path(PROJHOME, "Data", "data_clean",
-                         "df_country_aid_no_imputation.rds"))
+        file = here("Data", "data_clean", "df_country_aid_no_imputation.rds"))
 
 saveRDS(filter(country.aid.data, m != "original"),
-        file = file.path(PROJHOME, "Data", "data_clean",
-                         "df_country_aid_imputation.rds"))
+        file = here("Data", "data_clean", "df_country_aid_imputation.rds"))
 
 saveRDS(filter(country.aid.data.m10, m != "original"),
-        file = file.path(PROJHOME, "Data", "data_clean",
-                         "df_country_aid_imputation_m10.rds"))
+        file = here("Data", "data_clean", "df_country_aid_imputation_m10.rds"))
 
 saveRDS(donor.level.data,
-        file = file.path(PROJHOME, "Data", "data_clean",
-                         "df_donor.rds"))
+        file = here("Data", "data_clean", "df_donor.rds"))
 
 saveRDS(donor.level.data.usaid,
-        file = file.path(PROJHOME, "Data", "data_clean",
-                         "df_donor_usaid.rds"))
+        file = here("Data", "data_clean", "df_donor_usaid.rds"))
 ```

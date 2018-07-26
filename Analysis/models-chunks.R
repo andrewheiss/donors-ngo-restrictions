@@ -10,40 +10,38 @@ library(stargazer)
 library(lme4)
 library(modelr)
 library(broom)
+library(here)
 
-source(file.path(PROJHOME, "lib", "graphics.R"))
-source(file.path(PROJHOME, "lib", "pandoc.R"))
-source(file.path(PROJHOME, "lib", "bayes.R"))
+source(here("lib", "graphics.R"))
+source(here("lib", "pandoc.R"))
+source(here("lib", "bayes.R"))
 
-source(file.path(PROJHOME, "Analysis", "robustness_models_definitions.R"))
-source(file.path(PROJHOME, "Analysis", "h1_model_definitions.R"))
-source(file.path(PROJHOME, "Analysis", "h2_model_definitions.R"))
-source(file.path(PROJHOME, "Analysis", "h3_model_definitions.R"))
-source(file.path(PROJHOME, "Analysis", "h4_model_definitions.R"))
+source(here("Analysis", "robustness_models_definitions.R"))
+source(here("Analysis", "h1_model_definitions.R"))
+source(here("Analysis", "h2_model_definitions.R"))
+source(here("Analysis", "h3_model_definitions.R"))
+source(here("Analysis", "h4_model_definitions.R"))
 
 my.seed <- 1234
 set.seed(my.seed)
 
 
 # ---- load-data --------------------------------------------------------------
-df.country.aid <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                    "df_country_aid_no_imputation.rds"))
+df.country.aid <- readRDS(here("Data", "data_clean",
+                               "df_country_aid_no_imputation.rds"))
 
-df.country.aid.impute <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                           "df_country_aid_imputation.rds"))
+df.country.aid.impute <- readRDS(here("Data", "data_clean",
+                                      "df_country_aid_imputation.rds"))
 
-df.country.aid.impute.m10 <- readRDS(file.path(PROJHOME, "Data", "data_clean",
-                                               "df_country_aid_imputation_m10.rds"))
+df.country.aid.impute.m10 <- readRDS(here("Data", "data_clean",
+                                          "df_country_aid_imputation_m10.rds"))
 
-dcjw.questions.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
-                                           "dcjw_questions.csv"))
-dcjw.responses.clean <- read_csv(file.path(PROJHOME, "Data", "data_clean",
-                                           "dcjw_responses.csv"))
+dcjw.questions.clean <- read_csv(here("Data", "data_clean", "dcjw_questions.csv"))
+dcjw.responses.clean <- read_csv(here("Data", "data_clean", "dcjw_responses.csv"))
 
 # Load clean coefficient names and append "within" and "between" to them,
 # resulting in a giant table of possible coefficient names
-coef.names <- read_csv(file.path(PROJHOME, "Data", "data_clean",
-                                 "coef_names.csv"))
+coef.names <- read_csv(here("Data", "data_clean", "coef_names.csv"))
 
 coef.names.within <- coef.names %>%
   mutate(term = paste0(term, "_within"),
