@@ -36,6 +36,7 @@ library(xml2)
 library(ggstance)
 library(Amelia)
 library(imputeTS)
+library(validate)
 library(here)
 
 source(here("lib", "graphics.R"))
@@ -721,50 +722,33 @@ dcjw.full %>% glimpse()
 
 An alternative way of measuring civil society restrictions is to look at the overal civil society regulatory environment rather than specific laws, since de jure restrictions do not always map clearly into de facto restrictions (especially in dictatorships where the implementation of laws is more discretionary). 
 
-Andrew Heiss develops a new civil society regulatory environment index (CSRE) in his dissertation, which combines two civil society indexes from the [Varieties of Democracy project (V-Dem)](https://www.v-dem.net/en/): (1) civil society repression and (2) civil society entry and exit regulations. The CSRE ranges from roughly −6 to 6 (though typically only from −4 to 4ish), and shows more variation over time since it ostensibly captures changes in the implementation of the regulatory environment rather than the presence or absence of legislation. 
+Andrew Heiss develops a new civil society regulatory environment index (CSRE) in his dissertation, which combines two civil society indexes from the [Varieties of Democracy project (V-Dem)](https://www.v-dem.net/en/): (1) civil society repression and (2) civil society entry and exit regulations. The CSRE ranges from roughly −6 to 6 (though typically only from −4 to 4ish), and shows more variation over time since it ostensibly captures changes in the implementation of the regulatory environment rather than the presence or absence of legislation.
 
 While the main focus of this paper is donor response to new *legislation*, we also look at donor response to changes in the overall CSRE as a robustness check.
 
-```{r load-vdem, warning=FALSE}
-# There's no direct link for V-Dem data, since it's behind a contact
-# information form. So, download the 6.2 version of the "Country-Year: V-Dem +
-# other" dataset from https://www.v-dem.net/en/data/data-version-6-2/ and place
-# it in Data/data_raw/V-Dem/v6.2
-#
-# readr likes to incorrectly guess that most col_double columns are
-# col_integer, mostly because of the low default max_guess threshold. You can
-# either bump up that threshold, or prespecify column types, using col_double
-# as the default type.
-vdem.raw <- read_csv(here("Data", "data_raw", "V-Dem", "v6.2",
-                          "V-Dem-DS-CY+Others-v6.2.csv"),
-                     col_types = cols(
-                       country_name = col_character(),
-                       country_id = col_integer(),
-                       country_text_id = col_character(),
-                       year = col_integer(),
-                       historical_date = col_date(format = ""),
-                       codingstart = col_integer(),
-                       gapstart = col_integer(),
-                       gapend = col_integer(),
-                       codingend = col_integer(),
-                       COWcode = col_integer(),
-                       v2elregnam = col_character(),
-                       v2ellocnam = col_character(),
-                       v2exnamhos = col_character(),
-                       v2extithos = col_character(),
-                       v2lgnamelo = col_character(),
-                       v2lgnameup = col_character(),
-                       v2exnamhog = col_character(),
-                       v2extithog = col_character(),
-                       .default = col_double()
-                     )) %>%
+There's no direct link for V-Dem data, since it's behind a contact information form. So, download the [8.0 version of the "Country-Year: V-Dem + other" dataset](https://www.v-dem.net/en/data/data-version-8/) and place it in `Data/data_raw/V-Dem/v8`
+
+When loading the CSV, `readr::read_csv()` chokes on a bunch of rows for whatever reason and gives a ton of warnings, but it still works. Loading the Stata version of V-Dem doesn't create the warnings, but it's slower and it results in the same data. So we just load from CSV and make sure it has the right number of rows and columns in the end. 
+
+```{r load-vdem, warning=FALSE, message=FALSE, cache=TRUE}
+vdem.raw <- read_csv(here("Data", "data_raw", "V-Dem", "v8",
+                          "V-Dem-CY+Others-v8.csv")) %>% 
   # Missing COW codes
   mutate(COWcode = case_when(
     .$country_text_id == "SML" ~ as.integer(521),
     .$country_text_id == "PSE" ~ as.integer(667),
-    .$country_text_id == "PSG" ~ as.integer(668),
-    TRUE ~ .$COWcode))
+    .$country_text_id == "PSG" ~ as.integer(668)))
+```
 
+```{r check-vdem, results="asis", message=FALSE, warning=FALSE}
+vdem.raw %>% 
+  check_that(n_rows = nrow(.) == 26537, n_cols = ncol(.) == 4641) %>% 
+  summary() %>% 
+  mutate(expression = expression %>% map_chr(pandoc.verbatim.return)) %>% 
+  pandoc.table()
+```
+
+```{r clean-vdem}
 # Extract civil society-related variables and create CSRE index
 vdem.cso <- vdem.raw %>% select(country_name, year, cowcode = COWcode, 
                                 e_fh_ipolity2, v2x_corr, e_wbgi_gee,
@@ -785,7 +769,7 @@ vdem.cso <- vdem.raw %>% select(country_name, year, cowcode = COWcode,
 
 #### Civil society restrictions data
 
-```{r}
+```{r vdem-cso-minimal}
 vdem.cso.min <- vdem.cso %>%
   select(country_name, year, cowcode, csre, v2csreprss_ord,
          starts_with("v2csreprss"), starts_with("v2cseeorgs")) %>%
