@@ -115,17 +115,20 @@ gw.codes <- bind_rows(gw.states, gw.microstates) %>%
   mutate(iso3 = countrycode(country.name, "country.name", "iso3c",
                             custom_match = c(Abkhazia = NA, 
                                              `South Ossetia` = NA,
-                                             Yugoslavia = "SRB",
+                                             Yugoslavia = "YUG",
                                              Kosovo = "XKK",
                                              `Korea, People's Republic of` = NA)),
          iso2 = countrycode(iso3, "iso3c", "iso2c",
-                            custom_match = c(XKK = "XK")),
+                            custom_match = c(XKK = "XK",
+                                             YUG = 345)),
          cowcode = countrycode(iso3, "iso3c", "cown",
                                custom_match = c(XKK = 347,
-                                                SRB = 340))) %>%
+                                                SRB = 340,
+                                                YUG = 345))) %>%
   filter(!is.na(iso3)) %>%
   mutate(country.name = countrycode(iso3, "iso3c", "country.name",
-                                    custom_match = c(XKK = "Kosovo"))) %>%
+                                    custom_match = c(XKK = "Kosovo",
+                                                     YUG = "Yugoslavia"))) %>%
   select(country.name, iso3, iso2, gwcode, cowcode)
 
 manual.gw <- tribble(
@@ -163,12 +166,12 @@ Notably, this aggregated data shows total aid *commitments*, not aid *disburseme
 So, we look at ODA *commitments*.
 
 ```{r load-aiddata, message=FALSE, warning=FALSE}
-aiddata.url <- "https://github.com/AidData-WM/public_datasets/releases/download/v3.0/AidDataCore_ResearchRelease_Level1_v3.0.zip"
+aiddata.url <- "https://github.com/AidData-WM/public_datasets/releases/download/v3.1/AidDataCore_ResearchRelease_Level1_v3.1.zip"
 aiddata.path <- here("Data", "data_raw", "AidData")
 aiddata.zip.name <- basename(aiddata.url)
 aiddata.name <- tools::file_path_sans_ext(aiddata.zip.name)
 
-aiddata.final.name <- "AidDataCoreDonorRecipientYearPurpose_ResearchRelease_Level1_v3.0.csv"
+aiddata.final.name <- "AidDataCoreDonorRecipientYearPurpose_ResearchRelease_Level1_v3.1.csv"
 
 # Download AidData data if needed
 if (!file.exists(file.path(aiddata.path, aiddata.final.name))) {
@@ -222,28 +225,31 @@ non.dac.donors <- c("Bulgaria", "Croatia", "Cyprus", "Estonia", "Hungary",
 other.countries <- c("Brazil", "Chile", "Colombia", "India", "Monaco", "Qatar",
                      "South Africa", "Taiwan")
 
-donors <- aiddata.clean %>%
+donors.all <- aiddata.clean %>%
   distinct(donor) %>%
   mutate(donor.type = case_when(
     .$donor %in% c(dac.donors, non.dac.donors, other.countries) ~ "Country",
     .$donor == "Bill & Melinda Gates Foundation" ~ "Private donor",
     TRUE ~ "Multilateral or IGO"
-  )) %>%
-  mutate(donor.cowcode = ifelse(donor.type == "Country",
-                                countrycode(donor, "country.name", "cown"),
-                                NA),
-         donor.iso3 = ifelse(donor.type == "Country",
-                             countrycode(donor, "country.name", "iso3c"),
-                             NA))
+  ))
+
+donor.countries <- donors.all %>% 
+  filter(donor.type == "Country") %>% 
+  mutate(donor.cowcode = countrycode(donor, "country.name", "cown"),
+         donor.iso3 = countrycode(donor, "country.name", "iso3c"))
+
+donors <- bind_rows(filter(donors.all, donor.type != "Country"),
+                    donor.countries)
 
 recipients <- aiddata.clean %>%
   distinct(recipient) %>%
-  mutate(iso3 = countrycode(recipient, "country.name", "iso3c")) %>%
-  mutate(iso3 = case_when(
-    .$recipient == "Kosovo" ~ "XKK",
-    .$recipient == "Serbia and Montenegro" ~ "YUG",
-    TRUE ~ .$iso3
-  )) %>%
+  mutate(iso3 = countrycode(recipient, "country.name", "iso3c",
+                            custom_match = c(`Korea, Democratic Republic of` = NA,
+                                             `Netherlands Antilles` = NA,
+                                             Kosovo = "XKK",
+                                             `Serbia and Montenegro` = "SCG",
+                                             Yugoslavia = "YUG"
+                                             ))) %>%
   left_join(gw.codes, by = "iso3") %>%
   # Get rid of tiny countries
   filter(!is.na(gwcode))
