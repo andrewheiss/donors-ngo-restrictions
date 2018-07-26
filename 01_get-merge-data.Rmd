@@ -1167,7 +1167,18 @@ The [UCDP/PRIO Armed Conflict Dataset](http://ucdp.uu.se/downloads/) tracks a to
 #   mutate(intensity = factor(intensity, 
 #                             levels = c("No", "Minor", "Intermediate", "War"), 
 #                             ordered = TRUE))
-conflicts.raw <- read_csv("http://ucdp.uu.se/downloads/ucdpprio/ucdp-prio-acd-4-2016.csv")
+
+conflicts.url <- "http://ucdp.uu.se/downloads/ucdpprio/ucdp-prio-acd-4-2016.csv"
+
+conflicts.path <- here("Data", "data_raw", "UCDP")
+
+if (!file.exists(file.path(conflicts.path, basename(conflicts.url)))) {
+  GET(conflicts.url, 
+      write_disk(file.path(conflicts.path, basename(conflicts.url)),
+                 overwrite = TRUE))
+}
+
+conflicts.raw <- read_csv(file.path(conflicts.path, basename(conflicts.url)))
 
 conflicts <- conflicts.raw %>%
   filter(TypeOfConflict == 3) %>%
