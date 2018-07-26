@@ -1209,9 +1209,9 @@ EM-DAT does not provide a single link to download their data. Instead, you have 
 
 ```{r load-disasters, message=FALSE}
 # Disaster classification
-disaster.classification.raw <- "http://www.emdat.be/classification" %>%
+disaster.classification.raw <- "https://web.archive.org/web/20161203165345/http://www.emdat.be/classification" %>%
   read_html() %>%
-  html_nodes(xpath = '//*[@id="article-14627"]/div/div/div/div/table[1]') %>%
+  html_nodes(., xpath = '//*[@id="article-14627"]/div/div/div/div/table[1]') %>%
   html_table(header = TRUE)
 
 # For whatever reason, the downloaded data treats technological subgroups as
@@ -1253,30 +1253,22 @@ disasters <- disasters.raw %>%
                                   "mass movement", `disaster type`)) %>%
   left_join(disaster.classification, by = c("disaster type" = "Actual Type")) %>%
   mutate(iso = str_to_upper(iso), 
-         cowcode = countrycode(iso, "iso3c", "cown")) %>%
-  mutate(cowcode = case_when(
-    .$iso == "HKG" ~ as.integer(715),
-    .$iso == "DFR" ~ as.integer(255),
-    .$iso == "PSE" ~ as.integer(669),
-    .$iso == "SUN" ~ as.integer(365),
-    .$iso == "YMN" ~ as.integer(679),
-    .$iso == "SRB" ~ as.integer(340),
-    .$iso == "SCG" ~ as.integer(345),
-    TRUE ~ .$cowcode
-  )) %>%
+         cowcode = countrycode(iso, "iso3c", "cown",
+                               custom_match = c(HKG = 715, DFR = 255, PSE = 669,
+                                                SUN = 365, YMN = 679, SRB = 340,
+                                                SCG = 345, YUG = 345))) %>%
   # Get rid of tiny countries
   filter(!is.na(cowcode)) %>%
   # Fix missing names (collapsing old Germanies, Yemens, and USSR)
-  mutate(country_name = countrycode(iso, "iso3c", "country.name")) %>%
-  mutate(country_name = case_when(
-    .$iso == "DFR" ~ "Germany",
-    .$iso == "SCG" ~ "Yugoslavia",
-    .$iso == "SUN" ~ "Russia",
-    .$iso == "YMN" ~ "Yemen",
-    TRUE ~ .$country_name
-  )) %>%
+  mutate(country_name = countrycode(iso, "iso3c", "country.name",
+                                    custom_match = c(DFR = "Germany",
+                                                     SCG = "Yugoslavia",
+                                                     YUG = "Yugoslavia",
+                                                     SUN = "Russia",
+                                                     YMN = "Yemen"))) %>%
   # Fix ISOs
-  mutate(iso = countrycode(country_name, "country.name", "iso3c")) %>%
+  mutate(iso = countrycode(country_name, "country.name", "iso3c",
+                           custom_match = c(Yugoslavia = "YUG"))) %>%
   select(country_name, year, iso3 = iso, cowcode, disaster.type = `disaster type`, 
          disaster.group = `Disaster Group`, disaster.subgroup = `Disaster Subgroup`,
          disaster.occurrence = occurrence, disaster.deaths = `Total deaths`,
