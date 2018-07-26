@@ -811,7 +811,7 @@ read_distances <- function(type, year) {
                                  ifelse(gwcode != gwcode.other & distance == 0, 1,
                                         1 / distance))) %>%
     mutate(type = type, year = year) %>%
-    mutate_each(funs(as.numeric), starts_with("gwcode")) %>%
+    mutate_at(vars(starts_with("gwcode")), funs(as.numeric)) %>%
     # Mark if country is within 900 km
     mutate(is.rough.neighbor = distance < 900) %>%
     # Standardize inverted distances so that all rows within a country add to 1
@@ -832,7 +832,8 @@ read_distances <- function(type, year) {
 all.distances <- expand.grid(year = 1980:2015,
                              type = "min",
                              stringsAsFactors = FALSE) %>%
-  rowwise() %>% do(read_distances(.$type, .$year)) %>% ungroup()
+  mutate(distances = map2(type, year, ~ read_distances(.x, .y))) %>% 
+  unnest(distances)
 
 all.distances %>% glimpse()
 ```
