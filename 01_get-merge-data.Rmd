@@ -565,21 +565,21 @@ if (all.na.means.zero) {
     # gives us more flexibility to set different defaults per law (like how q_2b
     # or q_4c might be better as NA_integer_ instead of 0)
     mutate(value.fixed = case_when(
-      is.na(.$value) & .$question == "q_1a" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_1b" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_2a" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_2b" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_2c" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_2d" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_3a" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_3b" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_3c" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_3d" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_3e" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_3f" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_4a" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_4b" ~ as.integer(0),
-      is.na(.$value) & .$question == "q_4c" ~ as.integer(0),
+      is.na(.$value) & .$question == "q_1a" ~ 0L,
+      is.na(.$value) & .$question == "q_1b" ~ 0L,
+      is.na(.$value) & .$question == "q_2a" ~ 0L,
+      is.na(.$value) & .$question == "q_2b" ~ 0L,
+      is.na(.$value) & .$question == "q_2c" ~ 0L,
+      is.na(.$value) & .$question == "q_2d" ~ 0L,
+      is.na(.$value) & .$question == "q_3a" ~ 0L,
+      is.na(.$value) & .$question == "q_3b" ~ 0L,
+      is.na(.$value) & .$question == "q_3c" ~ 0L,
+      is.na(.$value) & .$question == "q_3d" ~ 0L,
+      is.na(.$value) & .$question == "q_3e" ~ 0L,
+      is.na(.$value) & .$question == "q_3f" ~ 0L,
+      is.na(.$value) & .$question == "q_4a" ~ 0L,
+      is.na(.$value) & .$question == "q_4b" ~ 0L,
+      is.na(.$value) & .$question == "q_4c" ~ 0L,
       TRUE ~ .$value
     )) %>%
     select(-value) %>%
@@ -597,21 +597,21 @@ if (all.na.means.zero) {
     # gives us more flexibility to set different defaults per law (like how q_2b
     # or q_4c might be better as NA_integer_ instead of 0)
     mutate(value.fixed = case_when(
-      .$not.all.na & is.na(.$value) & .$question == "q_1a" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_1b" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_2a" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_2b" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_2c" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_2d" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_3a" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_3b" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_3c" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_3d" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_3e" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_3f" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_4a" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_4b" ~ as.integer(0),
-      .$not.all.na & is.na(.$value) & .$question == "q_4c" ~ as.integer(0),
+      .$not.all.na & is.na(.$value) & .$question == "q_1a" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_1b" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_2a" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_2b" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_2c" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_2d" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_3a" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_3b" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_3c" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_3d" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_3e" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_3f" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_4a" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_4b" ~ 0L,
+      .$not.all.na & is.na(.$value) & .$question == "q_4c" ~ 0L,
       TRUE ~ .$value
     )) %>%
     select(-not.all.na, -value) %>%
@@ -684,8 +684,8 @@ dcjw.full <- dcjw.panel.all.laws %>%
                            dcjw.questions.raw$question_clean)) %>%
   # Add additional variables
   mutate(Country = countrycode(Country, "country.name", "country.name"),
-         cowcode = countrycode(Country, "country.name", "cown"),
-         cowcode = ifelse(Country == "Serbia", 340, cowcode)) %>%
+         cowcode = countrycode(Country, "country.name", "cown",
+                               custom_match = c(Serbia = 340))) %>%
   select(country.name = Country, cowcode, year, everything())
 ```
 
