@@ -1,0 +1,49 @@
+name: donors-ngo-restrictions
+exclude:
+- Analysis
+- Data
+- Miscellaneous
+- Output
+- Presentations
+- Readings
+- Sandbox
+- Writing
+- lib
+- Icon?
+- Makefile
+- LICENSE.html
+- README.html
+navbar:
+  title: NGO Crackdowns and Foreign Aid
+  right:
+  - text: Process and merge data
+    icon: fa-table
+    href: 01_get-merge-data.html
+  - text: Non-model analysis
+    icon: fa-bar-chart
+    href: 02_non-model-analysis.html
+  - text: General models
+    icon: fa-bar-chart
+    href: 03_general-models.html
+  - text: Bayesian models
+    icon: fa-bar-chart
+    href: 04_bayesian-models.html
+output:
+  html_document:
+    theme: spacelab
+    css: html/fixes.css
+    include:
+      after_body: html/footer.html
+    highlight: pygments
+    code_folding: show
+    code_download: yes
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+    toc_depth: 4
+    fig_height: 4
+    fig_width: 6
+    lib_dir: site_libs
+    self_contained: no
+output_dir: _site

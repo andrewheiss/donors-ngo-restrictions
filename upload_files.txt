@@ -1,6 +1,0 @@
-index.html
-html/
-Data/get_merge_data.html
-Analysis/models.html
-Analysis/models-bayesian.html
-Analysis/non-model-analysis.html

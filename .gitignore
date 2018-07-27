@@ -2,6 +2,14 @@
 Output/*
 Data/data_clean/*.rds
 
+# Site output
+_site/*
+site_libs/*
+
+# knitr and caching stuff
+*_files/*
+*_cache/*
+
 # Analysis output
 index.html
 Analysis/**/*.html

@@ -3,17 +3,8 @@ title: "Get, clean, and merge data"
 author: "Suparna Chaudhry and Andrew Heiss"
 date: "`r format(Sys.time(), '%F')`"
 output: 
-  html_document: 
-    css: html/fixes.css
+  html_document:
     code_folding: hide
-    toc: yes
-    toc_float: true
-    toc_depth: 4
-    highlight: pygments
-    self_contained: yes
-    theme: spacelab
-    includes:
-      after_body: html/add_home_link.html
 editor_options: 
   chunk_output_type: console
 ---
@@ -335,19 +326,19 @@ ever.dac.eligible <- read_csv(here("Data", "data_clean",
 
 #### List of donors
 
-```{r}
+```{r show-donors}
 donors %>% datatable()
 ```
 
 #### List of recipients
 
-```{r}
+```{r show-recipients}
 select(recipients, recipient) %>% datatable()
 ```
 
 #### List of purposes
 
-```{r}
+```{r show-purposes}
 arrange(purposes, desc(n)) %>% datatable()
 ```
 
@@ -456,7 +447,7 @@ rm(usaid.raw)
 
 Here are the US government agencies giving out money:
 
-```{r}
+```{r show-agencies}
 implementing.agencies <- usaid.clean %>%
   count(implementing_agency_name, subagency_name) %>%
   arrange(desc(n), implementing_agency_name)
@@ -468,7 +459,7 @@ implementing.agencies %>% datatable()
 
 The activities listed don't follow any standard coding guidelines. There are tens of thousands of them. Here are the first 100, just for reference:
 
-```{r}
+```{r show-activities}
 activities <- usaid.clean %>%
   count(activity_name) %>%
   slice(1:100)
@@ -480,7 +471,7 @@ activities %>% datatable()
 
 USAID distinguishes between domestic, foreign, and international NGOs, companies, multilateral organizations, etc. recipients (or channels) of money:
 
-```{r}
+```{r show-channels}
 channels <- usaid.clean %>%
   count(channel_category_name, channel_subcategory_name) %>%
   filter(!is.na(channel_category_name))
@@ -1278,7 +1269,7 @@ disasters <- disasters.raw %>%
   filter(disaster.group != "complex")
 ```
 
-```{r}
+```{r summarize-disasters}
 # Summarize disaster variables by country, year, and type/group/subgroup
 disaster.vars <- vars(disaster.occurrence, disaster.deaths, disaster.injured, 
                       disaster.affected, disaster.homeless, disaster.total.affected,
@@ -1298,7 +1289,7 @@ disasters.groups <- disasters %>%
 disasters.groups %>% head(100) %>% datatable(extensions = "Responsive")
 ```
 
-```{r}
+```{r show-disasters}
 disasters.groups %>% glimpse()
 ```
 
@@ -1652,8 +1643,6 @@ country.aid.data <- country.aid.data %>%
   filter(!(m %in% paste0("imp", 6:10)))
 
 country.aid.data %>% head(100) %>% datatable(extensions = "Responsive")
-
-country.aid.data %>% glimpse()
 ```
 
 The final imputed dataset still has missing data, but that's because of (1) `prop.contentious`, which is missing if there's no aid in a country year, and (2) lags and leads create missing values at the beginnings and ends of the country windows.
