@@ -763,7 +763,7 @@ vdem.cso.min <- vdem.cso %>%
          starts_with("v2csreprss"), starts_with("v2cseeorgs")) %>%
   arrange(cowcode, year)
 
-vdem.cso.min %>% head(100) %>% datatable(extensions = "Responsive")
+vdem.cso.min %>% head(50) %>% datatable(extensions = "Responsive")
 ```
 
 #### Summary of clean data
@@ -962,7 +962,7 @@ un.gdp.final <- un.gdp.rescaled %>%
   group_by(cowcode, year) %>%
   slice(1) %>% ungroup()
 
-un.gdp.final %>% head(100) %>% datatable(extensions = "Responsive")
+un.gdp.final %>% head(50) %>% datatable(extensions = "Responsive")
 
 un.gdp.final %>% glimpse()
 ```
@@ -1641,8 +1641,6 @@ country.aid.data.m10 <- country.aid.data
 # Use just the first 5 imputed datasets
 country.aid.data <- country.aid.data %>%
   filter(!(m %in% paste0("imp", 6:10)))
-
-country.aid.data %>% head(100) %>% datatable(extensions = "Responsive")
 ```
 
 The final imputed dataset still has missing data, but that's because of (1) `prop.contentious`, which is missing if there's no aid in a country year, and (2) lags and leads create missing values at the beginnings and ends of the country windows.
