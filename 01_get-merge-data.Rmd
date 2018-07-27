@@ -4,7 +4,7 @@ author: "Suparna Chaudhry and Andrew Heiss"
 date: "`r format(Sys.time(), '%F')`"
 output: 
   html_document: 
-    css: ../html/fixes.css
+    css: html/fixes.css
     code_folding: hide
     toc: yes
     toc_float: true
@@ -13,13 +13,13 @@ output:
     self_contained: yes
     theme: spacelab
     includes:
-      after_body: ../html/add_home_link.html
+      after_body: html/add_home_link.html
 editor_options: 
   chunk_output_type: console
 ---
 
 ```{r load-libraries, message=FALSE}
-knitr::opts_chunk$set(cache = FALSE, fig.retina = 2,
+knitr::opts_chunk$set(fig.retina = 2,
                       tidy.opts = list(width.cutoff = 120),  # For code
                       options(width = 120))  # For output
 
@@ -166,7 +166,7 @@ Notably, this aggregated data shows total aid *commitments*, not aid *disburseme
 
 So, we look at ODA *commitments*.
 
-```{r load-aiddata, message=FALSE, warning=FALSE}
+```{r load-aiddata, message=FALSE, warning=FALSE, cache=TRUE}
 aiddata.url <- "https://github.com/AidData-WM/public_datasets/releases/download/v3.1/AidDataCore_ResearchRelease_Level1_v3.1.zip"
 aiddata.path <- here("Data", "data_raw", "AidData")
 aiddata.zip.name <- basename(aiddata.url)
@@ -738,7 +738,7 @@ testthat::expect_equal(nrow(vdem.raw), 26537)
 testthat::expect_equal(ncol(vdem.raw), 4641)
 ```
 
-```{r clean-vdem}
+```{r clean-vdem, cache=TRUE}
 # Extract civil society-related variables and create CSRE index
 vdem.cso <- vdem.raw %>% 
   # Missing COW codes
@@ -1569,7 +1569,7 @@ if (file.exists(imputation.rds)) {
 }
 ```
 
-```{r log-lead-lag-everything}
+```{r log-lead-lag-everything, cache=TRUE}
 # Log, lead, and lag everything based on the big dataset of imputations
 
 # pct.change <- function(x) {
@@ -1658,7 +1658,7 @@ country.aid.data %>% glimpse()
 
 The final imputed dataset still has missing data, but that's because of (1) `prop.contentious`, which is missing if there's no aid in a country year, and (2) lags and leads create missing values at the beginnings and ends of the country windows.
 
-```{r plot-missing-imputed, fig.width=8, fig.height=5}
+```{r plot-missing-imputed, fig.width=8, fig.height=5, cache=TRUE}
 plot.percent.missing(filter(country.aid.data, m != "original"), 3)
 ```
 
@@ -1667,7 +1667,7 @@ plot.percent.missing(filter(country.aid.data, m != "original"), 3)
 
 Final, clean country- and donor-level datasets are available in `Data/data_clean/`.
 
-```{r save-final-data, echo=FALSE}
+```{r save-final-data, echo=FALSE, cache=TRUE}
 saveRDS(filter(country.aid.data, m == "original"),
         file = here("Data", "data_clean", "df_country_aid_no_imputation.rds"))
 
