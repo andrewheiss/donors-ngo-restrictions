@@ -1556,7 +1556,7 @@ if (file.exists(imputation.rds)) {
   # back the omitted variables
   country.aid.data.imputed.long <- 
     bind_rows(mutate(country.aid.data.to.impute, m = "original"),
-              bind_rows(country.aid.data.amelia$imputations, .id = "m")) %>%
+              bind_rows(unclass(country.aid.data.amelia$imputations), .id = "m")) %>%
     select(m, everything()) %>%
     left_join(select(country.aid.data.pre.amelia, 
                      -one_of(vars.to.include.sans.ids)), by = c("cowcode", "year"))
