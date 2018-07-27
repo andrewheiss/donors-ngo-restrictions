@@ -43,16 +43,6 @@ burden.colors <- c("black",
 simulation.individual <- "grey30"
 simulation.mean <- "black"
 
-plot.blank <- ggplot() + geom_blank(aes(1, 1)) + theme_void()
-
-# Extract legend from plot into a separate grob
-# http://stackoverflow.com/a/13650878/120898
-extract_legend <- function(a.gplot) {
-  tmp <- ggplot_gtable(ggplot_build(a.gplot))
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-  legend <- tmp$grobs[[leg]]
-  return(legend)
-}
 
 # Save Cairo PDF and PNG at the same time
 fig.save.cairo <- function(fig, filepath = here("Output"), 

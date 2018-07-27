@@ -18,6 +18,7 @@ library(tidyverse)
 library(stringr)
 library(forcats)
 library(scales)
+library(patchwork)
 library(here)
 
 source(here("lib", "graphics.R"))
@@ -138,7 +139,7 @@ plot.aid.contentiousness <- df.donor %>%
 fig.oecd.contention <- ggplot(plot.aid.contentiousness, aes(x = year, y = perc)) + 
   geom_line() +
   scale_y_continuous(labels = percent) + 
-  labs(x = NULL, y = "Percent of contentious aid") +
+  labs(x = NULL, y = "Percent of\ncontentious aid") +
   theme_donors()
 fig.oecd.contention
 ```
@@ -214,8 +215,8 @@ fig.usaid.channel <- ggplot(plot.usaid.channel,
   geom_line() +
   scale_y_continuous(labels = percent_format(accuracy = 1)) + 
   scale_colour_manual(values = channel.colors) +
-  labs(x = NULL, y = "Percent of US aid given through NGOs") +
-  guides(colour = guide_legend(title = NULL, reverse = TRUE)) +
+  labs(x = NULL, y = "Percent of US aid\ngiven through NGOs") +
+  guides(colour = guide_legend(title = NULL, reverse = TRUE, nrow = 2)) +
   theme_donors()
 fig.usaid.channel
 ```
@@ -249,20 +250,13 @@ fig.usaid.channel.trimmed
 
 ### All DV figures combined (for paper)
 
-```{r plot-all-dvs, fig.width=6, fig.height=5}
-# Extract legend and put it in its own grob
-# http://www.sthda.com/english/wiki/ggplot2-easy-way-to-mix-multiple-graphs-on-the-same-page-r-software-and-data-visualization#change-legend-position
-fig.dvs <- arrangeGrob(fig.oecd.aid, fig.oecd.contention, 
-                       fig.us.aid, fig.usaid.channel.trimmed + 
-                         theme(legend.position = "none"),
-                       plot.blank, extract_legend(fig.usaid.channel.trimmed), 
-                       ncol = 2,
-                       heights = c(1, 1, 0.2))
+```{r plot-all-dvs, fig.width=6, fig.height=3.75}
+fig.dvs <- (fig.oecd.aid + fig.oecd.contention + 
+              fig.us.aid + fig.usaid.channel.trimmed) + 
+  plot_layout(nrow = 2)
 
-grid::grid.newpage()
-grid::grid.draw(fig.dvs)
-
-fig.save.cairo(fig.dvs, filename = "fig-dvs", width = 6, height = 5)
+fig.dvs
+fig.save.cairo(fig.dvs, filename = "fig-dvs", width = 6, height = 3.75)
 ```
 
 
@@ -414,7 +408,7 @@ df.csre.plot <- df.country %>%
 fig.csre <- ggplot(df.csre.plot, aes(x = year, y = y)) +
   geom_ribbon(aes(ymin = ymin, ymax = ymax), alpha = 0.2) +
   geom_line() +
-  labs(y = "Average civil society regulatory environment", x = NULL) +
+  labs(y = "Average civil society\nregulatory environment", x = NULL) +
   theme_donors()
 fig.csre
 ```
@@ -422,17 +416,11 @@ fig.csre
 ### NGO barriers combined (for paper)
 
 ```{r plot-all-ngo-barriers, fig.width=6}
-fig.barriers <- arrangeGrob(fig.ngo.barriers + theme(legend.position = "none"), 
-                            fig.csre, 
-                            extract_legend(fig.ngo.barriers), plot.blank,  
-                            ncol = 2,
-                            heights = c(2, 0.2))
+fig.barriers <- (fig.ngo.barriers + fig.csre) + plot_layout(ncol = 2)
 
-grid::grid.newpage()
-grid::grid.draw(fig.barriers)
-
+fig.barriers
 fig.save.cairo(fig.barriers, filename = "fig-barriers",
-               width = 6, height = 3)
+               width = 6, height = 2.5)
 ```
 
 
