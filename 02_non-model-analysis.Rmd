@@ -415,7 +415,7 @@ fig.csre
 
 ### NGO barriers combined (for paper)
 
-```{r plot-all-ngo-barriers, fig.width=6}
+```{r plot-all-ngo-barriers, fig.width=6, fig.height=2.5}
 fig.barriers <- (fig.ngo.barriers + fig.csre) + plot_layout(ncol = 2)
 
 fig.barriers
