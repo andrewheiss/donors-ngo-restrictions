@@ -1204,7 +1204,7 @@ EM-DAT does not provide a single link to download their data. Instead, you have 
 - Download CSV and save in `Data/data_raw/Disasters/Data.csv`
 
 
-```{r load-disasters, message=FALSE}
+```{r load-disasters, message=FALSE, cache=TRUE}
 # Disaster classification
 disaster.classification.raw <- "https://web.archive.org/web/20161203165345/http://www.emdat.be/classification" %>%
   read_html() %>%
@@ -1249,13 +1249,16 @@ disasters <- disasters.raw %>%
   mutate(`disaster type` = ifelse(`disaster type` == "mass movement (dry)",
                                   "mass movement", `disaster type`)) %>%
   left_join(disaster.classification, by = c("disaster type" = "Actual Type")) %>%
+  # Get rid of tiny countries
+  filter(!(iso %in% c("AIA", "ANT", "ASM", "AZO", "BMU", "COK", "CSK", "CYM", 
+                      "DDR", "GLP", "GUF", "GUM", "MAC", "MNP", "MSR", "MTQ", 
+                      "MYT", "NCL", "NIU", "PRI", "PYF", "REU", "SHN", "SPI", 
+                      "TCA", "TKL", "VGB", "VIR", "WLF", "YMD"))) %>% 
   mutate(iso = str_to_upper(iso), 
          cowcode = countrycode(iso, "iso3c", "cown",
                                custom_match = c(HKG = 715, DFR = 255, PSE = 669,
                                                 SUN = 365, YMN = 679, SRB = 340,
                                                 SCG = 345, YUG = 345))) %>%
-  # Get rid of tiny countries
-  filter(!is.na(cowcode)) %>%
   # Fix missing names (collapsing old Germanies, Yemens, and USSR)
   mutate(country_name = countrycode(iso, "iso3c", "country.name",
                                     custom_match = c(DFR = "Germany",
