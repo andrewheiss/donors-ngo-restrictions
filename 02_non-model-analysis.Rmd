@@ -96,7 +96,7 @@ cat(var.summary, file = here("Output", "tbl-var-summary.md"))
 
 ```{r summarize-oecd-aid}
 df.country.aid %>%
-  summarise(total = scales::dollar(sum(total.oda))) %>% 
+  summarise(total = dollar(sum(total.oda))) %>% 
   pull(total) -> total.oecd.aid
 ```
 
@@ -110,7 +110,7 @@ plot.aid <- df.country.aid %>%
 fig.oecd.aid <- ggplot(plot.aid, aes(x = year, y = (total / 1000000000))) + 
   geom_line() +
   labs(x = NULL, y = "Total ODA commitments\n(billions of USD)") +
-  scale_y_continuous(labels = scales::dollar) +
+  scale_y_continuous(labels = dollar) +
   theme_donors()
 fig.oecd.aid
 ```
@@ -137,7 +137,7 @@ plot.aid.contentiousness <- df.donor %>%
 
 fig.oecd.contention <- ggplot(plot.aid.contentiousness, aes(x = year, y = perc)) + 
   geom_line() +
-  scale_y_continuous(labels = scales::percent) + 
+  scale_y_continuous(labels = percent) + 
   labs(x = NULL, y = "Percent of contentious aid") +
   theme_donors()
 fig.oecd.contention
@@ -147,12 +147,12 @@ fig.oecd.contention
 
 ```{r summarize-us-aid}
 df.country.aid %>%
-  summarise(total = scales::dollar(sum(oda.us))) %>% 
+  summarise(total = dollar(sum(oda.us))) %>% 
   pull(total) -> total.us.aid
 
 df.country.aid %>%
   filter(year > 1999) %>%
-  summarise(total = scales::dollar(sum(oda.us))) %>% 
+  summarise(total = dollar(sum(oda.us))) %>% 
   pull(total) -> total.us.aid.post.2000
 ```
 
@@ -166,7 +166,7 @@ plot.aid.us <- df.country.aid %>%
 fig.us.aid <- ggplot(plot.aid.us, aes(x = year, y = (total / 1000000000))) + 
   geom_line() +
   labs(x = NULL, y = "Total US ODA commitments\n(billions of USD)") +
-  scale_y_continuous(labels = scales::dollar) +
+  scale_y_continuous(labels = dollar) +
   theme_donors()
 fig.us.aid
 ```
@@ -299,7 +299,7 @@ df.regulation <- df.country %>%
 fig.regulation.burden <- ggplot(df.regulation, 
                                 aes(x = year, y = value, colour = type.of.law)) +
   geom_line() + 
-  scale_y_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
   coord_cartesian(ylim = c(0, 0.7)) +
   scale_colour_manual(values = burden.colors) +
   guides(colour = guide_legend(reverse = TRUE, title = NULL)) +
@@ -451,7 +451,7 @@ ggplot(aid.donor.type.time, aes(x = year, y = total.aid / 1000000000,
   labs(x = NULL, y = "Billions of USD",
        caption = "Source: OECD and AidData. 2011 dollars.") +
   guides(colour = guide_legend(title = NULL)) +
-  scale_y_continuous(labels = scales::dollar) + 
+  scale_y_continuous(labels = dollar) + 
   theme_donors()
 ```
 
@@ -468,6 +468,6 @@ ggplot(aid.contention.time, aes(x = year, y = total.aid / 1000000000,
   labs(x = NULL, y = "Billions of USD",
        caption = "Source: OECD and AidData. 2011 dollars.") +
   guides(colour = guide_legend(title = NULL)) +
-  scale_y_continuous(labels = scales::dollar) + 
+  scale_y_continuous(labels = dollar) + 
   theme_donors()
 ```
