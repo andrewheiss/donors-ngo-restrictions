@@ -3,29 +3,21 @@ title: "Non-model analysis"
 author: "Suparna Chaudhry and Andrew Heiss"
 date: "`r format(Sys.time(), '%F')`"
 output: 
-  html_document: 
+  html_document:
     code_folding: hide
-    css: ../html/fixes.css
-    fig_height: 3.5
-    fig_width: 5
-    highlight: pygments
-    includes:
-      after_body: ../html/add_home_link.html
-    theme: spacelab
-    toc: yes
-    toc_depth: 4
-    toc_float: yes
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r load-libraries, message=FALSE}
-knitr::opts_chunk$set(cache = FALSE, fig.retina = 2,
+knitr::opts_chunk$set(fig.retina = 2,
                       tidy.opts = list(width.cutoff = 120),  # For code
                       options(width = 120))  # For output
 
 library(tidyverse)
 library(stringr)
 library(forcats)
-library(DT)
+library(scales)
 library(here)
 
 source(here("lib", "graphics.R"))
@@ -71,18 +63,19 @@ vars.summarized <- df.country.aid %>%
   select(one_of(vars.to.summarize$term)) %>%
   mutate(trade.pct.gdp = trade.pct.gdp / 100,  # This is scaled up for modeling
          total.oda = total.oda / 1000000) %>%
-  summarise_each(funs(XXMean = mean(., na.rm = TRUE),
-                      XXSD = sd(., na.rm = TRUE),
-                      XXMedian = median(., na.rm = TRUE),
-                      XXN = sum(!is.na(.)),
-                      XXMin = min(., na.rm = TRUE),
-                      XXMax = max(., na.rm = TRUE))) %>%
-  gather(key, value) %>%
-  separate(key, c("term", "key"), sep = "_XX") %>%
-  spread(key, value) %>%
+  gather(term, value) %>%
+  filter(!is.na(value)) %>% 
+  group_by(term) %>%
+  summarize(N = n(),
+            Mean = mean(value),
+            Median = median(value),
+            `Std. Dev.` = sd(value),
+            Min = min(value),
+            Max = max(value)) %>% 
   left_join(vars.to.summarize, by = "term") %>%
   arrange(summary_order) %>%
-  select(Variable = term_clean_table, Source = source, Mean, SD, Median, Min, Max, N) %>%
+  select(Variable = term_clean_table, Source = source, 
+         Mean, `Std. Dev.`, Median, Min, Max, N) %>%
   as.data.frame()
 
 caption <- "Summary of all variables included in models {#tbl:var-summary}"
@@ -102,7 +95,7 @@ cat(var.summary, file = here("Output", "tbl-var-summary.md"))
 ```{r summarize-oecd-aid}
 df.country.aid %>%
   summarise(total = scales::dollar(sum(total.oda))) %>% 
-  c() -> total.oecd.aid
+  pull(total) -> total.oecd.aid
 ```
 
 OECD members donated `r total.oecd.aid` between 1981 and 2013.
@@ -122,15 +115,14 @@ fig.oecd.aid
 
 ### Proportion of contentious vs. noncontentious aid
 
-```{r summarize-contentious-aid}
+```{r summarize-contentious-aid, results="asis"}
 df.donor %>%
   filter(year > 1980) %>%
   group_by(purpose.contentiousness) %>%
   summarise(total = sum(oda)) %>%
   mutate(perc = total / sum(total)) %>%
-  datatable() %>%
-  formatCurrency("total", "$", digits = 0) %>%
-  formatPercentage("perc", 2)
+  mutate(total = dollar(total), perc = percent(perc)) %>% 
+  pandoc.table()
 ```
 
 ```{r plot-contentious-aid}
@@ -154,12 +146,12 @@ fig.oecd.contention
 ```{r summarize-us-aid}
 df.country.aid %>%
   summarise(total = scales::dollar(sum(oda.us))) %>% 
-  c() -> total.us.aid
+  pull(total) -> total.us.aid
 
 df.country.aid %>%
   filter(year > 1999) %>%
   summarise(total = scales::dollar(sum(oda.us))) %>% 
-  c() -> total.us.aid.post.2000
+  pull(total) -> total.us.aid.post.2000
 ```
 
 The US donated `r total.us.aid` between 1981 and 2013 and `r total.us.aid.post.2000` between 2000 and 2013.
@@ -181,7 +173,7 @@ fig.us.aid
 
 Total amounts over time:
 
-```{r summarize-aid-channels}
+```{r summarize-aid-channels, results="asis"}
 usaid.total <- df.country.aid %>% summarise(total = sum(oda.us)) %>% as.numeric()
 
 df.country.aid %>%
@@ -189,9 +181,8 @@ df.country.aid %>%
   group_by(channel) %>%
   summarise(total = sum(total.oda.us)) %>%
   mutate(perc = total / usaid.total) %>%
-  datatable() %>%
-  formatCurrency("total", "$", digits = 0) %>%
-  formatPercentage("perc", 2)
+  mutate(total = dollar(total), perc = percent(perc)) %>% 
+  pandoc.table()
 ```
 
 The US clearly favors US-based NGOs or international NGOs over domestic NGOs.
@@ -202,10 +193,10 @@ usaid.total.yearly <- df.country.aid %>%
   summarise(annual.total = sum(oda.us))
 
 channels.nice <- tribble(
-  ~channel, ~channel.clean,
+  ~channel,         ~channel.clean,
   "oda.us.ngo.dom", "Domestic NGOs",
   "oda.us.ngo.int", "International NGOs",
-  "oda.us.ngo.us", "US-based NGOs"
+  "oda.us.ngo.us",  "US-based NGOs"
 )
 
 plot.usaid.channel <- df.country.aid %>%
@@ -219,7 +210,7 @@ plot.usaid.channel <- df.country.aid %>%
 fig.usaid.channel <- ggplot(plot.usaid.channel, 
                             aes(x = year, y = perc, colour = channel.clean)) + 
   geom_line() +
-  scale_y_continuous(labels = scales::percent) + 
+  scale_y_continuous(labels = percent_format(accuracy = 1)) + 
   scale_colour_manual(values = channel.colors) +
   labs(x = NULL, y = "Percent of US aid given through NGOs") +
   guides(colour = guide_legend(title = NULL, reverse = TRUE)) +
@@ -239,7 +230,7 @@ plot.usaid.channels.all <- df.donor.us %>%
 ggplot(plot.usaid.channels.all, 
        aes(x = year, y = perc, colour = channel_subcategory_name)) + 
   geom_line() +
-  scale_y_continuous(labels = scales::percent) + 
+  scale_y_continuous(labels = percent_format(accuracy = 1)) + 
   labs(x = NULL, y = "Percent of US aid given through different channels") +
   guides(colour = guide_legend(title = NULL)) +
   theme_donors()
@@ -269,8 +260,7 @@ fig.dvs <- arrangeGrob(fig.oecd.aid, fig.oecd.contention,
 grid::grid.newpage()
 grid::grid.draw(fig.dvs)
 
-fig.save.cairo(fig.dvs, filename = "fig-dvs",
-               width = 6, height = 5)
+fig.save.cairo(fig.dvs, filename = "fig-dvs", width = 6, height = 5)
 ```
 
 
@@ -338,7 +328,7 @@ cat(dcjw.index.table, file = here("Output", "tbl-ngo-barriers-index.md"))
 
 ### Number of countries with restrictive laws
 
-```{r num-countries-laws, fig.width=11, fig.height=7}
+```{r num-countries-laws, fig.width=11, fig.height=7, cache=TRUE}
 df.ngo.restrictions.plot <- df.country %>%
   select(cowcode, year, const_assoc, political_parties, starts_with("ngo_")) %>%
   gather(restriction, value, -c(cowcode, year)) %>%
@@ -367,7 +357,7 @@ plot.dcjw <- function(df) {
     labs(x = NULL, y = NULL, title = plot.title) +
     coord_cartesian(ylim = c(0, num.countries)) +
     scale_y_continuous(sec.axis = sec_axis(~ . / num.countries,
-                                           labels = scales::percent)) +
+                                           labels = percent_format(accuracy = 1))) +
     guides(colour = guide_legend(title = NULL)) +
     theme_donors(8)
 }
@@ -387,8 +377,9 @@ df.restrictions.type <- df.country %>%
   select(year, advocacy, association, entry, funding) %>%
   gather(barrier, value, -year) %>%
   group_by(year, barrier) %>%
-  by_slice(~ mean_cl_normal(.x$value)) %>%
-  unnest() %>%
+  nest() %>% 
+  mutate(cis = data %>% map(~ mean_cl_normal(.$value))) %>% 
+  unnest(cis) %>% 
   mutate(barrier = factor(barrier, 
                           levels = unique(dcjw.questions.clean$barrier),
                           labels = unique(dcjw.questions.clean$barrier_display),
@@ -414,8 +405,9 @@ fig.ngo.barriers
 df.csre.plot <- df.country %>%
   select(year, csre) %>%
   group_by(year) %>%
-  by_slice(~ mean_cl_normal(.x$csre)) %>%
-  unnest()
+  nest() %>% 
+  mutate(cis = data %>% map(~ mean_cl_normal(.$csre))) %>% 
+  unnest(cis)
 
 fig.csre <- ggplot(df.csre.plot, aes(x = year, y = y)) +
   geom_ribbon(aes(ymin = ymin, ymax = ymax), alpha = 0.2) +
