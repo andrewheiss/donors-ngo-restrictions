@@ -53,6 +53,8 @@ Our data includes information about `r num.countries` countries across `r num.ye
 
 ## Summary of variables in model
 
+The values here are slightly different from what we had at ISA and MPSA (and our ISQ submission) because we're now using V-Dem 8.0 and AidData 3.1. 
+
 ```{r summary-vars-model, results="asis", message=FALSE}
 coef.names <- read_csv(here("Data", "data_clean", "coef_names.csv"))
 
