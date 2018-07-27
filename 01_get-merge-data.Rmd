@@ -732,33 +732,30 @@ When loading the CSV, `readr::read_csv()` chokes on a bunch of rows for whatever
 
 ```{r load-vdem, warning=FALSE, message=FALSE, cache=TRUE}
 vdem.raw <- read_csv(here("Data", "data_raw", "V-Dem", "v8",
-                          "V-Dem-CY+Others-v8.csv")) %>% 
-  # Missing COW codes
-  mutate(COWcode = case_when(
-    .$country_text_id == "SML" ~ as.integer(521),
-    .$country_text_id == "PSE" ~ as.integer(667),
-    .$country_text_id == "PSG" ~ as.integer(668)))
-```
+                          "V-Dem-CY+Others-v8.csv"))
 
-```{r check-vdem, results="asis", message=FALSE, warning=FALSE}
-vdem.raw %>% 
-  check_that(n_rows = nrow(.) == 26537, n_cols = ncol(.) == 4641) %>% 
-  summary() %>% 
-  mutate(expression = expression %>% map_chr(pandoc.verbatim.return)) %>% 
-  pandoc.table()
+testthat::expect_equal(nrow(vdem.raw), 26537)
+testthat::expect_equal(ncol(vdem.raw), 4641)
 ```
 
 ```{r clean-vdem}
 # Extract civil society-related variables and create CSRE index
-vdem.cso <- vdem.raw %>% select(country_name, year, cowcode = COWcode, 
-                                e_fh_ipolity2, v2x_corr, e_wbgi_gee,
-                                v2x_frassoc_thick, v2xcs_ccsi,
-                                starts_with("v2cseeorgs"), 
-                                starts_with("v2csreprss"), 
-                                starts_with("v2cscnsult"),
-                                starts_with("v2csprtcpt"), 
-                                starts_with("v2csgender"), 
-                                starts_with("v2csantimv")) %>%
+vdem.cso <- vdem.raw %>% 
+  # Missing COW codes
+  mutate(COWcode = case_when(
+    .$country_text_id == "SML" ~ 521L,
+    .$country_text_id == "PSE" ~ 667L,
+    .$country_text_id == "PSG" ~ 668L, 
+    TRUE ~ .$COWcode)) %>% 
+  select(country_name, year, cowcode = COWcode, 
+         e_fh_ipolity2, v2x_corr, e_wbgi_gee,
+         v2x_frassoc_thick, v2xcs_ccsi,
+         starts_with("v2cseeorgs"), 
+       starts_with("v2csreprss"), 
+       starts_with("v2cscnsult"),
+       starts_with("v2csprtcpt"), 
+       starts_with("v2csgender"), 
+       starts_with("v2csantimv")) %>%
   mutate(v2csreprss_ord = factor(v2csreprss_ord, 
                                  labels = c("Severely", "Substantially", 
                                             "Moderately", "Weakly", "No"),
