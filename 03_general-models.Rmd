@@ -3,28 +3,20 @@ title: "Models"
 author: "Suparna Chaudhry and Andrew Heiss"
 date: "`r format(Sys.time(), '%F')`"
 output: 
-  html_document: 
+  html_document:
     code_folding: hide
-    css: ../html/fixes.css
-    fig_height: 3.5
-    fig_width: 5
-    highlight: pygments
-    includes:
-      after_body: ../html/add_home_link.html
-    theme: spacelab
-    toc: yes
-    toc_depth: 4
-    toc_float: yes
+editor_options: 
+  chunk_output_type: console
 ---
 
-```{r echo=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 # Externalize these chunks:
 # http://zevross.com/blog/2014/07/09/making-use-of-external-r-code-in-knitr-and-r-markdown/
 # Except @knitr was replaced with four dashes because of RStudio section folding
 if (isTRUE(getOption('knitr.in.progress'))) {
-  knitr::read_chunk(here("Analysis", "models-chunks.R"))
+  knitr::read_chunk(here::here("lib", "models-chunks.R"))
 } else {
-  source(here("Analysis", "models-chunks.R"))
+  source(here::here("lib", "models-chunks.R"))
 }
 ```
 
@@ -51,7 +43,7 @@ $$ {#eq:all-models-dvs}
 
 ## General model specifications and controls
 
-We use a standard set of controls in each model ([explained in more detail here](../Data/get_merge_data.html#other_controls_and_alternative_hypotheses)):
+We use a standard set of controls in each model ([explained in more detail here](01_get-merge-data.html#other_controls_and_alternative_hypotheses)):
 
 - Democracy: `polity`
 - Wealth: `gdp.capita_log` (logged so it's on the same scale as the other variables) 
@@ -66,7 +58,7 @@ This approach has multiple benefits. The coefficients for the demeaned variables
 
 Here's proof of how it works in some simple models. Model 1 is a basic OLS with country fixed effects. Model 2 is a basic OLS with country random effects, but potentially misspecified, since the between and within effects are conflated. Model 3 is a basic OLS with country random effects specified with between (mean; $\bar{x}_i$) and within (demeaned; $x_{it} - \bar{x}_i$) coefficients. The demeaned/within coefficients in Model 3 are identical to the fixed effects coefficients in Model 1. If rows had been dropped because of listwise deletion (like, if there were missing values in one of independent variables), the coefficients would be slightly off, since the demeaned values would have been based on group means that included the values that were dropped (e.g. all 2013 rows are dropped because of lags, but the group means included 2013). This isn't  a problem in these reduced models, but that's one reason we impute all the data—we need the data to be as complete as possible to get the most accurate random effects.
 
-```{r fixed-random-example, results="asis"}
+```{r fixed-random-example, warning=FALSE, message=FALSE}
 mod.test.fe <- lm(total.oda_log_next_year ~ 
                     barriers.total + polity + gdp.capita_log + 
                     as.factor(cowcode),
@@ -84,11 +76,15 @@ mod.test.re.fancy <- lmer(total.oda_log_next_year ~
                             (1 | cowcode),
                           data = df.country.aid.demean.next_year)
 
-stargazer(mod.test.fe, mod.test.re, mod.test.re.fancy,
-          type = "html", omit = "factor", 
-          add.lines = list(c("Country effects",
-                             c("Fixed", "Random", "Random"))),
-          keep.stat = c("n"))
+coefs.to.ignore <- names(mod.test.fe$coefficients) %>% 
+  .[contains("cowcode", vars = .)]
+
+huxreg(mod.test.fe, mod.test.re, mod.test.re.fancy, 
+       omit_coefs = coefs.to.ignore,
+       tidy_args = list(effects = "fixed"),
+       statistics = c(N = "nobs")) %>% 
+  insert_row(c("Country effects", "Fixed", "Random", "Random"),
+             after = nrow(.) - 2, copy_cell_props = FALSE)
 ```
 
 \
@@ -144,8 +140,9 @@ ggplot(acf.plot.data, aes(x = Lag, y = ACF, fill = model)) +
 Not splitting current ODA into within and between also fixes another sticky mathematical issue. When the models are run with within and current ODA, the $\sigma$ value for within-country variability becomes 0 for whatever reason (maybe it swallows up too much country level variability?). When $\sigma = 0$, the between-group variability is too small to fully account for between effects, resulting in a "degenerate model" (see [pages 10–11 here](http://lme4.r-forge.r-project.org/lMMwR/lrgprt.pdf)) and influencing the coefficients in weird ways. See below, where Model 1 uses the split current ODA and Model 2 doesn't: $\sigma$ in Model 2 exists and the coefficients are better estimated.
 
 ```{r h1-table-results, results="asis"}
-stargazer(mod.test.oda.split, mod.test.oda.nosplit,
-          type = "html", keep.stat = c("n"))
+huxreg(mod.test.oda.split, mod.test.oda.nosplit,
+       tidy_args = list(effects = "fixed"),
+       statistics = c(N = "nobs"))
 
 bind_rows(
   as.data.frame(VarCorr(mod.test.oda.split)) %>% mutate(model = "(1)"),
