@@ -1,5 +1,5 @@
-# Each model was run indiviudally in run_bayes_remote.R because of memory
-# issues. Here we reassemble all the pieces.
+# Each model was run indiviudally in run_bayes_remote.R because it takes so long. 
+# Here we reassemble all the pieces.
 library(tidyverse)
 library(here)
 
