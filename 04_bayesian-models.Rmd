@@ -187,7 +187,7 @@ Country intercepts vary with an SD of 0.07 (etc.), year intercepts vary with an 
 
 Here, for the sake of computational efficiency and speed, we only use one of the imputed datasets for predictions. Technically we should base the predictions on all the merged chains, but (1) there's no function that can handle that, (2) it would take forever to run predictions on each individual imputation and then combine the predictions, and (3) these are posterior medians anyway from ostensibly the same-ish distribution—quintupling the number of chains to simulate is overkill for drawing a picture.
 
-```{r h1-predict-total, warning=FALSE, message=FALSE}
+```{r h1-predict-total, warning=FALSE, message=FALSE, cache=TRUE}
 model <- mods.h1.next_year.bayes %>%
   filter(m == "imp1", model.name == "mod.h1.barriers.total") %>%
   select(model) %>% .[[1]] %>% .[[1]]
