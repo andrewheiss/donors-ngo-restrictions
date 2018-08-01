@@ -324,8 +324,6 @@ fig.display.both.h1 <- fig.predicted.h1.barriers.both +
        caption = "Chaudhry and Heiss (2017)") + 
   theme_donors(11)
 
-fig.predicted.h1.barriers.both
-
 fig.save.cairo(fig.predicted.h1.barriers.both, filename = "fig-predicted-h1",
                width = 5.5, height = 3.5)
 ```
