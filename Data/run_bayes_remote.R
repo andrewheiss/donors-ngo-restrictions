@@ -1,3 +1,15 @@
+# On my 2016 quad-core MacBook Pro with 16 GB of RAM, using all four cores with
+# plan(multiprocess), each future_map() command below takes ≈45 minutes.
+# 
+# I used a cluster of 6 DigitalOcean droplets, each with 4 CPUs and 8 GB of RAM
+# ("s-4vcpu-8gb" in the API), and each future_map() command took ≈3 minutes,
+# which is phenomenal!
+# 
+# Run this as a job in RStudio 1.2+ to have this go in the background
+#
+# Once this script runs and all the *.rds files are saved, run
+# Data/run_bayes_reassemble.R to create final versions of the data
+
 source(here::here("lib", "models-chunks.R"))
 
 source(here("lib", "h1_model_definitions_bayes.R"))
@@ -5,13 +17,6 @@ source(here("lib", "h2_model_definitions_bayes.R"))
 source(here("lib", "h3_model_definitions_bayes.R"))
 
 raw.dir <- here("Data", "data_cache")
-
-# On my 2016 quad-core MacBook Pro with 16 GB of RAM, using all four cores with
-# plan(multiprocess), each future_map() command below takes ≈45 minutes.
-# 
-# I used a cluster of 6 DigitalOcean droplets, each with 4 CPUs and 8 GB of RAM
-# ("s-4vcpu-8gb" in the API), and each future_map() command took ≈3 minutes,
-# which is phenomenal!
 
 
 # Set up remote clusters --------------------------------------------------
