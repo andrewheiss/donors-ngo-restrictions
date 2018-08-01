@@ -637,7 +637,7 @@ cat(table.h3.domestic, file = here("Output", "tbl-h3-foreign-coefs-bayes.md"))
 
 #### Plot of proportion to domestic and foreign NGOs {.active}
 
-```{r plot-h3-coefs-both, warning=FALSE, message=FALSE, fig.width=5.5, fig.height=3}
+```{r plot-h3-coefs-both, warning=FALSE, message=FALSE, fig.width=5.5, fig.height=4}
 vars.to.plot <- c("barriers.total_within", "barriers.total_between",
                   "barriers.total_new",
                   "advocacy_within", "advocacy_between", 
