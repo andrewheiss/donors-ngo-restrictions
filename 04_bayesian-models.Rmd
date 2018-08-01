@@ -122,7 +122,7 @@ If it's a little off, it should be okay—it'll be off by an order of 0.001ish.
 
 ### Results
 
-```{r h1-plot-coefs, fig.width=7, fig.height=4}
+```{r h1-plot-coefs, fig.width=5.5, fig.height=3}
 vars.to.plot <- c("barriers.total_within", "barriers.total_between",
                   "barriers.total_new",
                   "advocacy_within", "advocacy_between", 
@@ -136,9 +136,10 @@ mods.h1.melded <- bayes.meld(mods.h1.next_year.bayes,
 
 plot.data <- mods.h1.melded %>%
   left_join(coef.names.all, by = "term") %>%
+  left_join(model.names, by = c("model.name" = "model")) %>% 
   mutate(term = factor(term, levels = vars.to.plot, ordered = TRUE)) %>%
   arrange(desc(term)) %>%
-  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot_short))) %>%
   mutate(coef.type = case_when(
     str_detect(.$term, "_within") ~ "Within",
     str_detect(.$term, "_between") ~ "Between",
@@ -146,21 +147,24 @@ plot.data <- mods.h1.melded %>%
   )) %>% 
   mutate(coef.type = factor(coef.type, levels = c("Within", "Between", "Not split"),
                             ordered = TRUE)) %>%
-  mutate(model.name = factor(model.name, levels = rev(unique(model.name)), ordered = TRUE))
+  mutate(model_clean = factor(model_clean, levels = rev(unique(model_clean)), ordered = TRUE))
 
 fig.coefs.h1 <- ggplot(plot.data, aes(x = med, y = term_plot, 
-                                      xmin = `2.5%`, xmax = `97.5%`, colour = model.name)) +
-  geom_vline(xintercept = 0) +
-  geom_pointrangeh() +
+                                      xmin = `2.5%`, xmax = `97.5%`, colour = model_clean)) +
+  geom_vline(xintercept = 0, colour = "black", size = 0.5) + 
+  geom_pointrangeh(size = 0.5, fatten = 3) +
   labs(x = "Posterior median change in log ODA in following year", y = NULL) +
-  scale_colour_manual(values = model.colors) +
-  guides(color = FALSE) +
-  theme_donors() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_wrap(~ coef.type, scales = "free")
+  scale_colour_manual(values = model.colors, name = "Models") +
+  expand_limits(x = c(-2, 1)) +
+  guides(color = guide_legend(override.aes = list(size = 0.25))) +
+  theme_donors() + 
+  theme(legend.position = c(0.5, 0.02), legend.justification = c(0.15, 0),
+        axis.title.x = element_text(hjust = 0)) +
+  facet_wrap(~ coef.type, scales = "free", ncol = 2)
 fig.coefs.h1
 
 fig.save.cairo(fig.coefs.h1, filename = "fig-coefs-h1-bayes",
-               width = 7, height = 2.5)
+               width = 5.5, height = 3)
 ```
 
 ```{r h1-table, results="asis", warning=FALSE}
@@ -206,12 +210,12 @@ predicted.h1.barriers.total <- new.data %>%
   mutate(predicted = future_map(.x = data, ~ generate_predictions(.x))) %>%
   unnest()
 
-df.plot.data <- predicted.h1.barriers.total %>%
+df.plot.data.h1 <- predicted.h1.barriers.total %>%
   group_by(cowcode, barriers.total_within) %>%
   summarise_at(vars(predicted), funs(mean(.))) %>%
   ungroup()
 
-df.plot.data.mean <- df.plot.data %>%
+df.plot.data.mean.h1 <- df.plot.data.h1 %>%
   group_by(barriers.total_within) %>%
   summarise(predicted = mean(predicted)) %>%
   mutate(cowcode = 1)  # Fake country so the line plots
@@ -263,55 +267,58 @@ predicted.h1.barriers.individual <- new.data %>%
   mutate(predicted = future_map(.x = data, ~ generate_predictions(.x))) %>%
   unnest()
 
-df.plot.data.indiv <- predicted.h1.barriers.individual %>%
+df.plot.data.indiv.h1 <- predicted.h1.barriers.individual %>%
   gather(barrier, barrier.value, c(advocacy_within, entry_within, funding_within)) %>%
   group_by(cowcode, barrier.value, barrier) %>%
   summarise_at(vars(predicted), funs(mean(.))) %>%
   left_join(barriers.indiv.clean.names, by = "barrier")
 
-df.plot.data.mean.indiv <- df.plot.data.indiv %>%
+df.plot.data.mean.indiv.h1 <- df.plot.data.indiv.h1 %>%
   group_by(barrier, barrier.value) %>%
   summarise(predicted = mean(predicted)) %>%
   mutate(cowcode = 1) %>%  # Fake country so the line plots
   left_join(barriers.indiv.clean.names, by = "barrier")
 ```
 
-```{r h1-predict-both, warning=FALSE, fig.width=6.5, fig.height=4}
+```{r h1-predict-both, warning=FALSE, fig.width=5.5, fig.height=3.5}
 # Combine the two plot data frames
-df.plot.data.both <- df.plot.data %>%
+df.plot.data.both.h1 <- df.plot.data.h1 %>%
   mutate(barrier = "barriers.total_within", barrier.clean = "Total barriers") %>%
   rename(barrier.value = barriers.total_within) %>%
-  bind_rows(df.plot.data.indiv) %>%
+  bind_rows(df.plot.data.indiv.h1) %>%
   mutate(barrier.clean = ordered(fct_inorder(barrier.clean)),
          highlight = ifelse(barrier.clean == "Total barriers", TRUE, FALSE))
 
-df.plot.data.mean.both <- df.plot.data.mean %>%
+df.plot.data.mean.both.h1 <- df.plot.data.mean.h1 %>%
   mutate(barrier = "barriers.total_within", barrier.clean = "Total barriers") %>%
   rename(barrier.value = barriers.total_within) %>%
-  bind_rows(df.plot.data.mean.indiv) %>%
+  bind_rows(df.plot.data.mean.indiv.h1) %>%
   mutate(barrier.clean = ordered(fct_inorder(barrier.clean)))
 
 # Create data frame for highlighting the total panel
-df.panel.highlight <- df.plot.data.both %>%
+df.panel.highlight.h1 <- df.plot.data.both.h1 %>%
   distinct(barrier.clean, highlight)
 
-fig.predicted.h1.barriers.both <- ggplot(df.plot.data.both, 
+fig.predicted.h1.barriers.both <- ggplot(df.plot.data.both.h1, 
                                          aes(x = barrier.value, y = expm1(predicted), 
                                              group = cowcode)) + 
-  geom_rect(data = df.panel.highlight, 
-            aes(fill = highlight, x = NULL, y = NULL, group = NULL),
+  geom_rect(data = df.panel.highlight.h1, aes(fill = highlight), inherit.aes = FALSE,
             xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, alpha = 0.15) +
-  geom_vline(xintercept = 0, size = 0.5) +
-  geom_smooth(method = "lm", size = 0.1, alpha = 0.1, colour = simulation.individual) +
-  geom_smooth(data = df.plot.data.mean.both, size = 1.5, method = "lm", colour = simulation.mean) +
-  labs(x = "Difference from average number of anti-NGO barriers in country\n(within effects)",
+  geom_vline(xintercept = 0, colour = "black", size = 0.5) + 
+  geom_smooth(method = "lm", size = 0.1, alpha = 0.1, 
+              colour = simulation.individual) +
+  geom_smooth(data = df.plot.data.mean.both.h1, size = 1.5, 
+              method = "lm", colour = simulation.mean) +
+  labs(x = "Difference from average number of anti-NGO barriers in country (within effects)",
        y = "Predicted ODA in the following year") +
-  scale_y_continuous(labels = scales::dollar, trans = scales::log1p_trans()) +
+  scale_y_continuous(labels = dollar, trans = log1p_trans()) +
   scale_fill_manual(values = c(NA, "grey50"), guide = FALSE) +
   facet_wrap(~ barrier.clean, scales = "free_x") +
-  theme_donors()
+  theme_donors() +
+  theme(axis.title.x = element_text(hjust = 0))
+fig.predicted.h1.barriers.both
 
-fig.display.both <- fig.predicted.h1.barriers.both + 
+fig.display.both.h1 <- fig.predicted.h1.barriers.both + 
   labs(title = "Donors reduce aid more in response to\nadditional advocacy-focused anti-NGO laws",
        subtitle = "Predicted foreign aid (ODA) across range of differences from the average number of\nanti-NGO laws in a hypothetical average country; dark line shows average of\n500 draws from posterior distribution",
        caption = "Chaudhry and Heiss (2017)") + 
@@ -320,7 +327,7 @@ fig.display.both <- fig.predicted.h1.barriers.both +
 fig.predicted.h1.barriers.both
 
 fig.save.cairo(fig.predicted.h1.barriers.both, filename = "fig-predicted-h1",
-               width = 6.5, height = 4)
+               width = 5.5, height = 3.5)
 ```
 
 
@@ -379,7 +386,7 @@ rstan::stan_diag(model.to.check, information = "divergence")
 
 ### Results
 
-```{r h2-plot-coefs, fig.width=7, fig.height=4}
+```{r h2-plot-coefs, fig.width=5.5, fig.height=3}
 vars.to.plot <- c("barriers.total_within", "barriers.total_between",
                   "barriers.total_new",
                   "advocacy_within", "advocacy_between", 
@@ -393,9 +400,10 @@ mods.h2.melded <- bayes.meld(mods.h2.next_year.bayes,
 
 plot.data <- mods.h2.melded %>%
   left_join(coef.names.all, by = "term") %>%
+  left_join(model.names, by = c("model.name" = "model")) %>% 
   mutate(term = factor(term, levels = vars.to.plot, ordered = TRUE)) %>%
   arrange(desc(term)) %>%
-  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot_short))) %>%
   mutate(coef.type = case_when(
     str_detect(.$term, "_within") ~ "Within",
     str_detect(.$term, "_between") ~ "Between",
@@ -403,20 +411,23 @@ plot.data <- mods.h2.melded %>%
   )) %>% 
   mutate(coef.type = factor(coef.type, levels = c("Within", "Between", "Not split"),
                             ordered = TRUE)) %>%
-  mutate(model.name = factor(model.name, levels = rev(unique(model.name)), ordered = TRUE))
+  mutate(model_clean = factor(model_clean, levels = rev(unique(model_clean)), ordered = TRUE))
 
-fig.coefs.h2 <- ggplot(plot.data, aes(x = med, y = term_plot, colour = model.name)) +
-  geom_vline(xintercept = 1, colour = "grey50", size = 0.5) + 
-  geom_pointrangeh(aes(xmin = `2.5%`, xmax = `97.5%`), size = 0.5) + 
+fig.coefs.h2 <- ggplot(plot.data, aes(x = med, y = term_plot, colour = model_clean)) +
+  geom_vline(xintercept = 1, colour = "black", size = 0.5) +  
+  geom_pointrangeh(aes(xmin = `2.5%`, xmax = `97.5%`), size = 0.5, fatten = 3) + 
   labs(x = "Odds ratio", y = NULL) +
-  scale_colour_manual(values = model.colors) +
-  guides(color = FALSE) +
+  scale_colour_manual(values = model.colors, name = "Models") +
+  expand_limits(x = c(0.6, 1.3)) +
+  guides(color = guide_legend(override.aes = list(size = 0.25))) +
   theme_donors() + 
-  facet_wrap(~ coef.type, scales = "free")
+  theme(legend.position = c(0.5, 0.02), legend.justification = c(0.15, 0),
+        axis.title.x = element_text(hjust = 0)) +
+  facet_wrap(~ coef.type, scales = "free", ncol = 2)
 fig.coefs.h2
 
 fig.save.cairo(fig.coefs.h2, filename = "fig-coefs-h2-bayes",
-               width = 7, height = 2.5)
+               width = 5.5, height = 3)
 ```
 
 ```{r h2-table, results="asis", warning=FALSE}
@@ -492,29 +503,32 @@ df.plot.h2.csre <- predicted.h2.csre %>%
   rename(variable = csre_within)
 ```
 
-```{r h2-predict-both-plot, fig.width=6.5, fig.height=4}
-df.plot.data <- bind_rows(df.plot.h2.advocacy, df.plot.h2.csre)
+```{r h2-predict-both-plot, fig.width=5.5, fig.height=2.5}
+df.plot.data.h2 <- bind_rows(df.plot.h2.advocacy, df.plot.h2.csre)
 
-df.plot.data.mean <- df.plot.data %>%
+df.plot.data.mean.h2 <- df.plot.data.h2 %>%
   group_by(variable.clean, variable) %>%
   summarise(predicted = mean(predicted)) %>%
   mutate(value.fixed = inv.logit(predicted, a = 0.001)) %>%
   mutate(cowcode = 1)  # Fake country so the line plots
 
-fig.predicted.h2.barriers <- ggplot(df.plot.data, aes(x = variable, 
-                                                      y = value.fixed, group = cowcode)) + 
-  geom_vline(xintercept = 0, size = 0.5) +
+fig.predicted.h2.barriers <- ggplot(df.plot.data.h2, 
+                                    aes(x = variable,
+                                        y = value.fixed, group = cowcode)) + 
+  geom_vline(xintercept = 0, colour = "black", size = 0.5) + 
   geom_smooth(method = "lm", size = 0.1, alpha = 0.1, colour = simulation.individual) +
-  geom_smooth(data = df.plot.data.mean, size = 1.5, method = "lm", colour = simulation.mean) +
-  labs(x = "Difference from average level of NGO legislation in country\n(within effect)",
+  geom_smooth(data = df.plot.data.mean.h2, size = 1.5, 
+              method = "lm", colour = simulation.mean) +
+  labs(x = "Difference from average level of NGO legislation in country (within effect)",
        y = "Predicted proportion of\ncontentious aid in the following year") +
-  scale_y_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
   facet_wrap(~ variable.clean, scales = "free_x") +
-  theme_donors()
+  theme_donors() + 
+  theme(axis.title.x = element_text(hjust = 0))
 fig.predicted.h2.barriers
 
 fig.save.cairo(fig.predicted.h2.barriers, filename = "fig-predicted-h2",
-               width = 6.5, height = 2.5)
+               width = 5.5, height = 2.5)
 ```
 
 
@@ -608,7 +622,7 @@ cat(table.h3.domestic, file = here("Output", "tbl-h3-foreign-coefs-bayes.md"))
 
 #### Both
 
-```{r plot-h3-coefs-both, warning=FALSE, message=FALSE, fig.width=7, fig.height=4}
+```{r plot-h3-coefs-both, warning=FALSE, message=FALSE, fig.width=5.5, fig.height=3}
 vars.to.plot <- c("barriers.total_within", "barriers.total_between",
                   "barriers.total_new",
                   "advocacy_within", "advocacy_between", 
@@ -622,9 +636,10 @@ mods.h3.dom.melded <- bayes.meld(mods.h3.dom.next_year.bayes,
 
 coefs.raw.h3.dom <- mods.h3.dom.melded %>%
   left_join(coef.names.all, by = "term") %>%
+  left_join(model.names, by = c("model.name" = "model")) %>% 
   mutate(term = factor(term, levels = vars.to.plot, ordered = TRUE)) %>%
   arrange(desc(term)) %>%
-  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot_short))) %>%
   mutate(coef.type = case_when(
     str_detect(.$term, "_within") ~ "Within",
     str_detect(.$term, "_between") ~ "Between",
@@ -632,16 +647,17 @@ coefs.raw.h3.dom <- mods.h3.dom.melded %>%
   )) %>% 
   mutate(coef.type = factor(coef.type, levels = c("Within", "Between", "Not split"),
                             ordered = TRUE)) %>%
-  mutate(model.name = factor(model.name, levels = rev(unique(model.name)), ordered = TRUE))
+  mutate(model_clean = factor(model_clean, levels = rev(unique(model_clean)), ordered = TRUE))
 
 mods.h3.foreign.melded <- bayes.meld(mods.h3.foreign.next_year.bayes,
                                      vars.to.plot, exponentiate = TRUE)$melded.summary
 
 coefs.raw.h3.foreign <- mods.h3.foreign.melded %>%
   left_join(coef.names.all, by = "term") %>%
+  left_join(model.names, by = c("model.name" = "model")) %>% 
   mutate(term = factor(term, levels = vars.to.plot, ordered = TRUE)) %>%
   arrange(desc(term)) %>%
-  mutate(term_plot = ordered(fct_inorder(term_plot))) %>%
+  mutate(term_plot = ordered(fct_inorder(term_plot_short))) %>%
   mutate(coef.type = case_when(
     str_detect(.$term, "_within") ~ "Within",
     str_detect(.$term, "_between") ~ "Between",
@@ -649,26 +665,33 @@ coefs.raw.h3.foreign <- mods.h3.foreign.melded %>%
   )) %>% 
   mutate(coef.type = factor(coef.type, levels = c("Within", "Between", "Not split"),
                             ordered = TRUE)) %>%
-  mutate(model.name = factor(model.name, levels = rev(unique(model.name)), ordered = TRUE))
+  mutate(model_clean = factor(model_clean, levels = rev(unique(model_clean)), ordered = TRUE))
 
 coefs.h3.both <- bind_rows(`Domestic NGOs` = coefs.raw.h3.dom,
                            `Foreign NGOs` = coefs.raw.h3.foreign,
                            .id = "channel")
 
 fig.coefs.h3 <- ggplot(coefs.h3.both, aes(y = term_plot, x = med, 
-                                          colour = interaction(model.name, channel))) + 
-  geom_vline(xintercept = 1, colour = "grey50", size = 1) + 
-  geom_pointrangeh(aes(xmin = `2.5%`, xmax = `97.5%`, shape = channel), size = 0.5,
+                                          colour = model_clean)) + 
+  geom_vline(xintercept = 1, colour = "black", size = 0.5) + 
+  geom_pointrangeh(aes(xmin = `2.5%`, xmax = `97.5%`, shape = channel), 
+                   size = 0.5, fatten = 3,
                    position = position_dodgev(height = 0.5)) + 
   labs(x = "Odds ratio", y = NULL) +
-  scale_colour_manual(values = c(model.colors, model.colors)) +
-  guides(color = FALSE, shape = guide_legend(title = NULL, reverse = TRUE)) +
-  theme_donors() +
-  facet_wrap(~ coef.type, scales = "free")
+  scale_colour_manual(values = model.colors) +
+  expand_limits(x = c(0.5, 2)) +
+  guides(color = guide_legend(override.aes = list(size = 0.25),
+                              title = "Models"),
+         shape = guide_legend(override.aes = list(size = 0.5, linetype = 0),
+                              title = "Channel")) +
+  theme_donors() + 
+  theme(legend.position = c(0.5, -0.01), legend.justification = c(0.15, 0),
+        axis.title.x = element_text(hjust = 0)) +
+  facet_wrap(~ coef.type, scales = "free", ncol = 2)
 fig.coefs.h3
 
 fig.save.cairo(fig.coefs.h3, filename = "fig-coefs-h3-bayes",
-               width = 7, height = 3)
+               width = 5.5, height = 4)
 ```
 
 ### Model diagnostics
@@ -733,27 +756,29 @@ df.plot.h3.domestic <- predicted.h3.domestic %>%
   rename(variable = funding_within)
 ```
 
-```{r h3-predict-both-plot, fig.width=6.5, fig.height=4}
-df.plot.data <- bind_rows(df.plot.h3.foreign, df.plot.h3.domestic)
+```{r h3-predict-both-plot, fig.width=5.5, fig.height=2.5}
+df.plot.data.h3 <- bind_rows(df.plot.h3.foreign, df.plot.h3.domestic)
 
-df.plot.data.mean <- df.plot.data %>%
+df.plot.data.mean.h3 <- df.plot.data.h3 %>%
   group_by(variable.clean, variable) %>%
   summarise(predicted = mean(predicted)) %>%
   mutate(value.fixed = inv.logit(predicted, a = 0.001)) %>%
   mutate(cowcode = 1)  # Fake country so the line plots
 
-fig.predicted.h3.barriers <- ggplot(df.plot.data, aes(x = variable, 
-                                                      y = value.fixed, group = cowcode)) + 
-  geom_vline(xintercept = 0, size = 0.5) +
+fig.predicted.h3.barriers <- ggplot(df.plot.data.h3, 
+                                    aes(x = variable, 
+                                        y = value.fixed, group = cowcode)) + 
+  geom_vline(xintercept = 0, colour = "black", size = 0.5) + 
   geom_smooth(method = "lm", size = 0.1, alpha = 0.1, colour = simulation.individual) +
-  geom_smooth(data = df.plot.data.mean, size = 1.5, method = "lm", colour = simulation.mean) +
-  labs(x = "Difference from average number of barriers to funding\n(within effect)",
+  geom_smooth(data = df.plot.data.mean.h3, size = 1.5, method = "lm", colour = simulation.mean) +
+  labs(x = "Difference from average number of barriers to funding (within effect)",
        y = "Predicted proportion of aid to\ntype of NGO in the following year") +
-  scale_y_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
   facet_wrap(~ variable.clean, scales = "free_x") +
-  theme_donors()
+  theme_donors() +
+  theme(axis.title.x = element_text(hjust = 0))
 fig.predicted.h3.barriers
 
 fig.save.cairo(fig.predicted.h3.barriers, filename = "fig-predicted-h3",
-               width = 6.5, height = 2.5)
+               width = 5.5, height = 2.5)
 ```

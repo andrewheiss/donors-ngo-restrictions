@@ -12,6 +12,7 @@ library(lme4)
 library(modelr)
 library(broom)
 library(broom.mixed)
+library(scales)
 library(here)
 
 source(here("lib", "graphics.R"))
@@ -48,15 +49,23 @@ coef.names <- read_csv(here("Data", "data_clean", "coef_names.csv"))
 coef.names.within <- coef.names %>%
   mutate(term = paste0(term, "_within"),
          term_plot = paste0(term_clean, "\n(within)"),
+         term_plot_short = term_clean,
          term_clean = paste0(term_clean, "~within~"))
 
 coef.names.between <- coef.names %>%
   mutate(term = paste0(term, "_between"),
          term_plot = paste0(term_clean, "\n(between)"),
+         term_plot_short = paste0(term_clean, ""),
          term_clean = paste0(term_clean, "~between~"))
 
 coef.names.all <- bind_rows(coef.names, coef.names.within, coef.names.between) %>%
-  mutate(term_plot = ifelse(is.na(term_plot), term_clean, term_plot))
+  mutate_at(vars(term_plot, term_plot_short),
+            funs(ifelse(is.na(.), term_clean, .))) %>% 
+  mutate(term_plot_short = recode(term_plot_short,
+                                  `Civil society reg. env. (CSRE)` = "CSRE"))
+
+# Load clean model names
+model.names <- read_csv(here("Data", "data_clean", "model_names.csv"))
 
 
 # Combine original data and imputed data so calculations can happen at the same time
