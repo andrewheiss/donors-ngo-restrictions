@@ -43,7 +43,7 @@ output:
       smooth_scroll: yes
     toc_depth: 4
     fig_height: 4
-    fig_width: 6
+    fig_width: 7
     lib_dir: site_libs
     self_contained: no
 output_dir: _site
