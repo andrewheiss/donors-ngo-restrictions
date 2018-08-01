@@ -109,7 +109,7 @@ plot.aid <- df.country.aid %>%
   summarise(total = sum(total.oda))
 
 fig.oecd.aid <- ggplot(plot.aid, aes(x = year, y = (total / 1000000000))) + 
-  geom_line() +
+  geom_line(size = 0.5) +
   labs(x = NULL, y = "Total ODA commitments\n(billions of USD)") +
   scale_y_continuous(labels = dollar) +
   theme_donors()
@@ -137,7 +137,7 @@ plot.aid.contentiousness <- df.donor %>%
   filter(purpose.contentiousness == "High")
 
 fig.oecd.contention <- ggplot(plot.aid.contentiousness, aes(x = year, y = perc)) + 
-  geom_line() +
+  geom_line(size = 0.5) +
   scale_y_continuous(labels = percent) + 
   labs(x = NULL, y = "Percent of\ncontentious aid") +
   theme_donors()
@@ -165,7 +165,7 @@ plot.aid.us <- df.country.aid %>%
   summarise(total = sum(oda.us))
 
 fig.us.aid <- ggplot(plot.aid.us, aes(x = year, y = (total / 1000000000))) + 
-  geom_line() +
+  geom_line(size = 0.5) +
   labs(x = NULL, y = "Total US ODA commitments\n(billions of USD)") +
   scale_y_continuous(labels = dollar) +
   theme_donors()
@@ -212,7 +212,7 @@ plot.usaid.channel <- df.country.aid %>%
 
 fig.usaid.channel <- ggplot(plot.usaid.channel, 
                             aes(x = year, y = perc, colour = channel.clean)) + 
-  geom_line() +
+  geom_line(size = 0.5) +
   scale_y_continuous(labels = percent_format(accuracy = 1)) + 
   scale_colour_manual(values = channel.colors) +
   labs(x = NULL, y = "Percent of US aid\ngiven through NGOs") +
@@ -232,7 +232,7 @@ plot.usaid.channels.all <- df.donor.us %>%
 
 ggplot(plot.usaid.channels.all, 
        aes(x = year, y = perc, colour = channel_subcategory_name)) + 
-  geom_line() +
+  geom_line(size = 0.5) +
   scale_y_continuous(labels = percent_format(accuracy = 1)) + 
   labs(x = NULL, y = "Percent of US aid given through different channels") +
   guides(colour = guide_legend(title = NULL)) +
@@ -266,7 +266,7 @@ fig.save.cairo(fig.dvs, filename = "fig-dvs", width = 6, height = 3.75)
 
 Laws requiring NGO registration aren't necessarily a sign of oppression—even the US requires that nonprofits that earn above a certain threshold register as 501(c)(3) organizations. Though the figure below shows that compulsory regulation have increased over time, actual restriction has occurred too. Burdensome registration is not just another standard layer of bureaucracy.
 
-```{r compulsory-vs-burdensome, fig.width=4.5, fig.height=2.5}
+```{r compulsory-vs-burdensome, fig.width=4.5, fig.height=2}
 autocracies <- df.country %>%
   group_by(cowcode) %>%
   summarise(polity.avg = mean(polity, na.rm = TRUE)) %>%
@@ -292,18 +292,19 @@ df.regulation <- df.country %>%
 
 fig.regulation.burden <- ggplot(df.regulation, 
                                 aes(x = year, y = value, colour = type.of.law)) +
-  geom_line() + 
+  geom_line(size = 0.5) +
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  coord_cartesian(ylim = c(0, 0.7)) +
+  scale_x_continuous(expand = c(0, 0)) +
+  coord_cartesian(ylim = c(0, 0.7), xlim = c(1980, 2015)) +
   scale_colour_manual(values = burden.colors) +
-  guides(colour = guide_legend(reverse = TRUE, title = NULL)) +
+  guides(colour = guide_legend(title = NULL)) +
   labs(x = NULL, y = "Proportion of countries\nwith regulation") +
   theme_donors() +
   facet_wrap(~ autocracy)
 
 fig.regulation.burden
 fig.save.cairo(fig.regulation.burden, filename = "fig-regulation-burden",
-               width = 4.5, height = 2.5)
+               width = 4.5, height = 2)
 ```
 
 
@@ -349,7 +350,7 @@ plot.dcjw <- function(df) {
                                 ordered = TRUE))
   
   ggplot(df.leveled, aes(x = year, y = n, colour = value_clean)) + 
-    geom_line() + 
+    geom_line(size = 0.5) +
     labs(x = NULL, y = NULL, title = plot.title) +
     coord_cartesian(ylim = c(0, num.countries)) +
     scale_y_continuous(sec.axis = sec_axis(~ . / num.countries,
@@ -383,7 +384,7 @@ df.restrictions.type <- df.country %>%
 
 fig.ngo.barriers <- ggplot(df.restrictions.type, aes(x = year, y = y, colour = barrier)) +
   geom_ribbon(aes(ymin = ymin, ymax = ymax, fill = barrier), alpha = 0.3, colour = NA) +
-  geom_line(aes(linetype = barrier)) +
+  geom_line(aes(linetype = barrier), size = 0.5) +
   labs(y = "Average number of barriers", x = NULL) +
   scale_colour_manual(values = barrier.colors) +
   scale_fill_manual(values = barrier.colors) +
@@ -407,7 +408,7 @@ df.csre.plot <- df.country %>%
 
 fig.csre <- ggplot(df.csre.plot, aes(x = year, y = y)) +
   geom_ribbon(aes(ymin = ymin, ymax = ymax), alpha = 0.2) +
-  geom_line() +
+  geom_line(size = 0.5) +
   labs(y = "Average civil society\nregulatory environment", x = NULL) +
   theme_donors()
 fig.csre
@@ -435,7 +436,7 @@ aid.donor.type.time <- df.donor.country %>%
 
 ggplot(aid.donor.type.time, aes(x = year, y = total.aid / 1000000000,
                                 colour = donor.type.collapsed)) +
-  geom_line() +
+  geom_line(size = 0.5) +
   labs(x = NULL, y = "Billions of USD",
        caption = "Source: OECD and AidData. 2011 dollars.") +
   guides(colour = guide_legend(title = NULL)) +
@@ -452,7 +453,7 @@ aid.contention.time <- df.donor.country %>%
 
 ggplot(aid.contention.time, aes(x = year, y = total.aid / 1000000000,
                                 colour = purpose.contentiousness)) +
-  geom_line() +
+  geom_line(size = 0.5) +
   labs(x = NULL, y = "Billions of USD",
        caption = "Source: OECD and AidData. 2011 dollars.") +
   guides(colour = guide_legend(title = NULL)) +
