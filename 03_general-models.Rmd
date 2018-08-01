@@ -230,7 +230,7 @@ mods.robust.check.m.next_year.melded.all <- bind_rows(
 stargazer.fake(mods.robust.check.m.next_year.melded.all) %>% cat()
 ```
 
-### Neutral regulations
+### Neutral regulations {.tabset .tabset-fade .tabset-pills}
 
 ```{r robust-neutral-regulations, cache=TRUE}
 mods.robust.neutral.regs.raw <- df.country.aid.demean.next_year.all %>%
@@ -312,7 +312,7 @@ table.robust.neutral.regs.h3 <- mods.robust.neutral.regs.melded.h3 %>%
 ```
 
 
-### Longer lags
+### Longer lags {.tabset .tabset-fade .tabset-pills}
 
 Looking at aid 2 years and 5 years after the change in anti-NGO legislation shows similar trends to 1 year after.
 

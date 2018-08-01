@@ -141,7 +141,7 @@ gw.codes %>% datatable()
 
 ## Foreign aid
 
-### OECD and AidData
+### OECD and AidData {.tabset .tabset-fade .tabset-pills}
 
 The OECD collects detailed data on all foreign aid flows (ODA) from OECD member countries (and some non-member countries), mulilateral organizations, and the Bill and Melinda Gates Foundation (for some reason they're the only nonprofit donor) to all DAC-eligible countries (and some non non-DAC-eligible countries). 
 
@@ -348,7 +348,7 @@ arrange(purposes, desc(n)) %>% datatable()
 aiddata.final %>% glimpse()
 ```
 
-### USAID
+### USAID {.tabset .tabset-fade .tabset-pills}
 
 USAID provides the complete dataset for its [Foreign Aid Explorer](https://explorer.usaid.gov/aid-dashboard.html) as a [giant CSV file](https://explorer.usaid.gov/data.html). The data includes both economic and military aid, but it's easy to filter out the military aid. Here we only look at obligations, not disbursements, so that the data is comparable to the OECD data from AidData. The data we downloaded provides constant amounts in 2015 dollars; we rescale that to 2011 to match all other variables. 
 
@@ -709,7 +709,7 @@ These indexes are also standardized by dividing by the maximum, yielding the fol
 dcjw.full %>% glimpse()
 ```
 
-### Civil society regulatory environment
+### Civil society regulatory environment {.tabset .tabset-fade .tabset-pills}
 
 An alternative way of measuring civil society restrictions is to look at the overal civil society regulatory environment rather than specific laws, since de jure restrictions do not always map clearly into de facto restrictions (especially in dictatorships where the implementation of laws is more discretionary). 
 
@@ -845,7 +845,7 @@ There are a bunch of reasons why overall aid flows might change over time. We co
 - Disasters: `natural_disaster.affected`, `natural_disaster.deaths`, `natural_disaster.occurrence`, and `natural_disaster.total.affected`, among others (from EM-DAT)
 
 
-### World Bank development indicators
+### World Bank and UN development indicators {.tabset .tabset-fade .tabset-pills}
 
 The World Bank has a fantastic API for [their statistical indicators](http://data.worldbank.org/) and there's already [a nice R package](https://cran.r-project.org/package=WDI) for accessing it, so downloading indicators is trivial. For the sake of our models, we care about GDP per capita as a proxy for a country's overall development. We also collect a few other relevant variables just for fun.
 
@@ -871,7 +871,11 @@ un.gdp.current.raw <- read_csv(here("Data", "data_raw", "UN data",
 un.pop.raw <- read_excel(here("Data", "data_raw", "UN data",
                               "WPP2015_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES.xls"),
                          skip = 16)
+```
 
+#### UN population
+
+```{r un-pop}
 un.pop <- un.pop.raw %>%
   filter((`Country code` %in% un.codes$un_code)) %>%
   select(-c(Index, Variant, Notes, `Major area, region, country or area *`), 
@@ -886,7 +890,11 @@ un.pop <- un.pop.raw %>%
   select(cowcode, year, un.population)
 
 un.pop %>% glimpse()
+```
 
+#### UN GDP
+
+```{r}
 un.gdp <- bind_rows(un.gdp.raw, un.gdp.current.raw) %>%
   filter(Item %in% c("Gross Domestic Product (GDP)",
                      "Exports of goods and services",
@@ -967,6 +975,7 @@ un.gdp.final %>% head(50) %>% datatable(extensions = "Responsive")
 un.gdp.final %>% glimpse()
 ```
 
+#### World Bank indicators
 
 ```{r load-wdi, cache=TRUE}
 wdi.indicators <- c("NY.GDP.PCAP.KD",        # GDP per capita (constant 2010 USD)
@@ -1019,7 +1028,7 @@ wdi.clean %>% glimpse()
 ```
 
 
-### Former colonial status
+### Former colonial status {.tabset .tabset-fade .tabset-pills}
 
 [Paul Hensel has collected data](http://www.paulhensel.org/icowcol.html) on each country's former colonial status, indicating both a given country's primary colonial ruler and the last colonial ruler prior to independence. The dataset also includes an estimated date of independence.
 
@@ -1136,9 +1145,17 @@ col.clean <- col.raw %>%
   # not 100% correct)
   bind_rows(filter(., cowcode == 344) %>% 
               mutate(cowcode = 340, country.name = "Serbia"))
+```
 
+#### Colonial status data
+
+```{r colonial-status-table}
 col.clean %>% datatable(extensions = "Responsive")
+```
 
+#### Summary of clean data
+
+```{r colonial-status-glimpse}
 col.clean %>% glimpse()
 ```
 
@@ -1181,7 +1198,7 @@ glimpse(conflicts)
 ```
 
 
-### Natural disasters
+### Natural disasters {.tabset .tabset-fade .tabset-pills}
 
 Natural disaster data comes from the [International Disaster Database (EM-DAT)](http://www.emdat.be/database). The data includes the number of deaths, injuries, homeless displacements, and monetary losses (in 2000 dollars) for a huge number of natural and technological disasters (see [EM-DAT's full classification](http://www.emdat.be/classification)).
 
@@ -1269,6 +1286,8 @@ disasters <- disasters.raw %>%
   filter(disaster.group != "complex")
 ```
 
+#### Clean disaster data
+
 ```{r summarize-disasters}
 # Summarize disaster variables by country, year, and type/group/subgroup
 disaster.vars <- vars(disaster.occurrence, disaster.deaths, disaster.injured, 
@@ -1288,6 +1307,8 @@ disasters.groups <- disasters %>%
 
 disasters.groups %>% head(100) %>% datatable(extensions = "Responsive")
 ```
+
+#### Summary of clean data
 
 ```{r show-disasters}
 disasters.groups %>% glimpse()

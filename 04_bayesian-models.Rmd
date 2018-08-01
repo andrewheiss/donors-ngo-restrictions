@@ -79,7 +79,9 @@ mods.h1.next_year.bayes <- mods.h1.next_year.raw.bayes %>%
 ```
 
 
-### MCMC diagnostics
+### MCMC diagnostics {.tabset .tabset-fade .tabset-pills}
+
+#### Check fit
 
 We use one of the imputed models (`mod.h1.barriers.total`) to check for fit and convergence.
 
@@ -95,6 +97,8 @@ How well does the posterior predictive distribution fit the observed outcome? No
 pp_check(model.to.check, plotfun = "ppc_dens_overlay", nreps = 5) + 
   theme_donors()
 ```
+
+#### Check convergence
 
 What about chain convergence? These should look like tops if everything converges, with no observations at 0 in the mean Metropolis-Hastings aceptance panel.
 
@@ -120,7 +124,9 @@ median(c(median(group1), median(group2)))
 If it's a little off, it should be okay—it'll be off by an order of 0.001ish. 
 
 
-### Results
+### Results {.tabset .tabset-fade .tabset-pills}
+
+#### Coefficients
 
 ```{r h1-plot-coefs, fig.width=5.5, fig.height=3}
 vars.to.plot <- c("barriers.total_within", "barriers.total_between",
@@ -166,6 +172,8 @@ fig.coefs.h1
 fig.save.cairo(fig.coefs.h1, filename = "fig-coefs-h1-bayes",
                width = 5.5, height = 3)
 ```
+
+#### Complete results in a table
 
 ```{r h1-table, results="asis", warning=FALSE}
 caption <- "The effect of anti-NGO legislation on OECD overseas development assistance (ODA) in the following year (H~1~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than zero. {#tbl:h1-coefs}"
@@ -358,7 +366,9 @@ mods.h2.next_year.bayes <- mods.h2.next_year.raw.bayes %>%
 ```
 
 
-### MCMC diagnostics
+### MCMC diagnostics {.tabset .tabset-fade .tabset-pills}
+
+#### Check fit
 
 Again, use one of the imputed models (`mod.h2.barriers.total`) to check for fit and convergence.
 
@@ -375,6 +385,8 @@ pp_check(model.to.check, plotfun = "ppc_dens_overlay", nreps = 5) +
   theme_donors()
 ```
 
+#### Check convergence
+
 Chain convergence:
 
 ```{r h2-diag-divergence}
@@ -382,7 +394,9 @@ rstan::stan_diag(model.to.check, information = "divergence")
 ```
 
 
-### Results
+### Results {.tabset .tabset-fade .tabset-pills}
+
+#### Coefficients
 
 ```{r h2-plot-coefs, fig.width=5.5, fig.height=3}
 vars.to.plot <- c("barriers.total_within", "barriers.total_between",
@@ -428,6 +442,8 @@ fig.save.cairo(fig.coefs.h2, filename = "fig-coefs-h2-bayes",
                width = 5.5, height = 3)
 ```
 
+#### Complete results in a table
+
 ```{r h2-table, results="asis", warning=FALSE}
 caption <- "The effect of anti-NGO legislation on the proportion of OECD overseas development assistance (ODA) committed to contentious purposes in the following year (H~2~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one. {#tbl:h2-coefs}"
 note <- c("Logit-linear models. Odds ratios reported.")
@@ -438,9 +454,6 @@ table.h2 <- bayesgazer(mods.h2.next_year.bayes, exponentiate = TRUE,
 cat(table.h2)
 cat(table.h2, file = here("Output", "tbl-h2-coefs-bayes.md"))
 ```
-
-
-### Model diagnostics
 
 ### Predicted proportion of contentious aid
 
@@ -566,7 +579,9 @@ mods.h3.foreign.next_year.bayes <- mods.h3.foreign.next_year.raw %>%
   filter(m != "original")
 ```
 
-### MCMC diagnostics
+### MCMC diagnostics {.tabset .tabset-fade .tabset-pills}
+
+#### Check fit
 
 Again, use one of the imputed models (`mod.h3.barriers.total`) to check for fit and convergence.
 
@@ -583,6 +598,8 @@ pp_check(model.to.check, plotfun = "ppc_dens_overlay", nreps = 5) +
   theme_donors()
 ```
 
+#### Check convergence
+
 Chain convergence:
 
 ```{r h3-diag-divergence}
@@ -590,7 +607,7 @@ rstan::stan_diag(model.to.check, information = "divergence")
 ```
 
 
-### Results
+### Results {.tabset .tabset-fade .tabset-pills}
 
 #### Proportion to domestic NGOs
 
@@ -618,7 +635,7 @@ cat(table.h3.domestic)
 cat(table.h3.domestic, file = here("Output", "tbl-h3-foreign-coefs-bayes.md"))
 ```
 
-#### Both
+#### Plot of proportion to domestic and foreign NGOs {.active}
 
 ```{r plot-h3-coefs-both, warning=FALSE, message=FALSE, fig.width=5.5, fig.height=3}
 vars.to.plot <- c("barriers.total_within", "barriers.total_between",
@@ -691,9 +708,6 @@ fig.coefs.h3
 fig.save.cairo(fig.coefs.h3, filename = "fig-coefs-h3-bayes",
                width = 5.5, height = 4)
 ```
-
-### Model diagnostics
-
 
 ### Predicted proportion of aid channeled to domestic or foreign NGOs
 
