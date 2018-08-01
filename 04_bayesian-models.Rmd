@@ -15,6 +15,7 @@ if (isTRUE(getOption('knitr.in.progress'))) {
   knitr::read_chunk(here::here("lib", "models-chunks.R"))
 } else {
   source(here::here("lib", "models-chunks.R"))
+  # qwraps2::lazyload_cache_dir("04_bayesian-models_cache/html")
 }
 ```
 
