@@ -34,8 +34,8 @@ df.donor <- readRDS(here("Data", "data_clean", "df_donor.rds"))
 df.donor.us <- readRDS(here("Data", "data_clean", "df_donor_usaid.rds"))
 df.country.aid <- readRDS(here("Data", "data_clean", "df_country_aid_no_imputation.rds"))
 
-dcjw.questions.clean <- read_csv(here("Data", "data_clean", "dcjw_questions.csv"))
-dcjw.responses.clean <- read_csv(here("Data", "data_clean", "dcjw_responses.csv"))
+dcjw.questions.clean <- read_csv(here("Data", "data_manual", "dcjw_questions.csv"))
+dcjw.responses.clean <- read_csv(here("Data", "data_manual", "dcjw_responses.csv"))
 ```
 
 ## Overall data summary
@@ -55,7 +55,7 @@ Our data includes information about `r num.countries` countries across `r num.ye
 The values here are slightly different from what we had at ISA and MPSA (and our ISQ submission) because we're now using V-Dem 8.0 and AidData 3.1. 
 
 ```{r summary-vars-model, results="asis", message=FALSE}
-coef.names <- read_csv(here("Data", "data_clean", "coef_names.csv"))
+coef.names <- read_csv(here("Data", "data_manual", "coef_names.csv"))
 
 vars.to.summarize <- coef.names %>%
   filter(summarize == TRUE)
@@ -309,7 +309,7 @@ fig.save.cairo(fig.regulation.burden, filename = "fig-regulation-burden",
 ### DCJW indexes
 
 ```{r dcjw-index-table, results="asis", message=FALSE}
-dcjw.indexes <- read_csv(here("Data", "data_clean", "dcjw_index.csv")) %>%
+dcjw.indexes <- read_csv(here("Data", "data_manual", "dcjw_index.csv")) %>%
   mutate(Laws = str_replace_all(Laws, "\n", "\n\n"))
 
 caption <- "Description of indexes of NGO barriers {#tbl:ngo-barriers-index}"

@@ -43,8 +43,8 @@ df.donor.us <- readRDS(here("Data", "data_clean", "df_donor_usaid.rds"))
 df.country <- readRDS(here("Data", "data_clean", "df_country.rds"))
 df.country.aid <- readRDS(here("Data", "data_clean", "df_country_aid_no_imputation.rds"))
 
-dcjw.questions.clean <- read_csv(here("Data", "data_clean", "dcjw_questions.csv"))
-dcjw.responses.clean <- read_csv(here("Data", "data_clean", "dcjw_responses.csv"))
+dcjw.questions.clean <- read_csv(here("Data", "data_manual", "dcjw_questions.csv"))
+dcjw.responses.clean <- read_csv(here("Data", "data_manual", "dcjw_responses.csv"))
 ```
 
 

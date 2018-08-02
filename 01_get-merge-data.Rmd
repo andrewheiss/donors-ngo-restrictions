@@ -298,10 +298,10 @@ purpose.codes.clean <- general.codes %>%
 
 # Manually code contentiousness of purposes
 write_csv(purpose.codes.clean,
-          here("Data", "data_clean",
+          here("Data", "data_manual",
                "purpose_codes_contention_WILL_BE_OVERWRITTEN.csv"))
 
-purpose.codes.contentiousness <- read_csv(here("Data", "data_clean",
+purpose.codes.contentiousness <- read_csv(here("Data", "data_manual",
                                                "purpose_codes_contention.csv"))
 
 aiddata.final <- aiddata.clean %>%
@@ -319,7 +319,7 @@ aiddata.final <- aiddata.clean %>%
          coalesced_purpose_code, coalesced_purpose_name) %>%
   arrange(cowcode, year)
 
-ever.dac.eligible <- read_csv(here("Data", "data_clean", 
+ever.dac.eligible <- read_csv(here("Data", "data_manual", 
                                    "oecd_dac_countries.csv")) %>%
   # Ignore High Income Countries and More Advanced Developing Countries
   filter(!(dac_abbr %in% c("HIC", "ADC"))) %>%
@@ -509,7 +509,7 @@ dcjw.orig <- read_excel(dcjw.orig.path)[,1:50] %>%
 # Tidy DCJW data
 dcjw.path <- here("Data", "data_raw", "DCJW NGO Laws", "Admn Crackdown_updated.xlsx")
 
-dcjw.questions.raw <- read_csv(here("Data", "data_clean", "dcjw_questions.csv"))
+dcjw.questions.raw <- read_csv(here("Data", "data_manual", "dcjw_questions.csv"))
 
 dcjw.barriers.clean <- dcjw.questions.raw %>%
   distinct(question_cat, barrier)
@@ -853,7 +853,7 @@ The World Bank has a fantastic API for [their statistical indicators](http://dat
 
 ```{r load-un, message=FALSE}
 # UN country codes
-un.codes <- read_csv(here("Data", "data_clean", "un_codes.csv")) %>%
+un.codes <- read_csv(here("Data", "data_manual", "un_codes.csv")) %>%
   select(un_code, iso3)
 
 # GDP by Type of Expenditure at constant (2005) prices - US dollars

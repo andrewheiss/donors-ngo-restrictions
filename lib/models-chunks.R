@@ -39,12 +39,12 @@ df.country.aid.impute <- readRDS(here("Data", "data_clean",
 df.country.aid.impute.m10 <- readRDS(here("Data", "data_clean",
                                           "df_country_aid_imputation_m10.rds"))
 
-dcjw.questions.clean <- read_csv(here("Data", "data_clean", "dcjw_questions.csv"))
-dcjw.responses.clean <- read_csv(here("Data", "data_clean", "dcjw_responses.csv"))
+dcjw.questions.clean <- read_csv(here("Data", "data_manual", "dcjw_questions.csv"))
+dcjw.responses.clean <- read_csv(here("Data", "data_manual", "dcjw_responses.csv"))
 
 # Load clean coefficient names and append "within" and "between" to them,
 # resulting in a giant table of possible coefficient names
-coef.names <- read_csv(here("Data", "data_clean", "coef_names.csv"))
+coef.names <- read_csv(here("Data", "data_manual", "coef_names.csv"))
 
 coef.names.within <- coef.names %>%
   mutate(term = paste0(term, "_within"),
@@ -65,7 +65,7 @@ coef.names.all <- bind_rows(coef.names, coef.names.within, coef.names.between) %
                                   `Civil society reg. env. (CSRE)` = "CSRE"))
 
 # Load clean model names
-model.names <- read_csv(here("Data", "data_clean", "model_names.csv"))
+model.names <- read_csv(here("Data", "data_manual", "model_names.csv"))
 
 
 # Combine original data and imputed data so calculations can happen at the same time
