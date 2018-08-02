@@ -30,10 +30,8 @@ set.seed(my.seed)
 ```
 
 ```{r load-data, cache=TRUE, message=FALSE}
-df.donor.country <- readRDS(here("Data", "data_clean", "df_donor_country.rds"))
 df.donor <- readRDS(here("Data", "data_clean", "df_donor.rds"))
 df.donor.us <- readRDS(here("Data", "data_clean", "df_donor_usaid.rds"))
-df.country <- readRDS(here("Data", "data_clean",  "df_country.rds"))
 df.country.aid <- readRDS(here("Data", "data_clean", "df_country_aid_no_imputation.rds"))
 
 dcjw.questions.clean <- read_csv(here("Data", "data_clean", "dcjw_questions.csv"))
@@ -267,7 +265,7 @@ fig.save.cairo(fig.dvs, filename = "fig-dvs", width = 6, height = 3.75)
 Laws requiring NGO registration aren't necessarily a sign of oppression—even the US requires that nonprofits that earn above a certain threshold register as 501(c)(3) organizations. Though the figure below shows that compulsory regulation have increased over time, actual restriction has occurred too. Burdensome registration is not just another standard layer of bureaucracy.
 
 ```{r compulsory-vs-burdensome, fig.width=4.5, fig.height=2}
-autocracies <- df.country %>%
+autocracies <- df.country.aid %>%
   group_by(cowcode) %>%
   summarise(polity.avg = mean(polity, na.rm = TRUE)) %>%
   mutate(autocracy = polity.avg < 7) %>%
@@ -280,7 +278,7 @@ autocracies <- df.country %>%
     TRUE ~ .$autocracy
   ))
 
-df.regulation <- df.country %>%
+df.regulation <- df.country.aid %>%
   left_join(autocracies, by = "cowcode") %>%
   group_by(year, autocracy) %>%
   summarise(`Registration required` = sum(ngo_register) / n(),
@@ -326,7 +324,7 @@ cat(dcjw.index.table, file = here("Output", "tbl-ngo-barriers-index.md"))
 ### Number of countries with restrictive laws
 
 ```{r num-countries-laws, fig.width=11, fig.height=7, cache=TRUE}
-df.ngo.restrictions.plot <- df.country %>%
+df.ngo.restrictions.plot <- df.country.aid %>%
   select(cowcode, year, const_assoc, political_parties, starts_with("ngo_")) %>%
   gather(restriction, value, -c(cowcode, year)) %>%
   group_by(year, restriction, value) %>%
@@ -370,8 +368,8 @@ grid::grid.draw(plot.all.dcjw)
 ### NGO restrictions by type
 
 ```{r ngo-laws-type}
-df.restrictions.type <- df.country %>%
-  select(year, advocacy, association, entry, funding) %>%
+df.restrictions.type <- df.country.aid %>%
+  select(year, advocacy, entry, funding) %>%
   gather(barrier, value, -year) %>%
   group_by(year, barrier) %>%
   nest() %>% 
@@ -399,7 +397,7 @@ fig.ngo.barriers
 ### CSRE over time
 
 ```{r plot-csre-time}
-df.csre.plot <- df.country %>%
+df.csre.plot <- df.country.aid %>%
   select(year, csre) %>%
   group_by(year) %>%
   nest() %>% 
@@ -430,7 +428,7 @@ fig.save.cairo(fig.barriers, filename = "fig-barriers",
 ### Aid over time, by donor type
 
 ```{r aid-by-donor}
-aid.donor.type.time <- df.donor.country %>%
+aid.donor.type.time <- df.donor %>%
   group_by(year, donor.type.collapsed) %>%
   summarise(total.aid = sum(oda, na.rm = TRUE))
 
@@ -447,7 +445,7 @@ ggplot(aid.donor.type.time, aes(x = year, y = total.aid / 1000000000,
 ### Aid over time, by contentiousness
 
 ```{r aid-by-contention}
-aid.contention.time <- df.donor.country %>%
+aid.contention.time <- df.donor %>%
   group_by(year, purpose.contentiousness) %>%
   summarise(total.aid = sum(oda, na.rm = TRUE))
 
