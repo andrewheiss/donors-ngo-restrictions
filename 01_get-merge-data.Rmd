@@ -53,6 +53,8 @@ Gleditsch and Ward do not include a bunch of countries, so I create my own codes
 
 Also, [following Gleditsch and Ward](http://privatewww.essex.ac.uk/~ksg/data/iisyst_casedesc.pdf), I treat Serbia as 340 and Serbia & Montenegro as a continuation of Yugoslavia, or 345.
 
+*Also*, following V-Dem and Polity, I treat Vietnam as 816.
+
 ```{r load-gwcodes, message=FALSE}
 # Gleditsch Ward codes
 #
@@ -116,7 +118,8 @@ gw.codes <- bind_rows(gw.states, gw.microstates) %>%
          cowcode = countrycode(iso3, "iso3c", "cown",
                                custom_match = c(XKK = 347,
                                                 SRB = 340,
-                                                YUG = 345))) %>%
+                                                YUG = 345,
+                                                VNM = 816))) %>%
   filter(!is.na(iso3)) %>%
   mutate(country.name = countrycode(iso3, "iso3c", "country.name",
                                     custom_match = c(XKK = "Kosovo",
@@ -677,7 +680,8 @@ dcjw.full <- dcjw.panel.all.laws %>%
   # Add additional variables
   mutate(Country = countrycode(Country, "country.name", "country.name"),
          cowcode = countrycode(Country, "country.name", "cown",
-                               custom_match = c(Serbia = 340))) %>%
+                               custom_match = c(Serbia = 340,
+                                                Vietnam = 816))) %>%
   select(country.name = Country, cowcode, year, everything())
 ```
 
