@@ -1501,7 +1501,7 @@ We estimate models for each of the imputed datasets and recombine their results.
 
 We varied the number of datasets we imputed (*m* = 5 and *m* = 10) and [found only trivial differences in coefficients between 5 and 10 datasets](../Analysis/models.html#imputation) (as predicted by King et al.). In the interest of computational efficiency and speed, we only use 5 imputed datasets. To avoid needing to recreate both 5 and 10 datasets, we impute 10, but only use the first 5 for analysis.
 
-```{r impute-missing-data}
+```{r impute-missing-data, results="hide"}
 imputation.rds <- here("Data", "data_cache", "country_aid_data_imputed_long.rds")
 
 if (file.exists(imputation.rds)) {
@@ -1563,7 +1563,9 @@ if (file.exists(imputation.rds)) {
                                     p2s = 1, 
                                     lags = vars.to.lag.lead,
                                     leads = vars.to.lag.lead,
-                                    logs = vars.to.log)
+                                    logs = vars.to.log,
+                                    parallel = "multicore",
+                                    ncpus = parallel::detectCores())
   
   # Append list of imputed datasets to original in a long data frame and bring
   # back the omitted variables
