@@ -657,15 +657,15 @@ dcjw.panel.barriers <- dcjw.panel.all.laws %>%
   unite(temp1, barrier, temp, sep = "_") %>%
   spread(temp1, value) %>%
   ungroup() %>%
-  rename_(.dots = setNames(paste0(unique(dcjw.questions.raw$barrier), "_restrictive"), 
+  # Take "_restrictive" out of the variable names. 
+  # "entry" = all restrictive entry laws, "entry_all" = all entry laws
+  rename_(.dots = setNames(paste0(unique(dcjw.questions.raw$barrier), "_restrictive"),
                            unique(dcjw.questions.raw$barrier))) %>%
   # Standardize barrier indexes by dividing by maximum number possible
-  mutate(association.std = association / 2,
-         entry.std = entry / 3,  # 4, but 1 ignored
-         funding.std = funding / 7,  # 8, but 1 ignored
-         advocacy.std = advocacy / 4) %>%
-  mutate(barriers.total = advocacy + association + entry + funding,
-         barriers.std.total = advocacy.std + association.std + entry.std + funding.std)
+  mutate_at(vars(entry, funding, advocacy),
+            funs(std = . / max(.))) %>% 
+  mutate(barriers.total = advocacy + entry + funding,
+         barriers.total_std = advocacy_std + entry_std + funding_std)
 
 dcjw.full <- dcjw.panel.all.laws %>%
   left_join(dcjw.panel.barriers, by = c("Country", "year")) %>%
@@ -685,25 +685,23 @@ Chaudhry's data augments Christensen and Weinstein's data substantially. Christe
 
 In addition to panel data on the presence or absence of specific NGO regulations, we create several indexes for each of the categories of regulation, [following Christensen and Weinstein's classification](https://darinchristensen.github.io/Data/DCJW_Codebook.pdf):
 
-- `association` (Q1a, Q1b; 2 points maximum): barriers to associational rights
-- Q1a and Q1b are reversed, so *not* having the constitutional right to assembly earns 1 point. 
-- `entry` (Q2b, Q2c, Q2d; 3 points maximum): barriers to entry
-- Q2c is reversed, so *not* being allowed to appeal registration status earns 1 point.
-- Q2a is omitted because it's benign
-- `funding` (Q3b, Q3c, Q3d, Q3e, Q3f; 5 points maximum): barriers to funding
-- Q3s id omitted because it's benign
-- Scores that range between 0–2 are rescaled to 0–1 (so 1 becomes 1.5)
-- `advocacy` (Q4a, Q4b, Q4c; 3 points maximum): barriers to advocacy
-- Scores that range between 0–2 are rescaled to 0–1 (so 1 becomes 1.5)
-- `barriers.total` (13 points maximum, though actual max is `r max(dcjw.full$barriers.total)`): sum of all four indexes
+- `entry` (Q2b, Q2c, Q2d; 3 points maximum, actual max = `r max(dcjw.full$entry)` points maximum): barriers to entry
+    - Q2c is reversed, so *not* being allowed to appeal registration status earns 1 point.
+    - Q2a is omitted because it's benign
+- `funding` (Q3b, Q3c, Q3d, Q3e, Q3f; 5 points maximum, actual max = `r max(dcjw.full$funding)`): barriers to funding
+    - Q3a is omitted because it's benign
+    - Scores that range between 0–2 are rescaled to 0–1 (so 1 becomes 0.5)
+- `advocacy` (Q4a, Q4c; 2 points maximum, actual max = `r max(dcjw.full$advocacy)`): barriers to advocacy
+    - Q4b is omitted because it's not a law
+    - Scores that range between 0–2 are rescaled to 0–1 (so 1 becomes 0.5)
+- `barriers.total` (10 points maximum, actual max = `r max(dcjw.full$barriers.total)`): sum of all three indexes
 
 These indexes are also standardized by dividing by the maximum, yielding the following variables:
 
-- `association.std`: 1 point maximum, actual max = `r max(dcjw.full$association.std)`
-- `entry.std`: 1 point maximum, actual max = `r max(dcjw.full$entry.std)`
-- `funding.std`: 1 point maximum, actual max = `r max(dcjw.full$funding.std)`
-- `advocacy.std`: 1 point maximum, actual max = `r max(dcjw.full$advocacy.std)`
-- `barriers.std.total`: 4 points maximum, actual max = `r max(dcjw.full$barriers.std.total)`
+- `entry_std`: 1 point maximum, actual max = `r max(dcjw.full$entry_std)`
+- `funding_std`: 1 point maximum, actual max = `r max(dcjw.full$funding_std)`
+- `advocacy_std`: 1 point maximum, actual max = `r max(dcjw.full$advocacy_std)`
+- `barriers.total_std`: 3 points maximum, actual max = `r max(dcjw.full$barriers.total_std)`
 
 ```{r dcjw-glimpse}
 dcjw.full %>% glimpse()
@@ -742,11 +740,11 @@ vdem.cso <- vdem.raw %>%
          e_fh_ipolity2, v2x_corr, e_wbgi_gee,
          v2x_frassoc_thick, v2xcs_ccsi,
          starts_with("v2cseeorgs"), 
-       starts_with("v2csreprss"), 
-       starts_with("v2cscnsult"),
-       starts_with("v2csprtcpt"), 
-       starts_with("v2csgender"), 
-       starts_with("v2csantimv")) %>%
+         starts_with("v2csreprss"), 
+         starts_with("v2cscnsult"),
+         starts_with("v2csprtcpt"), 
+         starts_with("v2csgender"), 
+         starts_with("v2csantimv")) %>%
   mutate(v2csreprss_ord = factor(v2csreprss_ord, 
                                  labels = c("Severely", "Substantially", 
                                             "Moderately", "Weakly", "No"),
