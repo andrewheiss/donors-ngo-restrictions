@@ -2,23 +2,23 @@
 title: "Are Donors Really Responding? Analyzing the Impact of Global Restrictions on NGOs"
 author:
 - name: Suparna Chaudhry
-  affiliation: Dartmouth College
-  email: Suparna.Chaudhry@dartmouth.edu
+  affiliation: Christopher Newport University
+  email: suparna.chaudhry@cnu.edu
 - name: Andrew Heiss
-  affiliation: Duke University
-  email: andrew.heiss@duke.edu
+  affiliation: Brigham Young University
+  email: andrewheiss@gmail.com
 date: July 23, 2018
 published: Please do not cite without permission.
 reference-section-title: References
 toc: false
 git-repo: https://github.com/andrewheiss/donors-ngo-restrictions
 abstract: >-
-   The previous three decades have seen a proliferation of anti-NGO legislation throughout the world, resulting in increasingly restricted space for civil society organizations to provide services or engage in advocacy. This is worrisome for Western donors because they channel a large amount of foreign aid and democracy assistance funds through NGOs. How do donors respond to this legal crackdown on NGOs? We use original data on civil society restrictions across 148 countries from 1981–2013 to assess the impact of these restrictions on total flows of foreign aid, how aid is distributed, and which issues are funded. We find that additional anti-NGO legal barriers—in particular, barriers to advocacy—decrease the amount of foreign channeled to restrictive countries. Besides reducing the amount of aid, donors also redirect funds within restrictive countries, decreasing funds for politically sensitive causes in favor of tamer issues that are more compatible with the governments of those countries. Finally, donors—USAID in particular—channel more aid to domestic over foreign NGOs in order to assuage target country concerns about external interference in domestic politics. Our findings have worrying implications for donors in the foreign aid and democracy promotion community, whose projects may be unsustainable in the face of this legal crackdown.
+   The past two decades have seen a proliferation of laws targeted against non-governmental organizations (NGOs), resulting in increasingly restricted space for these organizations to provide services or engage in advocacy. How do Western donors respond to this legal crackdown on NGOs? We use original data on civil society restrictions across all official aid recipients from 1981–2013 to assess the impact of these restrictions on total flows of foreign aid, how aid is distributed, and which issues are funded. We find that additional anti-NGO legal barriers—in particular, barriers to advocacy—decrease the amount of foreign channeled to restrictive countries. Additionally, we find that donors redirect funds within restrictive countries and decrease funding for politically sensitive causes in favor of tamer issues that are more compatible with the governments of those countries. Finally, we find that donors—USAID in particular—channel more aid to domestic rather than foreign NGOs in order to assuage target country concerns about external interference in domestic politics. The implications of these findings are worrisome for both Western donors, which channel a large amount of foreign aid through NGOs, and for NGOs, many of which are unable to sustain themselves without financial support from abroad. 
 thanks: >-
     We thank Elizabeth Bloodgood, Sarah Bush, Magnus Lundgren, Christopher Pallas, the participants of the "Beyond the Boomerang" workshop held before the 2017 annual International Studies Association conference, and the participants of the 2017 Midwest Political Science Association conference for their helpful comments. We also acknowledge Andrew Green, John Holbein, Judith Kelley, Robbie Richards, and Simon Weschle for their invaluable help and advice.
-keywords: NGOs; civil society restrictions; NGO crackdown; foreign aid
-...
-
+keywords: NGOs; civil society; foreign aid
+word-count: 
+---
 
 In 2013, an Egyptian court imposed jail sentences on 43 non-governmental organization (NGO) employees for failing to comply with a civil society organization (CSO) law, which required all NGOs to obtain approval from the Ministry of Social Solidarity before receiving funds from any foreign sources [@egypt-ngos-afp:2012]. Similarly, in 2014, the Indian government cancelled the licenses of over 9,000 NGOs, including prominent international NGOs (INGOs) such as the Ford Foundation and Greenpeace [@India9000]. This crackdown was initiated shortly after the government amended the country's Foreign Contribution Regulation Act, targeting all nonprofits receiving money from foreign sources and prohibiting those whose activities were "political" in nature. 
 
