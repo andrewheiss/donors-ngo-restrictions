@@ -117,13 +117,15 @@ OECD members donated `r total.oecd.aid` between 1981 and 2013.
 ```{r plot-oecd-aid}
 plot.aid <- df.country.aid %>%
   group_by(year) %>%
-  summarise(total = sum(total.oda))
+  summarise(total = sum(total.oda)) %>% 
+  mutate(fake_facet_title = "ODA commitments (all OECD)")
 
 fig.oecd.aid <- ggplot(plot.aid, aes(x = year, y = (total / 1000000000))) + 
   geom_line(size = 0.5) +
-  labs(x = NULL, y = "Total ODA commitments\n(billions of USD)") +
+  labs(x = NULL, y = "Billions of USD") +
   scale_y_continuous(labels = dollar) +
-  theme_donors()
+  theme_donors() + 
+  facet_wrap(~ fake_facet_title)
 fig.oecd.aid
 ```
 
@@ -145,13 +147,15 @@ plot.aid.contentiousness <- df.donor %>%
   group_by(year, purpose.contentiousness) %>%
   summarise(total = sum(oda)) %>%
   mutate(perc = total / sum(total)) %>%
-  filter(purpose.contentiousness == "High")
+  filter(purpose.contentiousness == "High") %>% 
+  mutate(fake_facet_title = "Contentious aid (all OECD)")
 
 fig.oecd.contention <- ggplot(plot.aid.contentiousness, aes(x = year, y = perc)) + 
   geom_line(size = 0.5) +
-  scale_y_continuous(labels = percent) + 
-  labs(x = NULL, y = "Percent of\ncontentious aid") +
-  theme_donors()
+  scale_y_continuous(labels = percent_format(accuracy = 1)) + 
+  labs(x = NULL, y = "Percent") +
+  theme_donors() +
+  facet_wrap(~ fake_facet_title)
 fig.oecd.contention
 ```
 
@@ -173,13 +177,16 @@ The US donated `r total.us.aid` between 1981 and 2013 and `r total.us.aid.post.2
 ```{r plot-us-aid}
 plot.aid.us <- df.country.aid %>%
   group_by(year) %>%
-  summarise(total = sum(oda.us))
+  summarise(total = sum(oda.us)) %>% 
+  mutate(fake_facet_title = "ODA commitments (USAID only)")
 
 fig.us.aid <- ggplot(plot.aid.us, aes(x = year, y = (total / 1000000000))) + 
   geom_line(size = 0.5) +
-  labs(x = NULL, y = "Total US ODA commitments\n(billions of USD)") +
+  expand_limits(y = 0) +
+  labs(x = NULL, y = "Billions of USD") +
   scale_y_continuous(labels = dollar) +
-  theme_donors()
+  theme_donors() +
+  facet_wrap(~ fake_facet_title)
 fig.us.aid
 ```
 
@@ -188,7 +195,7 @@ fig.us.aid
 Total amounts over time:
 
 ```{r summarize-aid-channels, results="asis"}
-usaid.total <- df.country.aid %>% summarise(total = sum(oda.us)) %>% as.numeric()
+usaid.total <- df.country.aid %>% summarise(total = sum(oda.us)) %>% pull(total)
 
 df.country.aid %>%
   gather(channel, total.oda.us, c(oda.us.ngo.dom, oda.us.ngo.int, oda.us.ngo.us)) %>%
@@ -204,7 +211,8 @@ The US clearly favors US-based NGOs or international NGOs over domestic NGOs.
 ```{r plot-aid-channels}
 usaid.total.yearly <- df.country.aid %>%
   group_by(year) %>%
-  summarise(annual.total = sum(oda.us))
+  summarise(annual.total = sum(oda.us)) %>% 
+  mutate(fake_facet_title = "USAID ODA channeled through NGOs")
 
 channels.nice <- tribble(
   ~channel,         ~channel.clean,
@@ -226,9 +234,10 @@ fig.usaid.channel <- ggplot(plot.usaid.channel,
   geom_line(size = 0.5) +
   scale_y_continuous(labels = percent_format(accuracy = 1)) + 
   scale_colour_manual(values = channel.colors) +
-  labs(x = NULL, y = "Percent of US aid\ngiven through NGOs") +
+  labs(x = NULL, y = "Percent") +
   guides(colour = guide_legend(title = NULL, reverse = TRUE, nrow = 2)) +
-  theme_donors()
+  theme_donors() + 
+  facet_wrap(~ fake_facet_title)
 fig.usaid.channel
 ```
 
@@ -258,16 +267,18 @@ fig.usaid.channel.trimmed <- fig.usaid.channel +
 fig.usaid.channel.trimmed
 ```
 
+### All DV figures combined
 
-### All DV figures combined (for paper)
-
-```{r plot-all-dvs, fig.width=6, fig.height=3.75}
-fig.dvs <- (fig.oecd.aid + fig.oecd.contention + 
-              fig.us.aid + fig.usaid.channel.trimmed) + 
-  plot_layout(nrow = 2)
+```{r plot-all-dvs, fig.width=5.5, fig.height=3.75}
+fig.dvs <- (fig.oecd.aid + fig.oecd.contention) / 
+  (fig.us.aid + fig.usaid.channel.trimmed) &
+  theme(legend.text = element_text(size = rel(0.6)),
+        axis.title.y = element_text(margin = margin(r = 3)),
+        legend.box.margin = margin(t = -0.5, unit = "lines"))
 
 fig.dvs
-fig.save.cairo(fig.dvs, filename = "fig-dvs", width = 6, height = 3.75)
+fig.save.cairo(fig.dvs, filename = "fig-dvs", 
+               width = 5.5, height = 3.75)
 ```
 
 
@@ -289,7 +300,7 @@ cat(dcjw.index.table, file = here("Output", "tbl-ngo-barriers-index.md"))
 
 ### NGO barriers over time
 
-```{r advocacy-laws, message=FALSE}
+```{r advocacy-laws, message=FALSE, fig.width=5.5, fig.height=4.5}
 dcjw.questions <- read_csv(here("Data", "data_manual", "dcjw_questions.csv")) %>% 
   filter(!ignore_in_index) %>% 
   select(barrier_group = barrier_display, barrier = question_clean, 
