@@ -36,6 +36,19 @@ df.country.aid <- readRDS(here("Data", "data_clean", "df_country_aid_no_imputati
 
 dcjw.questions.clean <- read_csv(here("Data", "data_manual", "dcjw_questions.csv"))
 dcjw.responses.clean <- read_csv(here("Data", "data_manual", "dcjw_responses.csv"))
+
+autocracies <- df.country.aid %>%
+  group_by(cowcode) %>%
+  summarise(polity.avg = mean(polity, na.rm = TRUE)) %>%
+  mutate(autocracy = polity.avg < 6) %>%
+  # These countries are missing polity scores
+  mutate(autocracy = case_when(
+    # Equatorial Guinea, Kuwait, Bahrain, UAE, Oman, Singapore
+    .$cowcode %in% c(411, 690, 692, 696, 698, 830) ~ TRUE,
+    # Serbia, Kosovo
+    .$cowcode %in% c(340, 347) ~ FALSE,
+    TRUE ~ .$autocracy
+  ))
 ```
 
 ## Overall data summary
@@ -260,24 +273,135 @@ fig.save.cairo(fig.dvs, filename = "fig-dvs", width = 6, height = 3.75)
 
 ## Legal restrictions on NGOs
 
+### DCJW indexes
+
+```{r dcjw-index-table, results="asis", message=FALSE}
+dcjw.indexes <- read_csv(here("Data", "data_manual", "dcjw_index.csv")) %>%
+  mutate(Laws = str_replace_all(Laws, "\n", "\n\n"))
+
+caption <- "Description of indexes of NGO barriers {#tbl:ngo-barriers-index}"
+dcjw.index.table <- pandoc.table.return(dcjw.indexes, keep.line.breaks = TRUE, 
+                                        style = "grid", justify = "lll", caption = caption)
+
+cat(dcjw.index.table)
+cat(dcjw.index.table, file = here("Output", "tbl-ngo-barriers-index.md"))
+```
+
+### NGO barriers over time
+
+```{r advocacy-laws, message=FALSE}
+dcjw.questions <- read_csv(here("Data", "data_manual", "dcjw_questions.csv")) %>% 
+  filter(!ignore_in_index) %>% 
+  select(barrier_group = barrier_display, barrier = question_clean, 
+         barrier_display = question_display) %>% 
+  mutate(barrier_group = paste0("Barriers to ", str_to_lower(barrier_group)))
+
+df.barriers <- df.country.aid %>% 
+  group_by(cowcode, year) %>% 
+  summarize_at(vars(one_of(dcjw.questions$barrier)), funs(. > 0)) %>% 
+  group_by(year) %>% 
+  summarize_at(vars(-cowcode, -year), funs(sum(.))) %>% 
+  gather(barrier, value, -year) %>% 
+  left_join(dcjw.questions, by = "barrier") %>% 
+  mutate(barrier_display = str_replace(barrier_display, "XXX", "\n")) %>% 
+  arrange(desc(value)) %>% 
+  mutate(barrier_display = fct_inorder(barrier_display, ordered = TRUE))
+
+dcjw_entry_plot <- ggplot(filter(df.barriers, 
+                                 barrier_group == "Barriers to entry"), 
+                          aes(x = year, y = value, 
+                              color = barrier_display,
+                              linetype = barrier_display)) +
+  geom_line(size = 0.5) +
+  expand_limits(y = c(0, 90)) +
+  scale_y_continuous(sec.axis = sec_axis(~ . / num.countries,
+                                         labels = percent_format(accuracy = 1)),
+                     expand = c(0, 0)) +
+  scale_colour_manual(values = c("black", "grey80", "grey50"), name = NULL) +
+  scale_linetype_manual(values = c("solid", "solid", "21"), name = NULL) +
+  guides(color = guide_legend(nrow = 2)) +
+  labs(x = NULL, y = "Number of countries") +
+  theme_donors() + 
+  theme(legend.justification = "left") +
+  facet_wrap(~ barrier_group)
+
+dcjw_funding_plot <- ggplot(filter(df.barriers, 
+                                   barrier_group == "Barriers to funding"), 
+                            aes(x = year, y = value, 
+                                color = barrier_display,
+                                linetype = barrier_display)) +
+  geom_line(size = 0.5) +
+  expand_limits(y = c(0, 40)) +
+  scale_y_continuous(sec.axis = sec_axis(~ . / num.countries,
+                                         labels = percent_format(accuracy = 1)),
+                     expand = c(0, 0)) +
+  scale_colour_manual(values = c("black", "grey80", "grey50", "black", "grey80"), name = NULL) +
+  scale_linetype_manual(values = c("solid", "solid", "solid", "21", "21"), name = NULL) +
+  guides(color = guide_legend(nrow = 3),
+         linetype = guide_legend(nrow = 3)) +
+  labs(x = NULL, y = "Number of countries") +
+  theme_donors() + 
+  theme(legend.justification = "left") +
+  facet_wrap(~ barrier_group)
+
+dcjw_advocacy_plot <- ggplot(filter(df.barriers, 
+                                    barrier_group == "Barriers to advocacy"), 
+                            aes(x = year, y = value, 
+                                color = barrier_display)) +
+  geom_line(size = 0.5) +
+  expand_limits(y = c(0, 40)) +
+  scale_y_continuous(sec.axis = sec_axis(~ . / num.countries,
+                                         labels = percent_format(accuracy = 1)),
+                     expand = c(0, 0)) +
+  scale_colour_manual(values = c("black", "grey80"), name = NULL) +
+  guides(color = guide_legend(nrow = 1)) +
+  labs(x = NULL, y = "Number of countries") +
+  theme_donors() + 
+  theme(legend.justification = "left") +
+  facet_wrap(~ barrier_group)
+
+df.csre.plot <- df.country.aid %>%
+  left_join(autocracies, by = "cowcode") %>%
+  group_by(year, autocracy) %>%
+  nest() %>% 
+  mutate(cis = data %>% map(~ mean_cl_normal(.$csre))) %>% 
+  unnest(cis) %>% 
+  mutate(fake_facet_title = "Civil society regulatory environment",
+         autocracy = factor(autocracy, 
+                            labels = c("Democracy (Polity IV ≥ 6)",
+                                       "Non-democracy (Polity IV < 6)"), 
+                            ordered = TRUE))
+
+fig.csre <- ggplot(df.csre.plot, aes(x = year, y = y)) +
+  geom_ribbon(aes(ymin = ymin, ymax = ymax, fill = autocracy), alpha = 0.2) +
+  geom_line(aes(color = autocracy), size = 0.5) +
+  annotate(geom = "text", x = 2013, y = -2.2, hjust = "right", size = 1.8,
+           label = "Larger values = more open civil society") +
+  scale_colour_manual(values = c("black", "grey75"), name = NULL) +
+  scale_fill_manual(values = c("black", "grey75"), name = NULL) +
+  scale_linetype_manual(values = c("solid", "solid", "21")) +
+  labs(y = "Average CSRE", x = NULL) +
+  theme_donors() +
+  theme(legend.justification = "left") +
+  facet_wrap(~ fake_facet_title)
+
+barriers_summary <- 
+  ((dcjw_entry_plot + dcjw_funding_plot) / 
+     (dcjw_advocacy_plot + fig.csre)) &
+  theme(legend.text = element_text(size = rel(0.6)),
+        axis.title.y = element_text(margin = margin(r = 3)),
+        legend.box.margin = margin(t = -0.5, unit = "lines"))
+
+barriers_summary
+fig.save.cairo(barriers_summary, filename = "fig-barriers-summary",
+               width = 5.5, height = 4.5)
+```
+
 ### Compulsory vs. burdensome registration
 
 Laws requiring NGO registration aren't necessarily a sign of oppression—even the US requires that nonprofits that earn above a certain threshold register as 501(c)(3) organizations. Though the figure below shows that compulsory regulation have increased over time, actual restriction has occurred too. Burdensome registration is not just another standard layer of bureaucracy.
 
 ```{r compulsory-vs-burdensome, fig.width=4.5, fig.height=2}
-autocracies <- df.country.aid %>%
-  group_by(cowcode) %>%
-  summarise(polity.avg = mean(polity, na.rm = TRUE)) %>%
-  mutate(autocracy = polity.avg < 7) %>%
-  # These countries are missing polity scores
-  mutate(autocracy = case_when(
-    # Equatorial Guinea, Kuwait, Bahrain, UAE, Oman, Singapore
-    .$cowcode %in% c(411, 690, 692, 696, 698, 830) ~ TRUE,
-    # Serbia, Kosovo
-    .$cowcode %in% c(340, 347) ~ FALSE,
-    TRUE ~ .$autocracy
-  ))
-
 df.regulation <- df.country.aid %>%
   left_join(autocracies, by = "cowcode") %>%
   group_by(year, autocracy) %>%
@@ -286,7 +410,7 @@ df.regulation <- df.country.aid %>%
   gather(type.of.law, value, -year, -autocracy) %>%
   mutate(autocracy = 
            factor(autocracy, levels = c(TRUE, FALSE),
-                  labels = c("Autocracies", "Democracies")))
+                  labels = c("Non-democracies", "Democracies")))
 
 fig.regulation.burden <- ggplot(df.regulation, 
                                 aes(x = year, y = value, colour = type.of.law)) +
@@ -303,123 +427,6 @@ fig.regulation.burden <- ggplot(df.regulation,
 fig.regulation.burden
 fig.save.cairo(fig.regulation.burden, filename = "fig-regulation-burden",
                width = 4.5, height = 2)
-```
-
-
-### DCJW indexes
-
-```{r dcjw-index-table, results="asis", message=FALSE}
-dcjw.indexes <- read_csv(here("Data", "data_manual", "dcjw_index.csv")) %>%
-  mutate(Laws = str_replace_all(Laws, "\n", "\n\n"))
-
-caption <- "Description of indexes of NGO barriers {#tbl:ngo-barriers-index}"
-dcjw.index.table <- pandoc.table.return(dcjw.indexes, keep.line.breaks = TRUE, 
-                                        style = "grid", justify = "lll", caption = caption)
-
-cat(dcjw.index.table)
-cat(dcjw.index.table, file = here("Output", "tbl-ngo-barriers-index.md"))
-```
-
-
-### Number of countries with restrictive laws
-
-```{r num-countries-laws, fig.width=11, fig.height=7, cache=TRUE}
-df.ngo.restrictions.plot <- df.country.aid %>%
-  select(cowcode, year, const_assoc, political_parties, starts_with("ngo_")) %>%
-  gather(restriction, value, -c(cowcode, year)) %>%
-  group_by(year, restriction, value) %>%
-  summarise(n = n()) %>%
-  ungroup() %>%
-  left_join(dcjw.responses.clean, by = c("restriction", "value")) %>%
-  mutate(restriction = factor(restriction,
-                              levels = unique(dcjw.responses.clean$restriction),
-                              ordered = TRUE))
-
-plot.dcjw <- function(df) {
-  df.levels <- dcjw.responses.clean %>%
-    filter(restriction == df$restriction[[1]]) %>%
-    left_join(dcjw.questions.clean, by = c("restriction" = "question_clean"))
-  
-  plot.title <- df.levels$question_display
-  num.countries <- max(df.ngo.restrictions.plot$n)
-  
-  df.leveled <- df %>%
-    mutate(value_clean = factor(value_clean, levels = df.levels$value_clean, 
-                                ordered = TRUE))
-  
-  ggplot(df.leveled, aes(x = year, y = n, colour = value_clean)) + 
-    geom_line(size = 0.5) +
-    labs(x = NULL, y = NULL, title = plot.title) +
-    coord_cartesian(ylim = c(0, num.countries)) +
-    scale_y_continuous(sec.axis = sec_axis(~ . / num.countries,
-                                           labels = percent_format(accuracy = 1))) +
-    guides(colour = guide_legend(title = NULL)) +
-    theme_donors(8)
-}
-
-plot.all.dcjw.raw <- df.ngo.restrictions.plot %>%
-  split(.$restriction) %>%
-  map(plot.dcjw)
-
-plot.all.dcjw <- arrangeGrob(grobs = plot.all.dcjw.raw, ncol = 3)
-grid::grid.draw(plot.all.dcjw)
-```
-
-### NGO restrictions by type
-
-```{r ngo-laws-type}
-df.restrictions.type <- df.country.aid %>%
-  select(year, advocacy, entry, funding) %>%
-  gather(barrier, value, -year) %>%
-  group_by(year, barrier) %>%
-  nest() %>% 
-  mutate(cis = data %>% map(~ mean_cl_normal(.$value))) %>% 
-  unnest(cis) %>% 
-  mutate(barrier = factor(barrier, 
-                          levels = unique(dcjw.questions.clean$barrier),
-                          labels = unique(dcjw.questions.clean$barrier_display),
-                          ordered = TRUE))
-
-fig.ngo.barriers <- ggplot(df.restrictions.type, aes(x = year, y = y, colour = barrier)) +
-  geom_ribbon(aes(ymin = ymin, ymax = ymax, fill = barrier), alpha = 0.3, colour = NA) +
-  geom_line(aes(linetype = barrier), size = 0.5) +
-  labs(y = "Average number of barriers", x = NULL) +
-  scale_colour_manual(values = barrier.colors) +
-  scale_fill_manual(values = barrier.colors) +
-  scale_linetype_manual(values = c("solid", "solid", "dashed", "dashed")) +
-  guides(colour = guide_legend(title = NULL),
-         fill = guide_legend(title = NULL),
-         linetype = guide_legend(title = NULL)) +
-  theme_donors()
-fig.ngo.barriers
-```
-
-### CSRE over time
-
-```{r plot-csre-time}
-df.csre.plot <- df.country.aid %>%
-  select(year, csre) %>%
-  group_by(year) %>%
-  nest() %>% 
-  mutate(cis = data %>% map(~ mean_cl_normal(.$csre))) %>% 
-  unnest(cis)
-
-fig.csre <- ggplot(df.csre.plot, aes(x = year, y = y)) +
-  geom_ribbon(aes(ymin = ymin, ymax = ymax), alpha = 0.2) +
-  geom_line(size = 0.5) +
-  labs(y = "Average civil society\nregulatory environment", x = NULL) +
-  theme_donors()
-fig.csre
-```
-
-### NGO barriers combined (for paper)
-
-```{r plot-all-ngo-barriers, fig.width=6, fig.height=2.5}
-fig.barriers <- (fig.ngo.barriers + fig.csre) + plot_layout(ncol = 2)
-
-fig.barriers
-fig.save.cairo(fig.barriers, filename = "fig-barriers",
-               width = 6, height = 2.5)
 ```
 
 
