@@ -28,7 +28,6 @@ raw.dir <- here("Data", "data_cache")
 
 # Set up remote clusters --------------------------------------------------
 
-# Note: 
 library(analogsea)
 library(furrr)
 library(tictoc)
@@ -73,7 +72,7 @@ droplet6 <- droplet_create(image = snapshot_id, region = droplet_region, size = 
 remote_droplets <- list(droplet1, droplet2, droplet3, 
                         droplet4, droplet5, droplet6)
 
-ips <- remote_droplets %>% map_chr(~ .$networks$v4[[1]]$ip_address)
+ips <- remote_droplets %>% map_chr(~ droplet(.$id)$networks$v4[[1]]$ip_address)
 
 
 # This command is run on each cluster
