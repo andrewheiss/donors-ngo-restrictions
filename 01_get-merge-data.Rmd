@@ -1317,6 +1317,26 @@ disasters.groups %>% glimpse()
 ```
 
 
+## Countries to exclude
+
+We exclude long-term consolidated democracies from our analysis, following FinkelPerez-LinanSeligson:2007, 414. These are classified by the World Bank as high income; they score below 3 on Freedom House's Scale, receive no aid from USAID, and are not newly independent states.
+
+```{r create-consolidated-democracies, results="asis"}
+consolidated.democracies <- 
+  data_frame(country.name = c("Andorra", "Australia", "Austria", "Bahamas", 
+                              "Barbados", "Belgium", "Canada", "Denmark", "Finland", 
+                              "France", "Germany", "Greece", "Grenada", "Iceland", 
+                              "Ireland", "Italy", "Japan", "Liechtenstein", "Luxembourg", 
+                              "Malta", "Monaco", "Netherlands", "New Zealand", "Norway", 
+                              "San Marino", "Spain", "Sweden", "Switzerland", 
+                              "United Kingdom", "United States of America")) %>% 
+  mutate(iso3 = countrycode(country.name, "country.name", "iso3c"),
+         cowcode = countrycode(country.name, "country.name", "cown"))
+
+consolidated.democracies %>% pandoc.table()
+```
+
+
 ## Final clean combined data
 
 With both donor- and country-level data, we have lots of different options for analysis. Since our hypotheses deal with questions of *donor* responses, the data we use to model donor responses uses donor-years as the unit of observation. Not all donors give money to the same countries, so this final data is not a complete panel (i.e. it does not include every combination of donors and years), which will pose some interesting methodological issues when modeling.
@@ -1388,6 +1408,7 @@ usaid.by.country.channel <- donor.level.data.usaid %>%
 # Use DCJW 1980+ as base data, since we're limited to the countries included there
 country.level.data <- dcjw.full %>%
   mutate(ever.dac.eligible = cowcode %in% ever.dac.eligible) %>%
+  filter(!(cowcode %in% consolidated.democracies$cowcode)) %>% 
   left_join(select(vdem.cso, year, cowcode, csre, 
                    polity = e_fh_ipolity2, 
                    corruption = v2x_corr, 
@@ -1420,7 +1441,9 @@ country.level.data <- dcjw.full %>%
   # Add indicator for post-Cold War, since all the former Soviet republics have
   # no GDP data before 1990
   mutate(post.1989 = year >= 1990)
-testthat::expect_equal(nrow(country.level.data), nrow(dcjw.full))
+testthat::expect_equal(nrow(country.level.data), 
+                       nrow(filter(dcjw.full, 
+                                   !(cowcode %in% consolidated.democracies$cowcode))))
 
 # Combine country and donor data
 donor.country.data <- donor.level.data %>%
