@@ -19,6 +19,8 @@ library(stringr)
 library(forcats)
 library(scales)
 library(patchwork)
+library(countrycode)
+library(sf)
 library(here)
 
 source(here("lib", "graphics.R"))
@@ -475,4 +477,52 @@ ggplot(aid.contention.time, aes(x = year, y = total.aid / 1000000000,
   guides(colour = guide_legend(title = NULL)) +
   scale_y_continuous(labels = dollar) + 
   theme_donors()
+```
+
+## CIVICUS restrictions
+
+```{r civicus-data, warning=FALSE, message=FALSE}
+civicus <- read_csv(here("data", "data_raw", "Civicus", "civicus_monitor_2017.csv"),
+                    na = "Null") %>%
+  mutate(Population = as.double(Population),  # Integers can't handle world population
+         Rating = factor(Rating, levels = c("Open", "Narrowed", "Obstructed", 
+                                            "Repressed", "Closed"), 
+                         ordered = TRUE),
+         iso3 = countrycode(Country, "country.name", "iso3c"))
+
+# Robinson projection
+projection = 54030
+
+world_shapes <- st_read(file.path("data", "data_raw", "ne_110m_admin_0_countries",
+                                  "ne_110m_admin_0_countries.shp"),
+                        quiet = TRUE) %>% 
+  filter(ISO_A3 != "ATA")
+```
+
+```{r civicus-numbers, results="asis"}
+civicus %>% count(Rating) %>% pandoc.table()
+```
+
+```{r civicus-map, fig.width=5.5, fig.height=3}
+map_with_civicus <- world_shapes %>% 
+  # Fix some Natural Earth ISO weirdness
+  mutate(ISO_A3 = ifelse(ISO_A3 == "-99", as.character(ISO_A3_EH), as.character(ISO_A3))) %>% 
+  mutate(ISO_A3 = case_when(
+    .$ISO_A3 == "GRL" ~ "DNK",
+    .$NAME == "Norway" ~ "NOR",
+    TRUE ~ ISO_A3
+  )) %>% 
+  left_join(civicus, by = c("ISO_A3" = "iso3"))
+
+plot_civicus_map <- ggplot() +
+  geom_sf(data = map_with_civicus, aes(fill = Rating), size = 0.15, color = "black") +
+  coord_sf(crs = st_crs(projection), datum = NA) +
+  scale_fill_manual(values = c("grey90", "grey70", "grey45",
+                               "grey20", "black"),
+                    na.translate = FALSE, name = "Civic space") +
+  theme_donors_map() + theme(legend.key.size = unit(0.7, "lines"))
+
+plot_civicus_map 
+fig.save.cairo(plot_civicus_map, filename = "fig-civicus-map",
+               width = 5.5, height = 3)
 ```

@@ -90,6 +90,13 @@ theme_donors <- function(base_size = 9, base_family = "Work Sans Light") {
   ret
 }
 
+theme_donors_map <- function(base_size = 9, base_family = "Work Sans Light") {
+  ret <- theme_void(base_size, base_family) +
+    theme(legend.position = "bottom")
+  
+  ret
+}
+
 plot.percent.missing <- function(df, n.cols = 2) {
   percent.missing <- df %>%
     mutate_all(funs(is.na(.))) %>%
