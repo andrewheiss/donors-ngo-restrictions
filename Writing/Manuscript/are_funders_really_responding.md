@@ -116,17 +116,20 @@ $$ {#eq:all-models-dvs}
 
 ## Explanatory variables
 
-We are primarily interested in donor reactions to restrictive NGO legislation, which we measure in a few different ways. First, we use data from @chaudhry2016 and @christensen2013, who track the presence or absence of standard and restrictive NGO legislation across all developing democracies, hybrid, and authoritarian states. We do not include consolidated democracies as these countries are the providers of aid and not the recipients of aid, and this paper seeks to analyze how restrictive anti-NGO legislation in recepient countries impacts donors[^5]. These laws are categorized by purpose and encompass barriers to association, entry, funding, and advocacy[^6]. We create summative indexes for the laws in each of these categories (see @tbl:ngo-barriers-index), as well as binary variables that indicate if a new law in a category was passed in a given year. The NGO legislation data indicates only the year of initial appearance of a legal barrier, so we carry the inverse of the first known value backwards (e.g. because Albania did not require NGO registration until 2001, it is coded as 0 until that year). As can be seen in the left panel of @fig:barriers, on average countries have eliminated barriers to association through constitutional and legal reforms, but have steadily increased the number of barriers to entry, funding, and advocacy. In particular, the average number of barriers to funding has increased more rapidly than other barriers since 2000. 
+To measure restrictive anti-NGO legislation, we use data from @Chaudhry:2016 and @christensen2013, who track the presence or absence of standard and restrictive NGO laws across all countries. We exclude consolidated democracies as these countries are generally the providers of aid and not the recipients of aid (see @tbl:countries in the appendix for a complete list of countries included).[^5] These laws are categorized by purpose and encompass barriers to entry, funding, and advocacy.[^6] We create summative indexes for the laws in each of these categories (see @tbl:ngo-barriers-index), as well as binary variables that indicate if a new law in a category was passed in a given year. We also show each component of this index over time in three of the panels of @fig:barriers. Because this NGO legislation data indicates only the year of initial appearance of a legal barrier, we carry the inverse of the first known value backwards (e.g. because Albania did not require NGO registration until 2001, it is coded as 0 until that year).
 
-![**Left**: Average number of barriers to NGO activity per country over time; **right**: average civil society regulatory environment (CSRE) per country over time](../../Output/fig-barriers){#fig:barriers}
+![**Top; bottom left**: Number of legal barriers to NGO activity per country over time (de jure legislation); **bottom right**: average civil society regulatory environment (CSRE) per country over time (de facto environment)](Output/fig-barriers-summary.pdf){#fig:barriers}
 
+\stgroup
+\renewcommand*{\arraystretch}{2.75}
 \footnotesize
-!INCLUDE "../../Output/tbl-ngo-barriers-index.md"
-\normalsize
+!INCLUDE "Output/tbl-ngo-barriers-index.md"
+\fingroup
 
-An alternative method for measuring civil society restrictions is to look at the overall civil society regulatory environment instead of specific laws, since *de jure* legislation does not always reflect the *de facto* restrictions. Actual laws can lie dormant until needed for repression. For instance, Russia passed the Undesirable Organizations law of 2015 with the purpose of targeting and eliminating specific foreign-connected NGOs it deemed dangerous. One of the law's sponsors, Aleksandr Tarnavsky, described the law as a preventative measure that would not affect the majority of NGOs working in Russia. Rather, the law would be a "weapon hanging on the wall… that never fires" and stand as a warning to potentially uncooperative NGOs [@Kozenko:2015]. Simply counting laws therefore misses the effect of their de facto implementation—laws could be benignly routine, dangerously dormant, or outrightly restrictive. 
+While the main focus of this paper is donor response to new formal legislation, we also look at donor response to changes in the de facto implementation of those laws as a robustness check. An alternative method for measuring civil society restrictions is to look at the overall civil society regulatory environment instead of specific laws, since *de jure* legislation does not always reflect the *de facto* restrictions. Actual laws can lie dormant until needed for repression. For instance, Russia passed the Undesirable Organizations law of 2015 with the purpose of targeting and eliminating specific foreign-connected NGOs it deemed dangerous. One of the law's sponsors, Aleksandr Tarnavsky, described the law as a preventative measure that would not affect the majority of NGOs working in Russia. Rather, the law would be a "weapon hanging on the wall… that never fires" and stand as a warning to potentially uncooperative NGOs [@Kozenko:2015]. Simply counting laws therefore misses the effect of their de facto implementation—laws can be benignly routine, dangerously dormant, or outrightly restrictive. 
 
-To address this disconnect, @Heiss:2016a developed a new civil society regulatory environment index (CSRE), which combines two civil society indexes from the Varieties of Democracy (V-Dem) project [@VDEM]: (1) civil society repression and (2) civil society entry and exit regulations. The CSRE index ranges from roughly −6 to 6 (though typically only from −4 to 4), and shows more variation over time since it ostensibly captures changes in the implementation of the regulatory environment rather than the presence or absence of legislation. The right panel of @fig:barriers shows how the average global CSRE index has changed over time, and the trends tend to match changes in legislation—the CSRE reflects the decline in barriers to association in the 1990s. At the same time, since the CSRE captures the effects of the implementation of laws, it shows a marked drop in 2012 and 2013, which is not reflected in the overall count of NGO legislation, possibly because of discretionary enforcement. While the main focus of this paper is donor response to new legislation, we also look at donor response to changes in the overall CSRE as a robustness check.
+
+
 
 ## Controls
 
@@ -238,6 +241,12 @@ TODO: @fig:regulation-burden shows that since the 1990s, there has been an almos
 !INCLUDE "Output/tbl-var-summary.md"
 \normalsize
 
+## List of countries included
+
+\small
+!INCLUDE "Output/tbl-countries.md"
+\normalsize
+
 ## Full model results
 
 \small
@@ -273,7 +282,7 @@ TODO: @fig:regulation-burden shows that since the 1990s, there has been an almos
 
 [^4]: For instance, within the category of "elections," a majority of projects that aim to fund and train election observers, coordinate Get Out The Vote campaigns, or reform the electoral process can be perceived by governments as contentious. However, training leaders about proper conduct of elections, or professionalizing all political parties may not necessarily be contentious, depending on the recipient country.
 
-[^5]: List of consolidated democracies excluded from the analysis include: United Kingdom, United States of America, Australia, Austria, Belgium, Canada, Denmark, Finland, France, Germany, Greece, Ireland, Italy, Japan, Liechtenstein, Luxembourg, Malta, Monaco, Netherlands, New Zealand, Norway, Spain, Sweden, Switzerland, Andorra, Bahamas, Barbados, Grenada, Iceland, San Marino. Long-term consolidated democracies are classified by the World Bank as high income; they score below 3 on Freedom House's Scale, receive no aid from USAID, and are not newly independent states (Finkel, Perez-Linan, and Seligson 2007, 414). We also exclude micro-states or states with a population of less than 500,000 based on previous research (bush? hyde?).
+[^5]: Long-term consolidated democracies are classified by the World Bank as high income; they score below 3 on Freedom House's Scale, receive no aid from USAID, and are not newly independent states [@FinkelPerez-LinanSeligson:2007, 414].
 
 [^6]: The scope of actors covered by these law is diverse, as there are some differences across countries in defining non-governmental organizations (NGOs), nonprofit organizations (NPOs), and civil society organizations (CSOs). For the purposes of this paper, we code legal regulations towards all of these organizations, based on precedent set by previous literature [@christensen2013; @Rutzen:2015].
 
