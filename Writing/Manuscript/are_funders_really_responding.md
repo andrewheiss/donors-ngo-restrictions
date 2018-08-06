@@ -158,10 +158,10 @@ While this model specification is at first a little unwieldy, it has multiple be
 
 # Results and analysis
 
-We present the estimates of our different models in coefficient plots below. Since there are many control variables, and most are doubled up with *within* and *between* effects, we only include variables related to the NGO regulatory environment in each plot. The full results of all models are included in the appendix, and @tbl:findings-summary summarizes the main findings for each hypothesis.
+We present the estimates of our different models in coefficient plots below. Since there are many control variables, and most are doubled up with *within* and *between* effects, we only include variables related to NGO regulations in each plot. The full results of all models are included in the appendix, and @tbl:findings-summary summarizes the main findings for each hypothesis.
 
 \small
-!INCLUDE "../../Output/tbl-findings-summary.md"
+!INCLUDE "Output/tbl-findings-summary.md"
 \normalsize
 
 
@@ -258,25 +258,25 @@ Typical time-series-cross-sectional data analysis includes these variables as fi
 ## Full model results
 
 \small
-!INCLUDE "../../Output/tbl-h1-coefs-bayes.md"
+!INCLUDE "Output/tbl-h1-coefs-bayes.md"
 \normalsize
 
 \clearpage
 
 \small
-!INCLUDE "../../Output/tbl-h2-coefs-bayes.md"
+!INCLUDE "Output/tbl-h2-coefs-bayes.md"
 \normalsize
 
 \clearpage
 
 \small
-!INCLUDE "../../Output/tbl-h3-domestic-coefs-bayes.md"
+!INCLUDE "Output/tbl-h3-domestic-coefs-bayes.md"
 \normalsize
 
 \clearpage
 
 \small
-!INCLUDE "../../Output/tbl-h3-foreign-coefs-bayes.md"
+!INCLUDE "Output/tbl-h3-foreign-coefs-bayes.md"
 \normalsize
 
 \clearpage
