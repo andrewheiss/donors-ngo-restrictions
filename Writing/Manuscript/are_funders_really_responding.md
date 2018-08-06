@@ -90,11 +90,7 @@ However, we argue there are several reasons why donors might prefer domestic NGO
 
 # Data and methods
 
-We analyze donor reactions to state crackdown of NGOs by looking at how foreign aid has changed in response to anti-NGO legislation. We combine variables from several existing datasets and create a cross-sectional time series panel that includes information about aid and NGO legislation in 148 countries from 1981–2013.[^1] Summary statistics for all the variables we use in our models are provided in @tbl:var-summary.
-
-\small
-!INCLUDE "../../Output/tbl-var-summary.md"
-\normalsize
+We test these hypotheses by analyzing how patterns of foreign aid commitments and allocation have changed in response to restrictive anti-NGO legislation. We combine variables from several existing datasets and create a cross-sectional time series panel that includes information about aid and NGO legislation in 148 countries from 1981–2013.[^1] Summary statistics for all the variables we use in our models are provided in @tbl:var-summary in the appendix.
 
 ## Dependent variables
 
@@ -235,6 +231,12 @@ Finally, this paper has exclusively looked at how donors respond to changes in r
 TODO: @fig:regulation-burden shows that since the 1990s, there has been an almost uniform increase in NGO registration requirements in both democracies and autocracies as governments routinized and streamlined state-NGO relations.[^regime] Thus, in this paper we primarily analyze the impact of restrictive legislations on donor behavior. 
 
 ![Proportion of countries with laws that require NGO registration and that impose additional burdens on the registration process](Output/fig-regulation-burden.pdf){#fig:regulation-burden}
+
+## Summary statistics
+
+\small
+!INCLUDE "Output/tbl-var-summary.md"
+\normalsize
 
 ## Full model results
 
