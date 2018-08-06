@@ -145,7 +145,7 @@ Foreign aid exhibits serial correlation, since the current year's level of aid i
 
 ## Missing values
 
-The bulk of our new dataset has complete data for every variable in each country-year observation, with only a few variables from V-Dem and the World Bank suffering from missing data: Polity IV, the political corruption index, the civil society regulatory index, population, and GDP. These variables are not missing at random—most of the missing data can be attributable to a lack of consistent reporting. In an effort to avoid the listwise deletion of these important control variables, we employ Bayesian multiple imputation using Honaker, King, and Blackwell's [-@HonakerKingBlackwell:2011] *Amelia II*. Following @KingHonakerJoseph:2001, we estimate individual regression models across five imputed datasets and then meld and combine the resulting posterior distributions.[^7]
+The bulk of our new dataset has complete data for every variable in each country-year observation, with only a few variables from V-Dem and the World Bank suffering from missing data: Polity IV, the political corruption index, the civil society regulatory index, population, and GDP. These variables are not missing at random—most of the missing data can be attributable to a lack of consistent reporting. In an effort to avoid the listwise deletion of these important control variables, we employ Bayesian multiple imputation using Honaker, King, and Blackwell's *Amelia II* [-@HonakerKingBlackwell:2011]. Following @KingHonakerJoseph:2001, we estimate individual regression models across five imputed datasets and then meld and combine the resulting posterior distributions.[^7]
 
 ## Modeling strategy
 
@@ -288,7 +288,7 @@ TODO: @fig:regulation-burden shows that since the 1990s, there has been an almos
 
 [^6]: The scope of actors covered by these law is diverse, as there are some differences across countries in defining non-governmental organizations (NGOs), nonprofit organizations (NPOs), and civil society organizations (CSOs). For the purposes of this paper, we code legal regulations towards all of these organizations, based on precedent set by previous literature [@christensen2013; @Rutzen:2015].
 
-[^7]:   We varied the number of imputed datasets between 5 and 10 and found only trivial differences in coefficients, as predicted by @KingHonakerJoseph:2001. In the interest of computational efficiency and speed, we only use five imputed datasets in our final analysis. 
+[^7]: We varied the number of imputed datasets between 5 and 10 and found only trivial differences in coefficients, as predicted by @KingHonakerJoseph:2001. In the interest of computational efficiency and speed, we only use five imputed datasets in our final analysis. 
 
     Our imputation model predicts missing values using following variables: year, country ID, the civil society regulatory environment (V-Dem), corruption (V-Dem), GDP (log; UN and World Bank), government effectiveness (World Bank), natural disaster occurrence and severity (EM-DAT), Polity IV, population (log; UN and World Bank), trade as a percent of GDP (UN and World Bank), and total ODA (AidData). We also include lags and leads (future values) of the civil society regulatory environment, corruption, GDP, trade as a percent of GDP, Polity IV, and population.
 
