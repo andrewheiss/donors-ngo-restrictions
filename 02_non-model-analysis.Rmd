@@ -526,3 +526,32 @@ plot_civicus_map
 fig.save.cairo(plot_civicus_map, filename = "fig-civicus-map",
                width = 5.5, height = 3)
 ```
+
+
+## List of countries included in models
+
+```{r list-countries, results="asis"}
+matrix_from_vector <- function(x, ncol) {
+  n_balanced <- ceiling(length(x) / ncol) * ncol
+  matrix(c(x, rep(NA, n_balanced - length(x))), ncol = ncol)
+}
+
+all_countries <- df.country.aid %>% 
+  distinct(country.name) %>% 
+  arrange(country.name) %>% 
+  pull(country.name) 
+
+caption <- paste0("All countries included in models (N = ", 
+                  length(all_countries),
+                  ") {#tbl:countries}")
+
+ncol_countries <- 4
+
+tbl_countries <- all_countries %>% 
+  matrix_from_vector(ncol = ncol_countries) %>% 
+  pandoc.table.return(justify = paste0(rep("l", ncol_countries), collapse = ""), 
+                      caption = caption, missing = "")
+
+cat(tbl_countries)
+cat(tbl_countries, file = here("Output", "tbl-countries.md"))
+```
