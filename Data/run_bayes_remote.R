@@ -2,8 +2,15 @@
 # plan(multiprocess), each future_map() command below takes ≈45 minutes.
 # 
 # I used a cluster of 6 DigitalOcean droplets, each with 4 CPUs and 8 GB of RAM
-# ("s-4vcpu-8gb" in the API), and each future_map() command took ≈3 minutes,
+# ("s-4vcpu-8gb" in the API), and each future_map() command took ≈3-9 minutes,
 # which is phenomenal!
+# 
+# Using 6 "s-4vcpu-8gb" machines, here's how long each hypothesis generally takes:
+# 
+# - H1: 2672 seconds (44.5 minutes) (idk why this takes so long?)
+# - H2: 1065 seconds (17.75 minutes)
+# - H3 (domestic): 499 seconds (8.3 minutes)
+# - H3 (foreign): 564 seconds (9.4 minutes)
 #
 # NB: Only use as many machines as you need in the cluster. Here, we run models
 # on the original data + each of the imputations, so there are 6 models running
