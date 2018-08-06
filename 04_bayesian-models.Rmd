@@ -457,89 +457,138 @@ cat(table.h2, file = here("Output", "tbl-h2-coefs-bayes.md"))
 
 ### Predicted proportion of contentious aid
 
-```{r h2-predict-both, warning=FALSE, message=FALSE, cache=TRUE}
-# Barriers to advocacy
+```{r h2-predict-total, warning=FALSE, message=FALSE, cache=TRUE}
+model <- mods.h2.next_year.bayes %>%
+  filter(m == "imp1", model.name == "mod.h2.barriers.total") %>%
+  select(model) %>% .[[1]] %>% .[[1]]
+
+new.data <- get_all_vars(model$formula, data = model$data) %>%
+  select(-c(barriers.total_within, year, cowcode)) %>%
+  summarise_all(typical) %>%
+  mutate(id = 1) %>%
+  right_join(expand.grid(barriers.total_within = seq(-3, 4, 0.5),
+                         cowcode = 1000:1049,
+                         year = 1981:2012,
+                         id = 1), by = "id") %>% select(-id)
+
+predicted.h2.barriers.total <- new.data %>%
+  nest(-cowcode) %>%
+  mutate(predicted = future_map(.x = data, ~ generate_predictions(.x))) %>%
+  unnest()
+
+df.plot.data.h2 <- predicted.h2.barriers.total %>%
+  group_by(cowcode, barriers.total_within) %>%
+  summarise_at(vars(predicted), funs(mean(.))) %>%
+  ungroup() %>% 
+  mutate(value.fixed = inv.logit(predicted, a = 0.001))
+
+df.plot.data.mean.h2 <- df.plot.data.h2 %>%
+  group_by(barriers.total_within) %>%
+  summarise(predicted = mean(predicted)) %>%
+  mutate(value.fixed = inv.logit(predicted, a = 0.001)) %>%
+  mutate(cowcode = 1)  # Fake country so the line plots
+```
+
+```{r h2-predict-individual, warning=FALSE, message=FALSE, cache=TRUE}
+barriers.indiv.clean.names <- tribble(
+  ~barrier, ~barrier.clean,
+  "advocacy_within", "Barriers to advocacy",
+  "entry_within", "Barriers to entry",
+  "funding_within", "Barriers to funding"
+)
+
 model <- mods.h2.next_year.bayes %>%
   filter(m == "imp1", model.name == "mod.h2.type.total") %>%
   select(model) %>% .[[1]] %>% .[[1]]
 
+hypothetical.bounds <- get_all_vars(model$formula, data = model$data) %>%
+  select(advocacy_within, entry_within, funding_within) %>%
+  summarise_all(funs(min, max)) %>%
+  gather(key, value) %>%
+  mutate(value = round(value, 0)) %>%
+  # Have to separate on _m because of multiple _s, then re-add the m
+  separate(key, into = c("term", "variable"), sep = "_m") %>%
+  mutate(variable = paste0("m", variable)) %>%
+  spread(variable, value)
+
+new.data.hypothetical.nested <- hypothetical.bounds %>%
+  nest(-term) %>%
+  mutate(newdata = map2(.x = data, .y = term,
+                        ~ expand.grid(term = seq(.x$min, .x$max, by = 0.5),
+                                      cowcode = 1000:1049,
+                                      year = 1981:2012,
+                                      id = 1) %>%
+                          # Rename the term column to the actual term name
+                          magrittr::set_colnames(c(.y, colnames(.)[-1]))))
+
+new.data.hypothetical <- as_tibble(bind_rows(new.data.hypothetical.nested$newdata)) %>%
+  mutate_at(vars(contains("within")), funs(ifelse(is.na(.), 0, .)))
+
 new.data <- get_all_vars(model$formula, data = model$data) %>%
-  select(-c(advocacy_within, year, cowcode)) %>%
+  select(-c(advocacy_within, entry_within, funding_within, year, cowcode)) %>%
   summarise_all(typical) %>%
   mutate(id = 1) %>%
-  right_join(expand.grid(advocacy_within = seq(-1, 2, 0.5),
-                         cowcode = 1000:1049,
-                         year = 1981:2012,
-                         id = 1), by = "id") %>% select(-id)
+  right_join(new.data.hypothetical, by = "id") %>% select(-id)
 
-predicted.h2.advocacy <- new.data %>%
+predicted.h2.barriers.individual <- new.data %>%
   nest(-cowcode) %>%
   mutate(predicted = future_map(.x = data, ~ generate_predictions(.x))) %>%
   unnest()
 
-# CSRE
-model <- mods.h2.next_year.bayes %>%
-  filter(m == "imp1", model.name == "mod.h2.csre") %>%
-  select(model) %>% .[[1]] %>% .[[1]]
-
-new.data <- get_all_vars(model$formula, data = model$data) %>%
-  select(-c(csre_within, year, cowcode)) %>%
-  summarise_all(typical) %>%
-  mutate(id = 1) %>%
-  right_join(expand.grid(csre_within = seq(-5, 5, 0.5),
-                         cowcode = 1000:1049,
-                         year = 1981:2012,
-                         id = 1), by = "id") %>% select(-id)
-
-predicted.h2.csre <- new.data %>%
-  nest(-cowcode) %>%
-  mutate(predicted = future_map(.x = data, ~ generate_predictions(.x))) %>%
-  unnest()
-
-# Combine predictions into plottable data
-df.plot.h2.advocacy <- predicted.h2.advocacy %>%
-  group_by(cowcode, advocacy_within) %>%
+df.plot.data.indiv.h2 <- predicted.h2.barriers.individual %>%
+  gather(barrier, barrier.value, c(advocacy_within, entry_within, funding_within)) %>%
+  group_by(cowcode, barrier.value, barrier) %>%
   summarise_at(vars(predicted), funs(mean(.))) %>%
-  ungroup() %>%
-  mutate(value.fixed = inv.logit(predicted, a = 0.001),
-         variable.clean = "Barriers to advocacy") %>%
-  rename(variable = advocacy_within)
+  mutate(value.fixed = inv.logit(predicted, a = 0.001)) %>% 
+  left_join(barriers.indiv.clean.names, by = "barrier")
 
-df.plot.h2.csre <- predicted.h2.csre %>%
-  group_by(cowcode, csre_within) %>%
-  summarise_at(vars(predicted), funs(mean(.))) %>%
-  ungroup() %>%
-  mutate(value.fixed = inv.logit(predicted, a = 0.001),
-         variable.clean = "Civil society regulatory environment") %>%
-  rename(variable = csre_within)
+df.plot.data.mean.indiv.h2 <- df.plot.data.indiv.h2 %>%
+  group_by(barrier, barrier.value) %>%
+  summarise(predicted = mean(predicted)) %>%
+  mutate(cowcode = 1) %>%  # Fake country so the line plots
+  mutate(value.fixed = inv.logit(predicted, a = 0.001)) %>% 
+  left_join(barriers.indiv.clean.names, by = "barrier")
 ```
 
 ```{r h2-predict-both-plot, fig.width=5.5, fig.height=2.5}
-df.plot.data.h2 <- bind_rows(df.plot.h2.advocacy, df.plot.h2.csre)
+# Combine the two plot data frames
+df.plot.data.both.h2 <- df.plot.data.h2 %>%
+  mutate(barrier = "barriers.total_within", barrier.clean = "Total barriers") %>%
+  rename(barrier.value = barriers.total_within) %>%
+  bind_rows(df.plot.data.indiv.h2) %>%
+  mutate(barrier.clean = ordered(fct_inorder(barrier.clean)),
+         highlight = ifelse(barrier.clean == "Total barriers", TRUE, FALSE))
 
-df.plot.data.mean.h2 <- df.plot.data.h2 %>%
-  group_by(variable.clean, variable) %>%
-  summarise(predicted = mean(predicted)) %>%
-  mutate(value.fixed = inv.logit(predicted, a = 0.001)) %>%
-  mutate(cowcode = 1)  # Fake country so the line plots
+df.plot.data.mean.both.h2 <- df.plot.data.mean.h2 %>%
+  mutate(barrier = "barriers.total_within", barrier.clean = "Total barriers") %>%
+  rename(barrier.value = barriers.total_within) %>%
+  bind_rows(df.plot.data.mean.indiv.h2) %>%
+  mutate(barrier.clean = ordered(fct_inorder(barrier.clean)))
 
-fig.predicted.h2.barriers <- ggplot(df.plot.data.h2, 
-                                    aes(x = variable,
-                                        y = value.fixed, group = cowcode)) + 
+# Create data frame for highlighting the total panel
+df.panel.highlight.h2 <- df.plot.data.both.h2 %>%
+  distinct(barrier.clean, highlight)
+
+fig.predicted.h2.barriers.both <- ggplot(df.plot.data.both.h2, 
+                                         aes(x = barrier.value,
+                                             y = value.fixed, group = cowcode)) + 
+  geom_rect(data = df.panel.highlight.h2, aes(fill = highlight), inherit.aes = FALSE,
+            xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, alpha = 0.15) +
   geom_vline(xintercept = 0, colour = "black", size = 0.5) + 
   geom_smooth(method = "lm", size = 0.1, alpha = 0.1, colour = simulation.individual) +
-  geom_smooth(data = df.plot.data.mean.h2, size = 1.5, 
+  geom_smooth(data = df.plot.data.mean.both.h2, size = 1.5, 
               method = "lm", colour = simulation.mean) +
   labs(x = "Difference from average level of NGO legislation in country (within effect)",
        y = "Predicted proportion of\ncontentious aid in the following year") +
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  facet_wrap(~ variable.clean, scales = "free_x") +
+  scale_fill_manual(values = c(NA, "grey50"), guide = FALSE) +
+  facet_wrap(~ barrier.clean, scales = "free_x") +
   theme_donors() + 
   theme(axis.title.x = element_text(hjust = 0))
-fig.predicted.h2.barriers
+fig.predicted.h2.barriers.both
 
-fig.save.cairo(fig.predicted.h2.barriers, filename = "fig-predicted-h2",
-               width = 5.5, height = 2.5)
+fig.save.cairo(fig.predicted.h2.barriers.both, filename = "fig-predicted-h2",
+               width = 5.5, height = 3.5)
 ```
 
 
