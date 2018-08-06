@@ -315,3 +315,8 @@ saveRDS(h3.foreign.csre, file.path(raw.dir, "h3_foreign_5.rds"))
 toc()
 
 toc()
+
+
+# Delete cluster and snapshot
+remote_droplets %>% map(~ droplet_delete(droplet(.$id)))
+image_delete(snapshot_id)
