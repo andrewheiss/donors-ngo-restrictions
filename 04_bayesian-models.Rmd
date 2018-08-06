@@ -73,7 +73,7 @@ We look at NGO legislation in a few different ways:
 mods.h1.next_year.bayes <- mods.h1.next_year.raw.bayes %>%
   gather(model.name, model, -m) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, intervals = TRUE, prob = 0.95),
+         tidy = model %>% map(broom::tidy),
          augment = model %>% map(broom::augment)) %>%
   filter(m != "original")
 ```
@@ -156,7 +156,7 @@ plot.data <- mods.h1.melded %>%
   mutate(model_clean = factor(model_clean, levels = rev(unique(model_clean)), ordered = TRUE))
 
 fig.coefs.h1 <- ggplot(plot.data, aes(x = med, y = term_plot, 
-                                      xmin = `2.5%`, xmax = `97.5%`, colour = model_clean)) +
+                                      xmin = `5%`, xmax = `95%`, colour = model_clean)) +
   geom_vline(xintercept = 0, colour = "black", size = 0.5) + 
   geom_pointrangeh(size = 0.5, fatten = 3) +
   labs(x = "Posterior median change in log ODA in following year", y = NULL) +
@@ -360,7 +360,7 @@ We look at NGO legislation in the same ways as H~1~ and use the same controls.
 mods.h2.next_year.bayes <- mods.h2.next_year.raw.bayes %>%
   gather(model.name, model, -m) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, intervals = TRUE, prob = 0.95),
+         tidy = model %>% map(broom::tidy),
          augment = model %>% map(broom::augment)) %>%
   filter(m != "original")
 ```
@@ -427,8 +427,8 @@ plot.data <- mods.h2.melded %>%
 
 fig.coefs.h2 <- ggplot(plot.data, aes(x = med, y = term_plot, colour = model_clean)) +
   geom_vline(xintercept = 1, colour = "black", size = 0.5) +  
-  geom_pointrangeh(aes(xmin = `2.5%`, xmax = `97.5%`), size = 0.5, fatten = 3) + 
-  labs(x = "Odds ratio", y = NULL) +
+  geom_pointrangeh(aes(xmin = `5%`, xmax = `95%`), size = 0.5, fatten = 3) + 
+  labs(x = "Percent change in ratio (odds ratio)", y = NULL) +
   scale_colour_manual(values = model.colors, name = "Models") +
   expand_limits(x = c(0.6, 1.3)) +
   guides(color = guide_legend(override.aes = list(size = 0.25))) +
@@ -446,7 +446,7 @@ fig.save.cairo(fig.coefs.h2, filename = "fig-coefs-h2-bayes",
 
 ```{r h2-table, results="asis", warning=FALSE}
 caption <- "The effect of anti-NGO legislation on the proportion of OECD overseas development assistance (ODA) committed to contentious purposes in the following year (H~2~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one. {#tbl:h2-coefs}"
-note <- c("Logit-linear models. Odds ratios reported.")
+note <- c("Logit-linear models. Percent change odds ratios reported.")
 
 table.h2 <- bayesgazer(mods.h2.next_year.bayes, exponentiate = TRUE,
                        caption = caption, note = note)
@@ -564,7 +564,7 @@ Again, we use the same NGO legislation variables as H~1~ and H~2~ and use the sa
 mods.h3.dom.next_year.bayes <- mods.h3.dom.next_year.raw %>%
   gather(model.name, model, -m) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, intervals = TRUE, prob = 0.95),
+         tidy = model %>% map(broom::tidy),
          augment = model %>% map(broom::augment)) %>%
   filter(m != "original")
 ```
@@ -574,7 +574,7 @@ mods.h3.dom.next_year.bayes <- mods.h3.dom.next_year.raw %>%
 mods.h3.foreign.next_year.bayes <- mods.h3.foreign.next_year.raw %>%
   gather(model.name, model, -m) %>%
   mutate(glance = model %>% map(broom::glance),
-         tidy = model %>% map(broom::tidy, intervals = TRUE, prob = 0.95),
+         tidy = model %>% map(broom::tidy),
          augment = model %>% map(broom::augment)) %>%
   filter(m != "original")
 ```
@@ -613,7 +613,7 @@ rstan::stan_diag(model.to.check, information = "divergence")
 
 ```{r h3-table-domestic, results="asis", warning=FALSE}
 caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *domestic* NGOs in the following year (H~3~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one {#tbl:h3-domestic-coefs}"
-note <- c("Logit-linear models. Odds ratios reported.")
+note <- c("Logit-linear models. Percent change odds ratios reported.")
 
 table.h3.domestic <- bayesgazer(mods.h3.dom.next_year.bayes,
                                 caption = caption, note = note, exponentiate = TRUE)
@@ -626,7 +626,7 @@ cat(table.h3.domestic, file = here("Output", "tbl-h3-domestic-coefs-bayes.md"))
 
 ```{r h3-table-foreign, results="asis", warning=FALSE}
 caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *US-based and international* NGOs in the following year (H~3~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one {#tbl:h3-foreign-coefs}"
-note <- c("Logit-linear models. Odds ratios reported.")
+note <- c("Logit-linear models. Percent change odds ratios reported.")
 
 table.h3.domestic <- bayesgazer(mods.h3.foreign.next_year.bayes,
                                 caption = caption, note = note, exponentiate = TRUE)
@@ -689,10 +689,10 @@ coefs.h3.both <- bind_rows(`Domestic NGOs` = coefs.raw.h3.dom,
 fig.coefs.h3 <- ggplot(coefs.h3.both, aes(y = term_plot, x = med, 
                                           colour = model_clean)) + 
   geom_vline(xintercept = 1, colour = "black", size = 0.5) + 
-  geom_pointrangeh(aes(xmin = `2.5%`, xmax = `97.5%`, shape = channel), 
+  geom_pointrangeh(aes(xmin = `5%`, xmax = `95%`, shape = channel), 
                    size = 0.5, fatten = 3,
                    position = position_dodgev(height = 0.5)) + 
-  labs(x = "Odds ratio", y = NULL) +
+  labs(x = "Percent change in ratio (odds ratio)", y = NULL) +
   scale_colour_manual(values = model.colors) +
   expand_limits(x = c(0.5, 2)) +
   guides(color = guide_legend(override.aes = list(size = 0.25),

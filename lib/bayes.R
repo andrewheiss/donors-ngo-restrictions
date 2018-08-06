@@ -10,7 +10,7 @@ options(contrasts = rep("contr.treatment", 2))
 # contrasts(df$x) <- "contr.treatment"
 
 CHAINS <- 4
-ITER <-2000
+ITER <- 2000
 WARMUP <- 1000
 BAYES.SEED <- 1234
 
@@ -39,10 +39,10 @@ diff.groups.bayes <- function(form, data, divide_by = 1) {
     group_by(group.name) %>%
     summarise(mean = mean(value),
               median = median(value),
-              q2.5 = quantile(value, probs = 0.025),
+              q5 = quantile(value, probs = 0.05),
               q25 = quantile(value, probs = 0.25),
               q75 = quantile(value, probs = 0.75),
-              q97.5 = quantile(value, probs = 0.975),
+              q95 = quantile(value, probs = 0.95),
               p.greater0 = mean(value > 0)) %>%
     mutate(group.name = factor(group.name, levels = group.names, ordered = TRUE)) %>%
     arrange(group.name)
@@ -121,13 +121,13 @@ bayes.meld <- function(models, coefs.to.keep, exponentiate = FALSE) {
   # Generate credible intervals
   # terms have to be extracted from rownames in the posterior interval df
   model.credible.intervals <- models %>%
-    mutate(post_pred = model %>% map(~ posterior_interval(., prob = 0.95) %>% 
+    mutate(post_pred = model %>% map(~ posterior_interval(., prob = 0.9) %>% 
                                        as.data.frame() %>%
                                        mutate(term = rownames(.)))) %>%
     unnest(post_pred) %>%
     filter(term %in% coefs.to.keep) %>%
     group_by(model.name, term) %>%
-    summarise_at(vars(`2.5%`, `97.5%`), mean) %>%
+    summarise_at(vars(`5%`, `95%`), median) %>%
     ungroup()
   
   melded.summary <- model.coefs.summary %>%
@@ -137,7 +137,7 @@ bayes.meld <- function(models, coefs.to.keep, exponentiate = FALSE) {
   
   if (exponentiate) {
     melded.summary <- melded.summary %>%
-      mutate_at(vars(med, `2.5%`, `97.5%`), exp)
+      mutate_at(vars(med, `5%`, `95%`), exp)
   }
   
   return(list(model.coefs = model.coefs, melded.summary = melded.summary))
@@ -188,7 +188,7 @@ bayesgazer <- function(models, digits = 2, caption = NULL, note = NULL, exponent
   fixed.coefs <- model.output %>%
     mutate(combined = paste0(fixed.digits(med, digits),
                              "\\ \n(",
-                             fixed.digits(`2.5%`, digits), ", ", fixed.digits(`97.5%`, digits),
+                             fixed.digits(`5%`, digits), ", ", fixed.digits(`95%`, digits),
                              ")\\ \n",
                              "*", fixed.digits(p.greater0, digits), "*")) %>%
     select(model.name, term, combined) %>%

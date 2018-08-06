@@ -140,7 +140,7 @@ barriers.samples <- barriers.df %>%
 
 ggplot(barriers.samples, aes(x = group.name, y = mean)) +
   geom_hline(yintercept = 0, size = 0.25) +
-  geom_pointrange(aes(ymin = q2.5, ymax = q97.5, colour = group.name)) + 
+  geom_pointrange(aes(ymin = q5, ymax = q95, colour = group.name)) + 
   scale_y_continuous(labels = scales::dollar) + 
   scale_colour_manual(values = c("#2ECC40", "#AAAAAA", "#FF4136"), guide = FALSE) +
   labs(x = NULL, y = "Change in aid the following year") +
@@ -148,13 +148,13 @@ ggplot(barriers.samples, aes(x = group.name, y = mean)) +
   theme_donors()
 
 barriers.samples %>% 
-  select(barrier.clean, group.name, mean, q2.5, q97.5, p.greater0) %>%
-  mutate_at(vars(mean, q2.5, q97.5), 
+  select(barrier.clean, group.name, mean, q5, q95, p.greater0) %>%
+  mutate_at(vars(mean, q5, q95), 
             funs(nice = scales::dollar(.))) %>%
-  select(-c(mean, q2.5, q97.5)) %>%
+  select(-c(mean, q5, q95)) %>%
   mutate(p.greater0 = scales::percent(p.greater0)) %>%
   rename(`Barrier` = barrier.clean, `Change in law` = group.name,
          `P (∆ > 0)` = p.greater0, Mean = mean_nice,
-         `2.5% quartile` = q2.5_nice, `97.5% quartile` = q97.5_nice) %>%
+         `5% quartile` = q5_nice, `95% quartile` = q95_nice) %>%
   pandoc.table()
 ```
