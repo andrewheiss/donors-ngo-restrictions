@@ -227,7 +227,7 @@ Finally, this paper has exclusively looked at how donors respond to changes in r
 
 # Appendix
 
-TODO: @fig:regulation-burden shows that since the 1990s, there has been an almost uniform increase in NGO registration requirements in both democracies and autocracies as governments routinized and streamlined state-NGO relations.[^regime] Thus, in this paper we primarily analyze the impact of restrictive legislations on donor behavior. 
+TODO: @fig:regulation-burden shows that since the 1990s, there has been an almost uniform increase in NGO registration requirements in both democracies and autocracies as governments routinized and streamlined state-NGO relations.[^regime] Thus, in this paper we primarily analyze the impact of restrictive laws on donor behavior. 
 
 ![Proportion of countries with laws that require NGO registration and that impose additional burdens on the registration process](Output/fig-regulation-burden.pdf){#fig:regulation-burden}
 
