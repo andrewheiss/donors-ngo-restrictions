@@ -15,10 +15,12 @@ trade.pct.gdp,Trade as % of GDP,Trade as % of GDP,TRUE,12,UN and World Bank
 corruption,Corruption,Corruption,TRUE,13,V-Dem
 total.oda_log,Total aid in present year (log),,,,
 internal.conflict.past.5,Internal conflict in last 5 years,Internal conflict in last 5 years,TRUE,14,UCDP/PRIO
+﻿internal.conflict.past.5TRUE,Internal conflict in last 5 years,,,,
 natural_disaster.occurrence,Natural disasters,Natural disasters,TRUE,15,EM-DAT
 cowcode,Within-country variability ($\sigma$),,,,
 year,Within-year variability ($\sigma$),,,,
 post.1989,After 1989,,,,
+﻿post.1989TRUE,After 1989,,,,
 post.2005,After 2005,,,,
 ngo_register,Registration requirement,,,,
 ngo_disclose_funds,Funding disclosure requirement,,,,

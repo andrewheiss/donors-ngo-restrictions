@@ -50,6 +50,39 @@ plan(multiprocess)
 ```{r helpful-functions}
 ```
 
+```{r huxreg-functions}
+# Wrappers around tidy.stanreg and glance.stanreg so that we can exponentiate
+# coefficients in huxreg
+tidy.expmcmc <- function(x, ...) {
+  # This is hacky, but it works. Remove the custom "expmcmc" class so that
+  # regular broom functions work on x
+  class(x) <- class(x)[class(x) != "expmcmc"]
+  
+  has_confint <- hasArg(conf.int)
+  non_exponentiated <- tidy(x, ...)
+  
+  if (has_confint) {
+    exponentiated <- non_exponentiated %>% 
+      mutate_at(vars(estimate, conf.low, conf.high), exp)
+  } else {
+    exponentiated <- non_exponentiated %>% 
+      mutate_at(vars(estimate), exp)
+  }
+  
+  return(exponentiated)
+}
+
+glance.expmcmc <- function(x, ...) {
+  class(x) <- class(x)[class(x) != "expmcmc"]
+  return(glance(x, ...))
+}
+
+add_expmcmc <- function(x) {
+  class(x) <- c("expmcmc", class(x))
+  return(x)
+}
+```
+
 ---
 
 ## H~1~: Donors reduce aid in response to legislation
@@ -185,6 +218,31 @@ cat(table.h1)
 cat(table.h1, file = here("Output", "tbl-h1-coefs-bayes.md"))
 ```
 
+#### Complete results (nonimputed)
+
+```{r h1-no-imputation, message=FALSE, warning=FALSE}
+mods.h1.next_year.bayes.no.imp <- mods.h1.next_year.raw.bayes %>%
+  filter(m == "original") %>% 
+  gather(model.name, model, -m) %>%
+  mutate(glance = model %>% map(glance),
+         tidy = model %>% map(tidy))
+
+h1_coefs <- mods.h1.next_year.bayes.no.imp %>%
+  unnest(tidy) %>% 
+  filter(!duplicated(term, fromLast = TRUE)) %>%
+  mutate(term_join = str_replace(term, "TRUE", "")) %>% 
+  left_join(coef.names.all, by = c("term_join" = "term")) %>% 
+  filter(term != "(Intercept)")
+
+h1_coefs_named <- h1_coefs %>% pull(term) %>% 
+  set_names(h1_coefs$term_clean)
+
+huxreg(mods.h1.next_year.bayes.no.imp$model,
+       coefs = c(h1_coefs_named, Constant = "(Intercept)"),
+       stars = NULL,
+       tidy_args = list(conf.int = TRUE, conf.level = 0.9),
+       error_format = "({conf.low}, {conf.high})")
+```
 
 ### Model diagnostics
 
@@ -453,6 +511,37 @@ table.h2 <- bayesgazer(mods.h2.next_year.bayes, exponentiate = TRUE,
 
 cat(table.h2)
 cat(table.h2, file = here("Output", "tbl-h2-coefs-bayes.md"))
+```
+
+#### Complete results (nonimputed)
+
+The models for H~2~ behave strangely sometimes (specifically the coefficient for adding a new advocacy regulation, which goes strongly in the opposite direction that we've hypothesized and that it goes in every single other model), so maybe it's an artifact of imputation? [Imputation isn't a panacea, after all](https://doi.org/10.1017/pan.2018.18), and in some cases it performs just as well as listwise deletion, so maybe this is a case of that?
+
+lolnope ¯\\\_(ツ)\_/¯
+
+```{r h2-no-imputation, message=FALSE, warning=FALSE}
+mods.h2.next_year.bayes.no.imp <- mods.h2.next_year.raw.bayes %>%
+  filter(m == "original") %>% 
+  gather(model.name, model, -m) %>%
+  mutate(glance = model %>% map(glance),
+         tidy = model %>% map(tidy)) %>% 
+  mutate(model_exp = model %>% map(add_expmcmc))
+
+h2_coefs <- mods.h2.next_year.bayes.no.imp %>%
+  unnest(tidy) %>% 
+  filter(!duplicated(term, fromLast = TRUE)) %>%
+  mutate(term_join = str_replace(term, "TRUE", "")) %>% 
+  left_join(coef.names.all, by = c("term_join" = "term")) %>% 
+  filter(term != "(Intercept)")
+
+h2_coefs_named <- h2_coefs %>% pull(term) %>% 
+  set_names(h2_coefs$term_clean)
+
+huxreg(mods.h2.next_year.bayes.no.imp$model_exp,
+       coefs = c(h2_coefs_named, Constant = "(Intercept)"),
+       stars = NULL,
+       tidy_args = list(conf.int = TRUE, conf.level = 0.9),
+       error_format = "({conf.low}, {conf.high})")
 ```
 
 ### Predicted proportion of contentious aid
@@ -756,6 +845,60 @@ fig.coefs.h3
 
 fig.save.cairo(fig.coefs.h3, filename = "fig-coefs-h3-bayes",
                width = 5.5, height = 4)
+```
+
+#### Proportion to domestic NGOs (nonimputed)
+
+```{r h3-domestic-no-imputation, message=FALSE, warning=FALSE}
+mods.h3.dom.next_year.bayes.no.imp <- mods.h3.dom.next_year.raw %>%
+  filter(m == "original") %>% 
+  gather(model.name, model, -m) %>%
+  mutate(glance = model %>% map(glance),
+         tidy = model %>% map(tidy)) %>% 
+  mutate(model_exp = model %>% map(add_expmcmc))
+
+h3_dom_coefs <- mods.h3.dom.next_year.bayes.no.imp %>%
+  unnest(tidy) %>% 
+  filter(!duplicated(term, fromLast = TRUE)) %>%
+  mutate(term_join = str_replace(term, "TRUE", "")) %>% 
+  left_join(coef.names.all, by = c("term_join" = "term")) %>% 
+  filter(term != "(Intercept)")
+
+h3_dom_coefs_named <- h3_dom_coefs %>% pull(term) %>% 
+  set_names(h3_dom_coefs$term_clean)
+
+huxreg(mods.h3.dom.next_year.bayes.no.imp$model_exp,
+       coefs = c(h3_dom_coefs_named, Constant = "(Intercept)"),
+       stars = NULL,
+       tidy_args = list(conf.int = TRUE, conf.level = 0.9),
+       error_format = "({conf.low}, {conf.high})")
+```
+
+#### Proportion to foreign NGOs (nonimputed)
+
+```{r h3-foreign-no-imputation, message=FALSE, warning=FALSE}
+mods.h3.foreign.next_year.bayes.no.imp <- mods.h3.foreign.next_year.raw %>%
+  filter(m == "original") %>% 
+  gather(model.name, model, -m) %>%
+  mutate(glance = model %>% map(glance),
+         tidy = model %>% map(tidy)) %>% 
+  mutate(model_exp = model %>% map(add_expmcmc))
+
+h3_foreign_coefs <- mods.h3.foreign.next_year.bayes.no.imp %>%
+  unnest(tidy) %>% 
+  filter(!duplicated(term, fromLast = TRUE)) %>%
+  mutate(term_join = str_replace(term, "TRUE", "")) %>% 
+  left_join(coef.names.all, by = c("term_join" = "term")) %>% 
+  filter(term != "(Intercept)")
+
+h3_foreign_coefs_named <- h3_foreign_coefs %>% pull(term) %>% 
+  set_names(h3_foreign_coefs$term_clean)
+
+huxreg(mods.h3.foreign.next_year.bayes.no.imp$model_exp,
+       coefs = c(h3_foreign_coefs_named, Constant = "(Intercept)"),
+       stars = NULL,
+       tidy_args = list(conf.int = TRUE, conf.level = 0.9, exponentiate = TRUE),
+       error_format = "({conf.low}, {conf.high})")
 ```
 
 ### Predicted proportion of aid channeled to domestic or foreign NGOs
