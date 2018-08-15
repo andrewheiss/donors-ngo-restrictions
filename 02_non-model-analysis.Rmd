@@ -479,6 +479,169 @@ ggplot(aid.contention.time, aes(x = year, y = total.aid / 1000000000,
   theme_donors()
 ```
 
+## Restrictions and aid {.tabset .tabset-fade .tabset-pills}
+
+In the models for H~2~, the coefficient for `advocacy_new` behaves really, really erratically—it's huge and in the opposite direction than expected. To check if this is a math issue with multicollinearity, we look at simple correlations between our key DVs and IVs without any control variables or imputation or demeaning. 
+
+```{r restrictions-aid-correlations}
+inv.logit <- function(f, a) {
+  a <- (1 - 2 * a)
+  (a * (1 + exp(f)) + (exp(f) - 1)) / (2 * a * (1 + exp(f)))
+}
+
+dvs.clean.names <- tribble(
+  ~key, ~key.clean, ~category,
+  "barriers.total", "All barriers", "Total",
+  "advocacy", "Barriers to advocacy", "Total",
+  "entry", "Barriers to entry", "Total",
+  "funding", "Barriers to funding", "Total",
+  "barriers.total_new", "All barriers", "New",
+  "advocacy_new", "Barriers to advocacy", "New",
+  "entry_new", "Barriers to entry", "New",
+  "funding_new", "Barriers to funding", "New"
+)
+
+ivs.clean.names <- tribble(
+  ~variable, ~variable.clean, ~hypothesis,
+  "total.oda_log_next_year", "Total ODA", "H1",
+  "prop.contentious_logit_next_year", "Contentious aid", "H2",
+  "prop.ngo.dom_logit_next_year", "Aid to domestic NGOs", "H3",
+  "prop.ngo.foreign_logit_next_year", "Aid to foreign NGOs", "H3"
+)
+```
+
+### Restrictions and ODA (H~1~)
+
+```{r restrictions-aid-h1, warning=FALSE, fig.width=8, fig.height=4.5}
+df.plot.barriers.oda <- df.country.aid %>% 
+  select(year, cowcode, country.name, total.oda_log_next_year,
+         one_of(dvs.clean.names$key)) %>% 
+  gather(key, value, one_of(dvs.clean.names$key)) %>% 
+  filter(!is.na(total.oda_log_next_year), !is.na(value)) %>% 
+  mutate(total.oda.transformed = expm1(total.oda_log_next_year)) %>% 
+  left_join(dvs.clean.names, by = "key") %>% 
+  mutate(key.clean = fct_inorder(key.clean, ordered = TRUE),
+         category = fct_inorder(category, ordered = TRUE))
+
+ggplot(df.plot.barriers.oda, 
+       aes(x = value, y = total.oda.transformed, color = key.clean)) +
+  geom_point(alpha = 0.5) +
+  stat_smooth(method = "lm") +
+  stat_smooth(data = filter(df.plot.barriers.oda, 
+                            total.oda.transformed > 10000000000), 
+              method = "lm", linetype = "21") +
+  scale_y_continuous(labels = dollar) +
+  guides(color = FALSE) +
+  labs(x = "Number of legal barriers", y = "Total ODA in next year",
+       title = "Total ODA in next year",
+       subtitle = "Dotted lines show trends when omitting observations\nwith less than $10,000,000,000 in ODA") +
+  theme_donors() +
+  theme(strip.text.x = element_text(margin = margin(t = 1, b = 1))) +
+  facet_wrap(~ key.clean + category, scales = "free_x", nrow = 2)
+```
+
+### Restrictions and contentiousness (H~2~)
+
+```{r restrictions-aid-h2, warning=FALSE, fig.width=8, fig.height=4.5}
+df.plot.barriers.contention <- df.country.aid %>% 
+  select(year, cowcode, country.name, prop.contentious_logit_next_year,
+         one_of(dvs.clean.names$key)) %>% 
+  gather(key, value, one_of(dvs.clean.names$key)) %>% 
+  filter(!is.na(prop.contentious_logit_next_year), !is.na(value)) %>% 
+  mutate(prop.contentious.transformed = 
+           inv.logit(prop.contentious_logit_next_year, a = 0.001)) %>% 
+  left_join(dvs.clean.names, by = "key") %>% 
+  mutate(key.clean = fct_inorder(key.clean, ordered = TRUE),
+         category = fct_inorder(category, ordered = TRUE))
+
+ggplot(df.plot.barriers.contention, 
+       aes(x = value, y = prop.contentious.transformed, color = key.clean)) +
+  geom_point(alpha = 0.5) +
+  stat_smooth(method = "lm") +
+  stat_smooth(data = filter(df.plot.barriers.contention, 
+                            prop.contentious.transformed > 0.05), 
+              method = "lm", linetype = "21") +
+  scale_y_continuous(labels = percent) +
+  guides(color = FALSE) +
+  labs(x = "Number of legal barriers", 
+       y = "Proportion of contentious aid in next year",
+       title = "Proportion of contentious aid in next year",
+       subtitle = "Dotted lines show trends when omitting observations\nwith less than 5% contentious aid") +
+  theme_donors() +
+  theme(strip.text.x = element_text(margin = margin(t = 1, b = 1))) +
+  facet_wrap(~ key.clean + category, scales = "free_x", nrow = 2)
+```
+
+### Restrictions and NGOs (H~3~)
+
+```{r restrictions-aid-h3, warning=FALSE, fig.width=8, fig.height=8.5}
+df.plot.barriers.ngos <- df.country.aid %>% 
+  select(year, cowcode, country.name, 
+         prop.ngo.dom_logit_next_year, prop.ngo.foreign_logit_next_year,
+         one_of(dvs.clean.names$key)) %>% 
+  gather(barrier, value, one_of(dvs.clean.names$key)) %>% 
+  gather(variable, prop.ngo, prop.ngo.dom_logit_next_year,
+         prop.ngo.foreign_logit_next_year) %>% 
+  filter(!is.na(prop.ngo)) %>% 
+  mutate(prop.ngo.transformed = inv.logit(prop.ngo, a = 0.001)) %>% 
+  left_join(dvs.clean.names, by = c("barrier" = "key")) %>% 
+  left_join(ivs.clean.names, by = "variable") %>% 
+  mutate(key.clean = fct_inorder(key.clean, ordered = TRUE),
+         category = fct_inorder(category, ordered = TRUE))
+
+ggplot(df.plot.barriers.ngos, 
+       aes(x = value, y = prop.ngo.transformed, color = key.clean)) +
+  geom_point(alpha = 0.5) +
+  stat_smooth(method = "lm") +
+  stat_smooth(data = filter(df.plot.barriers.ngos, 
+                            prop.ngo.transformed > 0.05), 
+              method = "lm", linetype = "21") +
+  scale_y_continuous(labels = percent) +
+  guides(color = FALSE) +
+  labs(x = "Number of legal barriers", 
+       y = "Proportion of aid to NGOs in next year",
+       title = "Proportion of aid channeled to types of NGOs in next year",
+       subtitle = "Dotted lines show trends when omitting observations\nwith less than 5% aid to NGOs") +
+  coord_cartesian(ylim = c(0, 1)) +
+  theme_donors() +
+  theme(strip.text.x = element_text(margin = margin(t = 1, b = 1))) +
+  facet_wrap(~ variable.clean + key.clean + category, 
+             scales = "free_x", ncol = 4)
+```
+
+### CSRE and all DVs (all hypotheses)
+
+```{r csre-aid-allhs, warning=FALSE, fig.width=8, fig.height=4.5}
+df.plot.csre.ngos <- df.country.aid %>% 
+  select(year, cowcode, country.name, 
+         prop.contentious_logit_next_year, total.oda_log_next_year,
+         prop.ngo.dom_logit_next_year, prop.ngo.foreign_logit_next_year,
+         csre) %>% 
+  gather(variable, value, -c(year, cowcode, country.name, csre)) %>% 
+  filter(!is.na(value)) %>% 
+  left_join(ivs.clean.names, by = "variable") %>% 
+  mutate(hypothesis.clean = paste0(hypothesis, ": ", variable.clean)) %>% 
+  arrange(hypothesis.clean) %>% 
+  mutate(hypothesis.clean = fct_inorder(hypothesis.clean, ordered = TRUE)) %>% 
+  mutate(value.transformed = case_when(
+    .$hypothesis == "H1" ~ expm1(.$value),
+    .$hypothesis == "H2" ~ inv.logit(.$value, a = 0.001),
+    .$hypothesis == "H3" ~ inv.logit(.$value, a = 0.001),
+  ))
+
+ggplot(df.plot.csre.ngos, 
+       aes(x = csre, y = value.transformed, color = hypothesis)) +
+  geom_point(alpha = 0.25) +
+  scale_color_viridis_d(option = "plasma", end = 0.9) +
+  guides(color = FALSE) +
+  labs(x = "Civil society regulatory environment", 
+       y = "Variable value in next year",
+       title = "Civil society regulatory environment") +
+  theme_donors() +
+  facet_wrap(~ hypothesis.clean, scales = "free_y")
+```
+
+
 ## CIVICUS restrictions
 
 ```{r civicus-data, warning=FALSE, message=FALSE}
