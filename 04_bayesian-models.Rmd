@@ -765,7 +765,7 @@ cat(table.h3.domestic, file = here("Output", "tbl-h3-foreign-coefs-bayes.md"))
 
 #### Plot of proportion to domestic and foreign NGOs {.active}
 
-```{r plot-h3-coefs-both, warning=FALSE, message=FALSE, fig.width=5.5, fig.height=4}
+```{r plot-h3-coefs-both, warning=FALSE, message=FALSE, fig.width=5.5, fig.height=3}
 vars.to.plot <- c("barriers.total_within", "barriers.total_between",
                   "advocacy_within", "advocacy_between", 
                   "entry_within", "entry_between", 
@@ -831,7 +831,7 @@ fig.coefs.h3 <- ggplot(coefs.h3.both, aes(y = term_plot, x = med,
 fig.coefs.h3
 
 fig.save.cairo(fig.coefs.h3, filename = "fig-coefs-h3-bayes",
-               width = 5.5, height = 4)
+               width = 5.5, height = 3)
 ```
 
 #### Proportion to domestic NGOs (nonimputed)
