@@ -89,7 +89,7 @@ However, we argue there are several reasons why donors might prefer domestic NGO
 
 # Data and methods
 
-We test these hypotheses by analyzing how patterns of foreign aid commitments and allocation have changed in response to restrictive anti-NGO legislation. We combine variables from several existing datasets and create a cross-sectional time series panel that includes information about aid and NGO legislation in 140 countries from 1981–2012.[^1] Summary statistics for all the variables we use in our models are provided in @tbl:var-summary in the appendix.
+We test these hypotheses by analyzing how patterns of foreign aid commitments and allocation have changed in response to restrictive anti-NGO legislation. We combine variables from several existing datasets and create a cross-sectional time series panel that includes information about aid and NGO legislation in 140 countries from 1981–2012.[^7] Summary statistics for all the variables we use in our models are provided in @tbl:var-summary in the appendix.
 
 ## Dependent variables
 
@@ -276,8 +276,6 @@ Typical time-series-cross-sectional data analysis includes these variables as fi
 \clearpage
 
 
-[^1]: Complete details of how we constructed this dataset, as well as annotated R code for reproducing this dataset, are available at <https://stats.andrewheiss.com/donors-ngo-restrictions/>.
-
 [^2]: DAC codes 150 and 151.
 
 [^3]: DAC code 152.
@@ -288,7 +286,7 @@ Typical time-series-cross-sectional data analysis includes these variables as fi
 
 [^6]: The scope of actors covered by these law is diverse, as there are some differences across countries in defining non-governmental organizations (NGOs), nonprofit organizations (NPOs), and civil society organizations (CSOs). For the purposes of this paper, we code legal regulations towards all of these organizations, based on precedent set by previous literature [@christensen2013; @Rutzen:2015].
 
-[^7]: The bulk of our new dataset has complete data for every variable in each country-year observation, with only a few variables from V-Dem and the World Bank suffering from missing data: Polity IV, the political corruption index, the civil society regulatory index, population, and GDP. These variables are not missing at random—most of the missing data can be attributable to a lack of consistent reporting. In an effort to avoid the listwise deletion of these important control variables, we employ Bayesian multiple imputation using Honaker, King, and Blackwell's Amelia II [-@HonakerKingBlackwell:2011]. Following @KingHonakerJoseph:2001, we estimate individual regression models across five imputed datasets and then meld and combine the resulting posterior distributions. We varied the number of imputed datasets between 5 and 10 and found only trivial differences in coefficients, as predicted by @KingHonakerJoseph:2001. In the interest of computational efficiency and speed, we only use five imputed datasets in our final analysis.
+[^7]: Complete details of how we constructed this dataset, as well as annotated R code for reproducing this dataset, are available at <https://stats.andrewheiss.com/donors-ngo-restrictions/>. The bulk of our new dataset has complete data for every variable in each country-year observation, with only a few variables from V-Dem and the World Bank suffering from missing data: Polity IV, the political corruption index, the civil society regulatory index, population, and GDP. These variables are not missing at random—most of the missing data can be attributable to a lack of consistent reporting. In an effort to avoid the listwise deletion of these important control variables, we employ Bayesian multiple imputation using Honaker, King, and Blackwell's Amelia II [-@HonakerKingBlackwell:2011]. Following @KingHonakerJoseph:2001, we estimate individual regression models across five imputed datasets and then meld and combine the resulting posterior distributions. We varied the number of imputed datasets between 5 and 10 and found only trivial differences in coefficients, as predicted by @KingHonakerJoseph:2001. In the interest of computational efficiency and speed, we only use five imputed datasets in our final analysis.
 
     Our imputation model predicts missing values using following variables: year, country ID, the civil society regulatory environment (V-Dem), corruption (V-Dem), GDP (log; UN and World Bank), government effectiveness (World Bank), natural disaster occurrence and severity (EM-DAT), Polity IV, population (log; UN and World Bank), trade as a percent of GDP (UN and World Bank), and total ODA (AidData). We also include lags and leads (future values) of the civil society regulatory environment, corruption, GDP, trade as a percent of GDP, Polity IV, and population.
 
