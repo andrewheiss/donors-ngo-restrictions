@@ -23,7 +23,6 @@ source(here("lib", "robustness_models_definitions.R"))
 source(here("lib", "h1_model_definitions.R"))
 source(here("lib", "h2_model_definitions.R"))
 source(here("lib", "h3_model_definitions.R"))
-source(here("lib", "h4_model_definitions.R"))
 
 my.seed <- 1234
 set.seed(my.seed)
