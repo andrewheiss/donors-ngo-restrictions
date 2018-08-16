@@ -137,27 +137,11 @@ saveRDS(h1.barriers.total, file.path(raw.dir, "h1_1.rds"))
 toc()
 
 tic()
-h1.barriers.new <- mods.h1.next_year.raw.bayes.nested %>%
-  mutate(mod.h1.barriers.new = data %>% 
-           future_map(mod.h1.barriers.new.bayes, 
-                      "total.oda_log_next_year"))
-saveRDS(h1.barriers.new, file.path(raw.dir, "h1_2.rds"))
-toc()
-
-tic()
 h1.type.total <- mods.h1.next_year.raw.bayes.nested %>%
   mutate(mod.h1.type.total = data %>% 
            future_map(mod.h1.type.total.bayes, 
                       "total.oda_log_next_year"))
-saveRDS(h1.type.total, file.path(raw.dir, "h1_3.rds"))
-toc()
-
-tic()
-h1.type.new <- mods.h1.next_year.raw.bayes.nested %>%
-  mutate(mod.h1.type.new = data %>% 
-           future_map(mod.h1.type.new.bayes, 
-                      "total.oda_log_next_year"))
-saveRDS(h1.type.new, file.path(raw.dir, "h1_4.rds"))
+saveRDS(h1.type.total, file.path(raw.dir, "h1_2.rds"))
 toc()
 
 tic()
@@ -165,7 +149,7 @@ h1.csre <- mods.h1.next_year.raw.bayes.nested %>%
   mutate(mod.h1.csre = data %>% 
            future_map(mod.h1.csre.bayes, 
                       "total.oda_log_next_year"))
-saveRDS(h1.csre, file.path(raw.dir, "h1_5.rds"))
+saveRDS(h1.csre, file.path(raw.dir, "h1_3.rds"))
 toc()
 
 toc()
@@ -188,27 +172,11 @@ saveRDS(h2.barriers.total, file.path(raw.dir, "h2_1.rds"))
 toc()
 
 tic()
-h2.barriers.new <- mods.h2.next_year.raw.bayes.nested %>%
-  mutate(mod.h2.barriers.new = data %>% 
-           future_map(mod.h2.barriers.new.bayes,
-                      "prop.contentious_logit_next_year"))
-saveRDS(h2.barriers.new, file.path(raw.dir, "h2_2.rds"))
-toc()
-
-tic()
 h2.type.total <- mods.h2.next_year.raw.bayes.nested %>%
   mutate(mod.h2.type.total = data %>% 
            future_map(mod.h2.type.total.bayes,
                       "prop.contentious_logit_next_year"))
-saveRDS(h2.type.total, file.path(raw.dir, "h2_3.rds"))
-toc()
-
-tic()
-h2.type.new <- mods.h2.next_year.raw.bayes.nested %>%
-  mutate(mod.h2.type.new = data %>% 
-           future_map(mod.h2.type.new.bayes,
-                      "prop.contentious_logit_next_year"))
-saveRDS(h2.type.new, file.path(raw.dir, "h2_4.rds"))
+saveRDS(h2.type.total, file.path(raw.dir, "h2_2.rds"))
 toc()
 
 tic()
@@ -216,7 +184,7 @@ h2.csre <- mods.h2.next_year.raw.bayes.nested %>%
   mutate(mod.h2.csre = data %>% 
            future_map(mod.h2.csre.bayes,
                       "prop.contentious_logit_next_year"))
-saveRDS(h2.csre, file.path(raw.dir, "h2_5.rds"))
+saveRDS(h2.csre, file.path(raw.dir, "h2_3.rds"))
 toc()
 
 toc()
@@ -239,27 +207,11 @@ saveRDS(h3.barriers.total, file.path(raw.dir, "h3_dom_1.rds"))
 toc()
 
 tic()
-h3.barriers.new <- mods.h3.dom.next_year.raw.nested %>%
-  mutate(mod.h3.barriers.new = data %>% 
-           future_map(mod.h3.barriers.new.bayes,
-                      "prop.ngo.dom_logit_next_year"))
-saveRDS(h3.barriers.new, file.path(raw.dir, "h3_dom_2.rds"))
-toc()
-
-tic()
 h3.type.total <- mods.h3.dom.next_year.raw.nested %>%
   mutate(mod.h3.type.total = data %>% 
            future_map(mod.h3.type.total.bayes,
                       "prop.ngo.dom_logit_next_year"))
-saveRDS(h3.type.total, file.path(raw.dir, "h3_dom_3.rds"))
-toc()
-
-tic()
-h3.type.new <- mods.h3.dom.next_year.raw.nested %>%
-  mutate(mod.h3.type.new = data %>% 
-           future_map(mod.h3.type.new.bayes,
-                      "prop.ngo.dom_logit_next_year"))
-saveRDS(h3.type.new, file.path(raw.dir, "h3_dom_4.rds"))
+saveRDS(h3.type.total, file.path(raw.dir, "h3_dom_2.rds"))
 toc()
 
 tic()
@@ -267,7 +219,7 @@ h3.csre <- mods.h3.dom.next_year.raw.nested %>%
   mutate(mod.h3.csre = data %>% 
            future_map(mod.h3.csre.bayes,
                       "prop.ngo.dom_logit_next_year"))
-saveRDS(h3.csre, file.path(raw.dir, "h3_dom_5.rds"))
+saveRDS(h3.csre, file.path(raw.dir, "h3_dom_3.rds"))
 toc()
 
 toc()
@@ -290,27 +242,11 @@ saveRDS(h3.foreign.barriers.total, file.path(raw.dir, "h3_foreign_1.rds"))
 toc()
 
 tic()
-h3.foreign.barriers.new <- mods.h3.foreign.next_year.raw.nested %>%
-  mutate(mod.h3.foreign.barriers.new = data %>% 
-           future_map(mod.h3.foreign.barriers.new.bayes,
-                      "prop.ngo.foreign_logit_next_year"))
-saveRDS(h3.foreign.barriers.new, file.path(raw.dir, "h3_foreign_2.rds"))
-toc()
-
-tic()
 h3.foreign.type.total <- mods.h3.foreign.next_year.raw.nested %>%
   mutate(mod.h3.foreign.type.total = data %>% 
            future_map(mod.h3.foreign.type.total.bayes,
                       "prop.ngo.foreign_logit_next_year"))
-saveRDS(h3.foreign.type.total, file.path(raw.dir, "h3_foreign_3.rds"))
-toc()
-
-tic()
-h3.foreign.type.new <- mods.h3.foreign.next_year.raw.nested %>%
-  mutate(mod.h3.foreign.type.new = data %>% 
-           future_map(mod.h3.foreign.type.new.bayes,
-                      "prop.ngo.foreign_logit_next_year"))
-saveRDS(h3.foreign.type.new, file.path(raw.dir, "h3_foreign_4.rds"))
+saveRDS(h3.foreign.type.total, file.path(raw.dir, "h3_foreign_2.rds"))
 toc()
 
 tic()
@@ -318,7 +254,7 @@ h3.foreign.csre <- mods.h3.foreign.next_year.raw.nested %>%
   mutate(mod.h3.foreign.csre = data %>% 
            future_map(mod.h3.foreign.csre.bayes,
                       "prop.ngo.foreign_logit_next_year"))
-saveRDS(h3.foreign.csre, file.path(raw.dir, "h3_foreign_5.rds"))
+saveRDS(h3.foreign.csre, file.path(raw.dir, "h3_foreign_3.rds"))
 toc()
 
 toc()

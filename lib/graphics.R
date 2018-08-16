@@ -23,8 +23,6 @@ library(ggstance)
 # simulation.mean <- "#BD4932"  # Burnt orange
 
 model.colors <- c("black",
-                  "black",
-                  "grey50",
                   "grey50",
                   "grey80")
 

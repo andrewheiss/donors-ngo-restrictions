@@ -192,10 +192,12 @@ It's clear that imputation makes a substantial difference—note the big differe
 ```{r robust-compare-imputations, message=FALSE, warning=FALSE, cache=TRUE}
 mods.robust.check.m.next_year.raw <- df.country.aid.demean.next_year.all %>%
   nest(-m) %>%
-  mutate(mod.h1.barriers.total = data %>% map(mod.h1.barriers.total,
-                                              "total.oda_log_next_year"),
-         mod.h1.type.total = data %>% map(mod.h1.type.total,
-                                          "total.oda_log_next_year"))
+  mutate(mod.h1.barriers.total = data %>% 
+           future_map(mod.h1.barriers.total,
+                      "total.oda_log_next_year"),
+         mod.h1.type.total = data %>% 
+           future_map(mod.h1.type.total,
+                      "total.oda_log_next_year"))
 
 # Get model details and parameters
 mods.robust.check.m.next_year <- mods.robust.check.m.next_year.raw %>%
@@ -240,25 +242,33 @@ stargazer.fake(mods.robust.check.m.next_year.melded.all) %>% cat()
 ```{r robust-neutral-regulations, cache=TRUE}
 mods.robust.neutral.regs.raw <- df.country.aid.demean.next_year.all %>%
   nest(-m) %>%
-  mutate(mod.h1.neutral.reg = data %>% map(mod.h1.neutral.reg,
-                                           "total.oda_log_next_year"),
-         mod.h1.neutral.fund = data %>% map(mod.h1.neutral.fund,
-                                            "total.oda_log_next_year"),
-         mod.h2.neutral.reg = data %>% map(mod.h2.neutral.reg,
-                                           "prop.contentious_logit_next_year"),
-         mod.h2.neutral.fund = data %>% map(mod.h2.neutral.fund,
-                                            "prop.contentious_logit_next_year"))
+  mutate(mod.h1.neutral.reg = data %>% 
+           future_map(mod.h1.neutral.reg,
+                      "total.oda_log_next_year"),
+         mod.h1.neutral.fund = data %>% 
+           future_map(mod.h1.neutral.fund,
+                      "total.oda_log_next_year"),
+         mod.h2.neutral.reg = data %>% 
+           future_map(mod.h2.neutral.reg,
+                      "prop.contentious_logit_next_year"),
+         mod.h2.neutral.fund = data %>% 
+           future_map(mod.h2.neutral.fund,
+                      "prop.contentious_logit_next_year"))
 
 mods.robust.neutral.regs.raw.h3 <- df.country.aid.us.demean.next_year.both %>%
   nest(-m) %>%
-  mutate(mod.h3.dom.neutral.reg = data %>% map(mod.h3.dom.neutral.reg,
-                                               "prop.ngo.dom_logit_next_year"),
-         mod.h3.dom.neutral.fund = data %>% map(mod.h3.dom.neutral.fund,
-                                                "prop.ngo.dom_logit_next_year"),
-         mod.h3.for.neutral.reg = data %>% map(mod.h3.for.neutral.reg,
-                                               "prop.ngo.foreign_logit_next_year"),
-         mod.h3.for.neutral.fund = data %>% map(mod.h3.for.neutral.fund,
-                                                "prop.ngo.foreign_logit_next_year"))
+  mutate(mod.h3.dom.neutral.reg = data %>% 
+           future_map(mod.h3.dom.neutral.reg,
+                      "prop.ngo.dom_logit_next_year"),
+         mod.h3.dom.neutral.fund = data %>% 
+           future_map(mod.h3.dom.neutral.fund,
+                      "prop.ngo.dom_logit_next_year"),
+         mod.h3.for.neutral.reg = data %>% 
+           future_map(mod.h3.for.neutral.reg,
+                      "prop.ngo.foreign_logit_next_year"),
+         mod.h3.for.neutral.fund = data %>% 
+           future_map(mod.h3.for.neutral.fund,
+                      "prop.ngo.foreign_logit_next_year"))
 
 # Get model details and parameters
 mods.robust.neutral.regs <- mods.robust.neutral.regs.raw %>%
@@ -326,12 +336,8 @@ mods.h1.after_2.raw <- df.country.aid.demean.after_2.impute %>%
   nest(-m) %>%
   mutate(mod.h1.barriers.total = data %>% 
            future_map(mod.h1.barriers.total, "total.oda_log_next_year"),
-         mod.h1.barriers.new = data %>% 
-           future_map(mod.h1.barriers.new, "total.oda_log_next_year"),
          mod.h1.type.total = data %>% 
            future_map(mod.h1.type.total, "total.oda_log_next_year"),
-         mod.h1.type.new = data %>% 
-           future_map(mod.h1.type.new, "total.oda_log_next_year"),
          mod.h1.csre = data %>% 
            future_map(mod.h1.csre, "total.oda_log_next_year"))
 
@@ -354,12 +360,8 @@ mods.h1.after_5.raw <- df.country.aid.demean.after_5.impute %>%
   nest(-m) %>%
   mutate(mod.h1.barriers.total = data %>% 
            future_map(mod.h1.barriers.total, "total.oda_log_next_year"),
-         mod.h1.barriers.new = data %>% 
-           future_map(mod.h1.barriers.new, "total.oda_log_next_year"),
          mod.h1.type.total = data %>% 
            future_map(mod.h1.type.total, "total.oda_log_next_year"),
-         mod.h1.type.new = data %>% 
-           future_map(mod.h1.type.new, "total.oda_log_next_year"),
          mod.h1.csre = data %>% 
            future_map(mod.h1.csre, "total.oda_log_next_year"))
 
@@ -397,12 +399,8 @@ mods.h2.after_2.raw <- df.country.aid.demean.after_2.impute %>%
   nest(-m) %>%
   mutate(mod.h2.barriers.total = data %>% 
            future_map(mod.h2.barriers.total, "prop.contentious_logit_next_year"),
-         mod.h2.barriers.new = data %>% 
-           future_map(mod.h2.barriers.new, "prop.contentious_logit_next_year"),
          mod.h2.type.total = data %>% 
            future_map(mod.h2.type.total, "prop.contentious_logit_next_year"),
-         mod.h2.type.new = data %>% 
-           future_map(mod.h2.type.new, "prop.contentious_logit_next_year"),
          mod.h2.csre = data %>% 
            future_map(mod.h2.csre, "prop.contentious_logit_next_year"))
 
@@ -425,12 +423,8 @@ mods.h2.after_5.raw <- df.country.aid.demean.after_5.impute %>%
   nest(-m) %>%
   mutate(mod.h2.barriers.total = data %>% 
            future_map(mod.h2.barriers.total, "prop.contentious_logit_next_year"),
-         mod.h2.barriers.new = data %>% 
-           future_map(mod.h2.barriers.new, "prop.contentious_logit_next_year"),
          mod.h2.type.total = data %>% 
            future_map(mod.h2.type.total, "prop.contentious_logit_next_year"),
-         mod.h2.type.new = data %>% 
-           future_map(mod.h2.type.new, "prop.contentious_logit_next_year"),
          mod.h2.csre = data %>% 
            future_map(mod.h2.csre, "prop.contentious_logit_next_year"))
 
