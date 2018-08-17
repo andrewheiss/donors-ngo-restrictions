@@ -233,15 +233,13 @@ Finally, this paper has exclusively looked at how donors respond to changes in r
 
 # Appendix
 
-TODO: @fig:regulation-burden shows that since the 1990s, there has been an almost uniform increase in NGO registration requirements in both democracies and autocracies as governments routinized and streamlined state-NGO relations.[^regime] Thus, in this paper we primarily analyze the impact of restrictive laws on donor behavior. 
-
-![Proportion of countries with laws that require NGO registration and that impose additional burdens on the registration process](Output/fig-regulation-burden.pdf){#fig:regulation-burden}
-
 ## Summary statistics
 
 \small
 !INCLUDE "Output/tbl-var-summary.md"
 \normalsize
+
+\clearpage
 
 ## List of countries included
 
@@ -249,37 +247,37 @@ TODO: @fig:regulation-burden shows that since the 1990s, there has been an almos
 !INCLUDE "Output/tbl-countries.md"
 \normalsize
 
-## Model stuff
+\clearpage
 
-Fixed effects models assume that these between coefficients are zero, which leads to Bell and Jones's primary criticism of fixed effects regression—too much between-unit variance is swallowed up by fixed effects and helpful information is lost. A random effects model specified in this manner clearly separates the within from the between effects.
+## Crossed random effects multilevel modeling with time-series cross-sectional data
 
-Typical time-series-cross-sectional data analysis includes these variables as fixed effects to control out issues of heterogeneity within units. However, @BellJones:2015 forcefully (and convincingly) argue that fixed effects models eliminate too much variance and make it impossible to measure the effects of time-invariant (or slowly-variant) variables. Random effects (or multilevel) models, when properly specified, overcome these issues by decomposing the effects of variables to within- and between-effects (or time-variant and time-invariant effects). 
+Following @BellJones:2015 we use crossed random effects for country and year and use a combination of meaned and demeaned versions of each continuous variable to estimate both the within and between effects of each variable. This approach has multiple benefits. The coefficients for the demeaned variables are roughly equivalent to their corresponding coefficients in a fixed effects model, but a fixed effects model assumes that the between effect (captured by the mean variables) is 0, which is not the case. A random effects model specified in this manner is more interpretable, as it clearly separates the within and between effects (within = demeaned, between = mean). Typical time-series-cross-sectional data analysis includes these variables as fixed effects to control out issues of heterogeneity within units. However, @BellJones:2015 forcefully (and convincingly) argue that fixed effects models eliminate too much variance and make it impossible to measure the effects of time-invariant (or slowly-variant) variables. Random effects (or multilevel) models, when properly specified, overcome these issues by decomposing the effects of variables to within- and between-effects (or time-variant and time-invariant effects). 
 
+@tbl:within-between-example demonstrates the intuition behind this approach. Model 1 is a basic OLS model with country fixed effects. Model 2 is a basic OLS model with country random effects, but potentially misspecified, since the between and within effects are conflated. Model 3 is a basic OLS model with country random effects specified with between (mean; $\bar{x}_i$) and within (demeaned; $x_{it} - \bar{x}_i$) coefficients. The demeaned/within coefficients in Model 3 are identical to the fixed effects coefficients in Model 1. If rows had been dropped because of listwise deletion (like, if there were missing values in one of independent variables), the coefficients would be slightly off, since the demeaned values would have been based on group means that included the values that were dropped (e.g. all 2013 rows are dropped because of lags, but the group means included 2013). This is not a problem in these example models, but in our actual models we use multiple imputation to avoid this issue—we need the data to be as complete as possible to get the most accurate random effects.
 
+\newpage
+
+!INCLUDE "Output/tbl-within-between-example.md"
+
+Table: Example of crossed random effects multilevel modeling; dependent variable is log of ODA in previous year {#tbl:within-between-example}
+
+\clearpage
 
 ## Full model results
 
-\small
 !INCLUDE "Output/tbl-h1-coefs-bayes.md"
-\normalsize
 
 \clearpage
 
-\small
 !INCLUDE "Output/tbl-h2-coefs-bayes.md"
-\normalsize
 
 \clearpage
 
-\small
 !INCLUDE "Output/tbl-h3-domestic-coefs-bayes.md"
-\normalsize
 
 \clearpage
 
-\small
 !INCLUDE "Output/tbl-h3-foreign-coefs-bayes.md"
-\normalsize
 
 \clearpage
 
@@ -298,10 +296,10 @@ Typical time-series-cross-sectional data analysis includes these variables as fi
 
     Our imputation model predicts missing values using following variables: year, country ID, the civil society regulatory environment (V-Dem), corruption (V-Dem), GDP (log; UN and World Bank), government effectiveness (World Bank), natural disaster occurrence and severity (EM-DAT), Polity IV, population (log; UN and World Bank), trade as a percent of GDP (UN and World Bank), and total ODA (AidData). We also include lags and leads (future values) of the civil society regulatory environment, corruption, GDP, trade as a percent of GDP, Polity IV, and population.
 
-[^regime]: We define autocracies here as any country averaging less than 7 on the 0–10 Polity scale between 1981–2015.
-
 [^domestic-international]: Throughout this paper, we discuss differences between "domestic," "international," and "US-based" NGOs. Domestic NGOs are organizations that are headquartered in the country receiving foreign aid and run by local staff. International NGOs are organizations that are headquartered in a different country from the state receiving aid, while US-based NGOs are international NGOs based in the United States.
+
 [^longer-lags]: We also ran models with two- and five-year lags as robustness checks and find similar results. We include these results in the online appendix.
+
 [^oecd]: See "Guidance for analysis of the policy objectives of aid" at [https://www.oecd.org/dac/stats/crsguide.htm](https://www.oecd.org/dac/stats/crsguide.htm).
 
 [^stan]: We use weakly informative prior distributions for each of the coefficient parameters, based on a normal distribution with a mean of zero. We obtain the posterior distribution of each dependent variable with Markov Chain Monte Carlo (MCMC) sampling and simulate values from the joint posterior distribution of the coefficient parameters. We use Stan [@stan] through R [@rstan; @rstanarm; @r-project] to generate 4 MCMC chains with 2,000 iterations in each chain, 1,000 of which are used for warmup. All chains converge; we assess convergence with visual inspection, and diagnostic plots are included in the online appendix. We use the medians of the simulated values from the MCMC samples as coefficient estimates and use the 5% and 95% quantiles as lower and upper limits for 9% credible intervals. Following the suggestion of @GelmanCarlin:2014, we rely on 90% credible intervals for computational stability and for better estimation of Type-S errors. Finally, we estimate models on each of the imputed datasets individually and merge the resulting MCMC chains and posterior distributions. All plots are created with ggplot2 [@ggplot2].
