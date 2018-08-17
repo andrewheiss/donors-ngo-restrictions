@@ -121,7 +121,10 @@ tbl_example <- huxreg(mod.test.fe, mod.test.re, mod.test.re.fancy,
                       coefs = c(coefs_named, Constant = "(Intercept)"),
                       stars = NULL, statistics = c(N = "nobs"), note = "") %>% 
   insert_row(c("Country effects", "Fixed", "Random", "Random"),
-             after = nrow(.) - 2, copy_cell_props = FALSE) 
+             after = nrow(.) - 2, copy_cell_props = FALSE) %>% 
+  # Highlight identical cells
+  set_bold(2:5, 2, TRUE) %>% 
+  set_bold(c(8, 9, 12, 13), 4, TRUE)
 
 tbl_example %>% print_hux()
 
