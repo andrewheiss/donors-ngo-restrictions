@@ -90,7 +90,7 @@ This approach has multiple benefits. The coefficients for the demeaned variables
 
 Here's proof of how it works in some simple models. Model 1 is a basic OLS with country fixed effects. Model 2 is a basic OLS with country random effects, but potentially misspecified, since the between and within effects are conflated. Model 3 is a basic OLS with country random effects specified with between (mean; $\bar{x}_i$) and within (demeaned; $x_{it} - \bar{x}_i$) coefficients. The demeaned/within coefficients in Model 3 are identical to the fixed effects coefficients in Model 1. If rows had been dropped because of listwise deletion (like, if there were missing values in one of independent variables), the coefficients would be slightly off, since the demeaned values would have been based on group means that included the values that were dropped (e.g. all 2013 rows are dropped because of lags, but the group means included 2013). This isn't  a problem in these reduced models, but that's one reason we impute all the data—we need the data to be as complete as possible to get the most accurate random effects.
 
-```{r fixed-random-example, warning=FALSE, message=FALSE}
+```{r fixed-random-example, warning=FALSE, message=FALSE, results="asis"}
 mod.test.fe <- lm(total.oda_log_next_year ~ barriers.total + polity + 
                     as.factor(cowcode),
                   data = df.country.aid.demean.next_year)
