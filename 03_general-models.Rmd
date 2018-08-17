@@ -173,6 +173,7 @@ findings.summary <- read_csv(here("Data", "data_manual", "findings_summary.csv")
 
 caption <- "Summary of findings {#tbl:findings-summary}"
 findings.summary.table <- pandoc.table.return(findings.summary, justify = "lll",
+                                              keep.line.breaks = TRUE, style = "grid",
                                               caption = caption)
 
 cat(findings.summary.table)
