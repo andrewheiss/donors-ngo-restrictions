@@ -6,7 +6,7 @@ Barriers to funding,5,"- Do NGOs need prior approval from the government to rece
 - Are NGOs required to channel foreign funding through state-owned banks or government ministries? *(Yes = 1; No = 0)*
 - Are any additional restrictions on foreign support in place? *(Yes = 1; No = 0)*
 - Are all NGOs prohibited from receiving foreign funds? *(No = 0; Partially = 0.5; Yes = 1)*
-- Are a category of NGOs prohibited from receiving foreign funds? *(No = 0; Partially = 0.5; Yes = 1)*"
+- Is a category of NGOs prohibited from receiving foreign funds? *(No = 0; Partially = 0.5; Yes = 1)*"
 Barriers to advocacy,2,"- Does the law restrict NGOs from engaging in political activities? *(No = 0; Partially = 0.5; Yes = 1)*
 - Are restrictions on political activities different for NGOs receiving foreign funds? *(Less restrictive = -1; Same = 0; More restrictive = 1)*"
 Total barriers,10,—
