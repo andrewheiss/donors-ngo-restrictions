@@ -31,6 +31,33 @@ library(furrr)
 plan(multiprocess)
 ```
 
+```{r huxtable-functions}
+# Print correct huxtable table depending on the type of output.
+#
+# Technically this isn't completely necessary, since huxtable can output a
+# markdown table, which is ostensibly universal for all output types. However,
+# markdown tables are inherently limited in how fancy they can be (e.g. they
+# don't support column spans), so I instead let the regression table use
+# huxtable's fancy formatting for html and PDF and markdown everywhere else.
+if (isTRUE(getOption('knitr.in.progress'))) {
+  file_format <- rmarkdown::all_output_formats(knitr::current_input())
+} else {
+  file_format <- ""
+}
+
+print_hux <- function(x) {
+  if ("html_document" %in% file_format) {
+    print_html(x)
+  } else if ("pdf_document" %in% file_format) {
+    print_latex(x)
+  } else if ("word_document" %in% file_format) {
+    print_md(x)
+  } else {
+    print(x)
+  }
+}
+```
+
 ```{r helpful-functions}
 ```
 
@@ -64,32 +91,43 @@ This approach has multiple benefits. The coefficients for the demeaned variables
 Here's proof of how it works in some simple models. Model 1 is a basic OLS with country fixed effects. Model 2 is a basic OLS with country random effects, but potentially misspecified, since the between and within effects are conflated. Model 3 is a basic OLS with country random effects specified with between (mean; $\bar{x}_i$) and within (demeaned; $x_{it} - \bar{x}_i$) coefficients. The demeaned/within coefficients in Model 3 are identical to the fixed effects coefficients in Model 1. If rows had been dropped because of listwise deletion (like, if there were missing values in one of independent variables), the coefficients would be slightly off, since the demeaned values would have been based on group means that included the values that were dropped (e.g. all 2013 rows are dropped because of lags, but the group means included 2013). This isn't  a problem in these reduced models, but that's one reason we impute all the data—we need the data to be as complete as possible to get the most accurate random effects.
 
 ```{r fixed-random-example, warning=FALSE, message=FALSE}
-mod.test.fe <- lm(total.oda_log_next_year ~ 
-                    barriers.total + polity + gdp.capita_log + 
+mod.test.fe <- lm(total.oda_log_next_year ~ barriers.total + polity + 
                     as.factor(cowcode),
                   data = df.country.aid.demean.next_year)
 
-mod.test.re <- lmer(total.oda_log_next_year ~ 
-                      barriers.total + polity + gdp.capita_log + 
+mod.test.re <- lmer(total.oda_log_next_year ~ barriers.total + polity + 
                       (1 | cowcode),
                     data = df.country.aid.demean.next_year)
 
 mod.test.re.fancy <- lmer(total.oda_log_next_year ~ 
                             barriers.total_between + barriers.total_within +
                             polity_between + polity_within + 
-                            gdp.capita_log_between + gdp.capita_log_within +
                             (1 | cowcode),
                           data = df.country.aid.demean.next_year)
 
-coefs.to.ignore <- names(mod.test.fe$coefficients) %>% 
-  .[contains("cowcode", vars = .)]
+# Make named list of coefficients to include in the table
+all_coefs <- data_frame(model = list(mod.test.fe, mod.test.re, mod.test.re.fancy)) %>% 
+  mutate(tidy = model %>% map(tidy)) %>% 
+  unnest(tidy) %>% 
+  filter(!str_detect(term, "cowcode"), (effect != "ran_pars" | is.na(effect))) %>% 
+  filter(!duplicated(term, fromLast = TRUE)) %>% 
+  filter(term != "(Intercept)") %>% 
+  left_join(coef.names.all, by = "term")
+  
+coefs_named <- all_coefs %>% pull(term) %>% 
+  set_names(all_coefs$term_clean)
 
-huxreg(mod.test.fe, mod.test.re, mod.test.re.fancy, 
-       omit_coefs = coefs.to.ignore,
-       tidy_args = list(effects = "fixed"),
-       statistics = c(N = "nobs")) %>% 
+tbl_example <- huxreg(mod.test.fe, mod.test.re, mod.test.re.fancy, 
+                      coefs = c(coefs_named, Constant = "(Intercept)"),
+                      stars = NULL, statistics = c(N = "nobs"), note = "") %>% 
   insert_row(c("Country effects", "Fixed", "Random", "Random"),
-             after = nrow(.) - 2, copy_cell_props = FALSE)
+             after = nrow(.) - 2, copy_cell_props = FALSE) 
+
+tbl_example %>% print_hux()
+
+tbl_example %>% 
+  to_md(max_width = 100) %>% 
+  cat(file = here("Output", "tbl-within-between-example.md"))
 ```
 
 \
