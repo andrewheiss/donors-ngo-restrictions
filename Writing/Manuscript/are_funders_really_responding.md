@@ -107,8 +107,8 @@ To capture the lagged effect of each explanatory variable on amount of aid in a 
 $$
 \begin{aligned}
 \boldsymbol{H_1}&: \ln ( \text{ODA}_{\text{OECD}} )_{i, t+1} \\
-\boldsymbol{H_2}&: \ln ( \frac{\text{contentious ODA}_{\text{OECD}}}{\text{non-contentious ODA}_{\text{OECD}}} )_{i, t+1} \\
-\boldsymbol{H_3}&: \ln ( \frac{\text{Aid to (domestic or foreign) NGOs}_{\text{USAID}}}{\text{Aid to other channels}_{\text{USAID}}} )_{i, t+1}
+\boldsymbol{H_2}&: \ln \left ( \frac{\text{contentious ODA}_{\text{OECD}}}{\text{non-contentious ODA}_{\text{OECD}}} \right )_{i, t+1} \\
+\boldsymbol{H_3}&: \ln \left ( \frac{\text{Aid to (domestic or foreign) NGOs}_{\text{USAID}}}{\text{Aid to other channels}_{\text{USAID}}} \right )_{i, t+1}
 \end{aligned}
 $$ {#eq:all-models-dvs}
 \normalsize
