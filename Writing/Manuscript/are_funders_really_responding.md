@@ -7,7 +7,7 @@ author:
 - name: Andrew Heiss
   affiliation: Brigham Young University
   email: andrewheiss@gmail.com
-date: August 16, 2018
+date: August 17, 2018
 published: Please do not cite without permission.
 reference-section-title: References
 toc: false
