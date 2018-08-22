@@ -1076,3 +1076,24 @@ fig.predicted.h3.barriers.both
 fig.save.cairo(fig.predicted.h3.barriers.both, filename = "fig-predicted-h3",
                width = 5.5, height = 4)
 ```
+
+
+## Save data
+
+Save CSVs of predicted data for use in other projects
+
+```{r save-predicted}
+predictions <- tribble(
+  ~prediction,                              ~filename,
+  predicted.h1.barriers.total,              "predicted_h1_barriers_total",
+  predicted.h1.barriers.individual,         "predicted_h1_barriers_individual",
+  predicted.h2.barriers.total,              "predicted_h2_barriers_total",
+  predicted.h2.barriers.individual,         "predicted_h2_barriers_individual",
+  predicted.h3.dom.barriers.total,          "predicted_h3_dom_barriers_total",
+  predicted.h3.dom.barriers.individual,     "predicted_h3_dom_barriers_individual",
+  predicted.h3.foreign.barriers.total,      "predicted_h3_foreign_barriers_total",
+  predicted.h3.foreign.barriers.individual, "predicted_h3_foreign_barriers_individual"
+) %>% 
+  walk2(.x = .$prediction, .y = .$filename, 
+        .f = ~ write_csv(.x, path = here("Data", "data_export", paste0(.y, ".csv"))))
+```

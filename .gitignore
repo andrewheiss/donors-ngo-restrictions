@@ -1,6 +1,9 @@
 # Temporarily ignore data and output
 Output/*
 Data/data_clean/*.rds
+Data/data_export/*
+
+lib/Hurdle*
 
 # Site output
 _site/*
