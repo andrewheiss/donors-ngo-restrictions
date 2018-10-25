@@ -13,6 +13,7 @@ library(modelr)
 library(broom)
 library(broom.mixed)
 library(scales)
+library(formula.tools)
 library(here)
 
 source(here("lib", "graphics.R"))
@@ -191,11 +192,11 @@ build.formula <- function(DV, IVs) {
   reformulate(c(terms.fixed, terms.rand), response = DV)
 }
 
-get.terms <- function(IVs) {
-  terms.all <- attr(terms(IVs), "term.labels")
-  terms.clean <- stringr::str_replace_all(terms.all, "1 \\| ", "")
-  return(terms.clean)
-}
+get.rhs <- function(x) rhs.vars(x) %>% str_replace_all("1 \\| ", "")
+get.lhs <- function(x) lhs.vars(x)
+is_scaled <- function(x) "scaled:scale" %in% names(attributes(x))
+get_scale <- function(x) attr(x, "scaled:scale")
+
 
 # Meld a bunch of imputed models
 meld.imputed.models <- function(model.data, exponentiate = FALSE) {

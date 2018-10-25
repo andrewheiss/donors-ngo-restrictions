@@ -1,16 +1,14 @@
-# On my 2016 quad-core MacBook Pro with 16 GB of RAM, using all four cores with
-# plan(multiprocess), each future_map() command below takes ≈45 minutes.
+# I use a cluster of 6 DigitalOcean droplets, each with 4 CPUs and 8 GB of RAM
+# ("s-4vcpu-8gb" in the API). Here's how long each hypothesis generally takes:
 # 
-# I used a cluster of 6 DigitalOcean droplets, each with 4 CPUs and 8 GB of RAM
-# ("s-4vcpu-8gb" in the API), and each future_map() command took ≈3-9 minutes,
-# which is phenomenal!
-# 
-# Using 6 "s-4vcpu-8gb" machines, here's how long each hypothesis generally takes:
-# 
-# - H1: 2672 seconds (44.5 minutes) (idk why this takes so long?)
-# - H2: 1065 seconds (17.75 minutes)
-# - H3 (domestic): 499 seconds (8.3 minutes)
-# - H3 (foreign): 564 seconds (9.4 minutes)
+# - H1: 619 seconds (10.3 minutes; 210ish seconds per set of models)
+#   (aaaaaahhh these zero-one-inflated models take soooooooo long)
+# - H2: 1201 seconds (20 minutes; 400ish seconds per set of models)
+# - H2 (zoib): 4192 seconds (69.9 minutes; 1400ish seconds per set of models)
+# - H3 (domestic): 972 seconds (16.2 minutes; 740ish seconds per set of models)
+# - H3 (domestic; zoib): 2210 seconds (37 minutes; 740ish seconds per set of models)
+# - H3 (foreign): 851 seconds (14 minutes; 280ish seconds per set of models)
+# - H3 (foreign; zoib): 1971 seconds (32.9 minutes; 660ish seconds per set of models)
 #
 # NB: Only use as many machines as you need in the cluster. Here, we run models
 # on the original data + each of the imputations, so there are 6 models running
@@ -18,8 +16,6 @@
 # across the different machines happily, and 6 gives you the maximum speed.
 # Going beyond 6, though, slows things down substantially (like, models take
 # twice as long (or more) to run). idk why, but too big of a cluster is bad.
-# 
-# Run this as a job in RStudio 1.2+ to have this go in the background
 #
 # Once this script runs and all the *.rds files are saved, run
 # Data/run_bayes_reassemble.R to create final versions of the data
@@ -55,6 +51,7 @@ droplet(droplet1$id) %>%
   droplet_wait() %>% 
   docklet_pull("andrewheiss/docker-donors-ngo-restrictions")
 
+# Make a snapshot of the already-pulled Docker image so we don't have to keep pulling it
 droplet(droplet1$id) %>% 
   droplet_power_off() %>% 
   droplet_snapshot(name = "docker_ready") %>% 
@@ -80,7 +77,6 @@ remote_droplets <- list(droplet1, droplet2, droplet3,
                         droplet4, droplet5, droplet6)
 
 ips <- remote_droplets %>% map_chr(~ droplet(.$id)$networks$v4[[1]]$ip_address)
-
 
 # This command is run on each cluster
 # The script loads the project image
@@ -125,31 +121,38 @@ print("Running H1 models")
 
 tic("all_h1")
 mods.h1.next_year.raw.bayes.nested <- df.country.aid.demean.next_year.both %>%
-  select(one_of(c("m", "total.oda_log_next_year", h1.ivs))) %>%
-  nest(-m) 
+  select(one_of(c("m", h1.lhs, h1.rhs))) %>%
+  nest(-m) %>% 
+  # Rescale all large variables to help with model convergence (and drop
+  # incomplete cases first for more accurate scaling in non-imputed data)
+  mutate(data_scaled = data %>% map(~ {
+    .x %>% 
+      filter(complete.cases(.)) %>% 
+      mutate_at(vars(-c(cowcode, year, internal.conflict.past.5, 
+                        natural_disaster.occurrence, post.1989),
+                     -one_of(h1.lhs)),
+                funs(my_scale))
+  }))
 
 tic()
 h1.barriers.total <- mods.h1.next_year.raw.bayes.nested %>%
-  mutate(mod.h1.barriers.total = data %>% 
-           future_map(mod.h1.barriers.total.bayes, 
-                      "total.oda_log_next_year"))
-saveRDS(h1.barriers.total, file.path(raw.dir, "h1_1.rds"))
+  mutate(mod.h1.barriers.total = data_scaled %>% 
+           future_map(mod.h1.barriers.total.bayes))
+write_rds(h1.barriers.total, file.path(raw.dir, "h1_1.rds.gz"), compress = "gz")
 toc()
 
 tic()
 h1.type.total <- mods.h1.next_year.raw.bayes.nested %>%
-  mutate(mod.h1.type.total = data %>% 
-           future_map(mod.h1.type.total.bayes, 
-                      "total.oda_log_next_year"))
-saveRDS(h1.type.total, file.path(raw.dir, "h1_2.rds"))
+  mutate(mod.h1.type.total = data_scaled %>% 
+           future_map(mod.h1.type.total.bayes))
+write_rds(h1.type.total, file.path(raw.dir, "h1_2.rds.gz"), compress = "gz")
 toc()
 
 tic()
 h1.csre <- mods.h1.next_year.raw.bayes.nested %>%
-  mutate(mod.h1.csre = data %>% 
-           future_map(mod.h1.csre.bayes, 
-                      "total.oda_log_next_year"))
-saveRDS(h1.csre, file.path(raw.dir, "h1_3.rds"))
+  mutate(mod.h1.csre = data_scaled %>% 
+           future_map(mod.h1.csre.bayes))
+write_rds(h1.csre, file.path(raw.dir, "h1_3.rds.gz"), compress = "gz")
 toc()
 
 toc()
@@ -160,31 +163,73 @@ print("Running H2 models")
 
 tic("all_h2")
 mods.h2.next_year.raw.bayes.nested <- df.country.aid.demean.next_year.both %>%
-  select(one_of(c("m", "prop.contentious_logit_next_year", h2.ivs))) %>%
-  nest(-m) 
+  select(one_of(c("m", h2.lhs, h2.rhs))) %>%
+  nest(-m) %>% 
+  mutate(data_scaled = data %>% map(~ {
+    .x %>% 
+      filter(complete.cases(.)) %>% 
+      mutate_at(vars(-c(cowcode, year, starts_with("prop.contentious"), 
+                        internal.conflict.past.5, natural_disaster.occurrence, post.1989),
+                     -one_of(h2.lhs)),
+                funs(my_scale))
+  }))
 
 tic()
 h2.barriers.total <- mods.h2.next_year.raw.bayes.nested %>%
-  mutate(mod.h2.barriers.total = data %>% 
-           future_map(mod.h2.barriers.total.bayes, 
-                      "prop.contentious_logit_next_year"))
-saveRDS(h2.barriers.total, file.path(raw.dir, "h2_1.rds"))
+  mutate(mod.h2.barriers.total = data_scaled %>% 
+           future_map(mod.h2.barriers.total.bayes))
+write_rds(h2.barriers.total, file.path(raw.dir, "h2_1.rds.gz"), compress = "gz")
 toc()
 
 tic()
 h2.type.total <- mods.h2.next_year.raw.bayes.nested %>%
-  mutate(mod.h2.type.total = data %>% 
-           future_map(mod.h2.type.total.bayes,
-                      "prop.contentious_logit_next_year"))
-saveRDS(h2.type.total, file.path(raw.dir, "h2_2.rds"))
+  mutate(mod.h2.type.total = data_scaled %>% 
+           future_map(mod.h2.type.total.bayes))
+write_rds(h2.type.total, file.path(raw.dir, "h2_2.rds.gz"), compress = "gz")
 toc()
 
 tic()
 h2.csre <- mods.h2.next_year.raw.bayes.nested %>%
-  mutate(mod.h2.csre = data %>% 
-           future_map(mod.h2.csre.bayes,
-                      "prop.contentious_logit_next_year"))
-saveRDS(h2.csre, file.path(raw.dir, "h2_3.rds"))
+  mutate(mod.h2.csre = data_scaled %>% 
+           future_map(mod.h2.csre.bayes))
+write_rds(h2.csre, file.path(raw.dir, "h2_3.rds.gz"), compress = "gz")
+toc()
+
+toc()
+
+# Zero-one inflated beta models
+tic("all_h2_zoib")
+mods.h2.next_year.raw.bayes.nested.zoib <- df.country.aid.demean.next_year.both %>%
+  select(one_of(c("m", h2.lhs.zoib, h2.rhs.zoib))) %>%
+  nest(-m) %>% 
+  mutate(data_scaled = data %>% map(~ {
+    .x %>% 
+      filter(complete.cases(.)) %>% 
+      mutate_at(vars(-c(cowcode, year, starts_with("prop.contentious"), 
+                        internal.conflict.past.5, natural_disaster.occurrence, post.1989),
+                     -one_of(h2.lhs.zoib)),
+                funs(my_scale))
+  }))
+
+tic()
+h2.barriers.total.zoib <- mods.h2.next_year.raw.bayes.nested.zoib %>%
+  mutate(mod.h2.barriers.total.zoib = data_scaled %>% 
+           future_map(mod.h2.barriers.total.bayes.zoib))
+write_rds(h2.barriers.total.zoib, file.path(raw.dir, "h2_1_zoib.rds.gz"), compress = "gz")
+toc()
+
+tic()
+h2.type.total.zoib <- mods.h2.next_year.raw.bayes.nested.zoib %>%
+  mutate(mod.h2.type.total.zoib = data_scaled %>% 
+           future_map(mod.h2.type.total.bayes.zoib))
+write_rds(h2.type.total.zoib, file.path(raw.dir, "h2_2_zoib.rds.gz"), compress = "gz")
+toc()
+
+tic()
+h2.csre.zoib <- mods.h2.next_year.raw.bayes.nested.zoib %>%
+  mutate(mod.h2.csre.zoib = data_scaled %>% 
+           future_map(mod.h2.csre.bayes.zoib))
+write_rds(h2.csre.zoib, file.path(raw.dir, "h2_3_zoib.rds.gz"), compress = "gz")
 toc()
 
 toc()
@@ -195,66 +240,149 @@ print("Running H3 domestic models")
 
 tic("all_h3_domestic")
 mods.h3.dom.next_year.raw.nested <- df.country.aid.us.demean.next_year.both %>%
-  select(one_of(c("m", "prop.ngo.dom_logit_next_year", h3.ivs))) %>%
-  nest(-m) 
+  select(one_of(c("m", h3.dom.lhs, h3.dom.rhs))) %>%
+  nest(-m) %>% 
+  mutate(data_scaled = data %>% map(~ {
+    .x %>% 
+      filter(complete.cases(.)) %>% 
+      mutate_at(vars(-c(cowcode, year, starts_with("prop.ngo"), 
+                        internal.conflict.past.5, natural_disaster.occurrence),
+                     -one_of(h3.dom.lhs)),
+                funs(my_scale))
+  }))
 
 tic()
-h3.barriers.total <- mods.h3.dom.next_year.raw.nested %>%
-  mutate(mod.h3.barriers.total = data %>% 
-           future_map(mod.h3.barriers.total.bayes,
-                      "prop.ngo.dom_logit_next_year"))
-saveRDS(h3.barriers.total, file.path(raw.dir, "h3_dom_1.rds"))
+h3.dom.barriers.total <- mods.h3.dom.next_year.raw.nested %>%
+  mutate(mod.h3.barriers.total = data_scaled %>% 
+           future_map(mod.h3.dom.barriers.total.bayes))
+write_rds(h3.dom.barriers.total, file.path(raw.dir, "h3_dom_1.rds.gz"), compress = "gz")
 toc()
 
 tic()
-h3.type.total <- mods.h3.dom.next_year.raw.nested %>%
-  mutate(mod.h3.type.total = data %>% 
-           future_map(mod.h3.type.total.bayes,
-                      "prop.ngo.dom_logit_next_year"))
-saveRDS(h3.type.total, file.path(raw.dir, "h3_dom_2.rds"))
+h3.dom.type.total <- mods.h3.dom.next_year.raw.nested %>%
+  mutate(mod.h3.type.total = data_scaled %>% 
+           future_map(mod.h3.dom.type.total.bayes))
+write_rds(h3.dom.type.total, file.path(raw.dir, "h3_dom_2.rds.gz"), compress = "gz")
 toc()
 
 tic()
-h3.csre <- mods.h3.dom.next_year.raw.nested %>%
-  mutate(mod.h3.csre = data %>% 
-           future_map(mod.h3.csre.bayes,
-                      "prop.ngo.dom_logit_next_year"))
-saveRDS(h3.csre, file.path(raw.dir, "h3_dom_3.rds"))
+h3.dom.csre <- mods.h3.dom.next_year.raw.nested %>%
+  mutate(mod.h3.csre = data_scaled %>% 
+           future_map(mod.h3.dom.csre.bayes))
+write_rds(h3.dom.csre, file.path(raw.dir, "h3_dom_3.rds.gz"), compress = "gz")
 toc()
 
 toc()
+
+
+tic("all_h3_domestic_zoib")
+mods.h3.dom.next_year.raw.nested.zoib <- df.country.aid.us.demean.next_year.both %>%
+  select(one_of(c("m", h3.dom.lhs.zoib, h3.dom.rhs.zoib))) %>%
+  nest(-m) %>% 
+  mutate(data_scaled = data %>% map(~ {
+    .x %>% 
+      filter(complete.cases(.)) %>% 
+      mutate_at(vars(-c(cowcode, year, starts_with("prop.ngo"), 
+                        internal.conflict.past.5, natural_disaster.occurrence),
+                     -one_of(h3.dom.lhs.zoib)),
+                funs(my_scale))
+  }))
+
+tic()
+h3.dom.barriers.total.zoib <- mods.h3.dom.next_year.raw.nested.zoib %>%
+  mutate(mod.h3.barriers.total.zoib = data_scaled %>% 
+           future_map(mod.h3.dom.barriers.total.bayes.zoib))
+write_rds(h3.dom.barriers.total.zoib, file.path(raw.dir, "h3_dom_1_zoib.rds.gz"), compress = "gz")
+toc()
+
+tic()
+h3.dom.type.total.zoib <- mods.h3.dom.next_year.raw.nested.zoib %>%
+  mutate(mod.h3.type.total.zoib = data_scaled %>% 
+           future_map(mod.h3.dom.type.total.bayes.zoib))
+write_rds(h3.dom.type.total.zoib, file.path(raw.dir, "h3_dom_2_zoib.rds.gz"), compress = "gz")
+toc()
+
+tic()
+h3.dom.csre.zoib <- mods.h3.dom.next_year.raw.nested.zoib %>%
+  mutate(mod.h3.csre.zoib = data_scaled %>% 
+           future_map(mod.h3.dom.csre.bayes.zoib))
+write_rds(h3.dom.csre.zoib, file.path(raw.dir, "h3_dom_3_zoib.rds.gz"), compress = "gz")
+toc()
+
+toc()
+
 
 print("Running H3 foreign models")
-h3.foreign.raw.path <- here("Data", "data_cache",
-                            "models_bayes_h3_foreign.rds")
 
 tic("all_h3_foreign")
 mods.h3.foreign.next_year.raw.nested <- df.country.aid.us.demean.next_year.both %>%
-  select(one_of(c("m", "prop.ngo.foreign_logit_next_year", h3.foreign.ivs))) %>%
-  nest(-m) 
+  select(one_of(c("m", h3.foreign.lhs, h3.foreign.rhs))) %>%
+  nest(-m) %>% 
+  mutate(data_scaled = data %>% map(~ {
+    .x %>% 
+      filter(complete.cases(.)) %>% 
+      mutate_at(vars(-c(cowcode, year, starts_with("prop.ngo"), 
+                        internal.conflict.past.5, natural_disaster.occurrence),
+                     -one_of(h3.foreign.lhs)),
+                funs(my_scale))
+  }))
 
 tic()
 h3.foreign.barriers.total <- mods.h3.foreign.next_year.raw.nested %>%
-  mutate(mod.h3.foreign.barriers.total = data %>% 
-           future_map(mod.h3.foreign.barriers.total.bayes,
-                      "prop.ngo.foreign_logit_next_year"))
-saveRDS(h3.foreign.barriers.total, file.path(raw.dir, "h3_foreign_1.rds"))
+  mutate(mod.h3.foreign.barriers.total = data_scaled %>% 
+           future_map(mod.h3.foreign.barriers.total.bayes))
+write_rds(h3.foreign.barriers.total, file.path(raw.dir, "h3_foreign_1.rds.gz"), compress = "gz")
 toc()
 
 tic()
 h3.foreign.type.total <- mods.h3.foreign.next_year.raw.nested %>%
-  mutate(mod.h3.foreign.type.total = data %>% 
-           future_map(mod.h3.foreign.type.total.bayes,
-                      "prop.ngo.foreign_logit_next_year"))
-saveRDS(h3.foreign.type.total, file.path(raw.dir, "h3_foreign_2.rds"))
+  mutate(mod.h3.foreign.type.total = data_scaled %>% 
+           future_map(mod.h3.foreign.type.total.bayes))
+write_rds(h3.foreign.type.total, file.path(raw.dir, "h3_foreign_2.rds.gz"), compress = "gz")
 toc()
 
 tic()
 h3.foreign.csre <- mods.h3.foreign.next_year.raw.nested %>%
-  mutate(mod.h3.foreign.csre = data %>% 
-           future_map(mod.h3.foreign.csre.bayes,
-                      "prop.ngo.foreign_logit_next_year"))
-saveRDS(h3.foreign.csre, file.path(raw.dir, "h3_foreign_3.rds"))
+  mutate(mod.h3.foreign.csre = data_scaled %>% 
+           future_map(mod.h3.foreign.csre.bayes))
+write_rds(h3.foreign.csre, file.path(raw.dir, "h3_foreign_3.rds.gz"), compress = "gz")
+toc()
+
+toc()
+
+
+tic("all_h3_foreign_zoib")
+mods.h3.foreign.next_year.raw.nested.zoib <- df.country.aid.us.demean.next_year.both %>%
+  select(one_of(c("m", h3.foreign.lhs.zoib, h3.foreign.rhs.zoib))) %>%
+  nest(-m) %>% 
+  mutate(data_scaled = data %>% map(~ {
+    .x %>% 
+      filter(complete.cases(.)) %>% 
+      mutate_at(vars(-c(cowcode, year, starts_with("prop.ngo"), 
+                        internal.conflict.past.5, natural_disaster.occurrence),
+                     -one_of(h3.foreign.lhs.zoib)),
+                funs(my_scale))
+  }))
+
+tic()
+h3.foreign.barriers.total.zoib <- mods.h3.foreign.next_year.raw.nested.zoib %>%
+  mutate(mod.h3.foreign.barriers.total.zoib = data_scaled %>% 
+           future_map(mod.h3.foreign.barriers.total.bayes.zoib))
+write_rds(h3.foreign.barriers.total.zoib, file.path(raw.dir, "h3_foreign_1_zoib.rds.gz"), compress = "gz")
+toc()
+
+tic()
+h3.foreign.type.total.zoib <- mods.h3.foreign.next_year.raw.nested.zoib %>%
+  mutate(mod.h3.foreign.type.total.zoib = data_scaled %>% 
+           future_map(mod.h3.foreign.type.total.bayes.zoib))
+write_rds(h3.foreign.type.total.zoib, file.path(raw.dir, "h3_foreign_2_zoib.rds.gz"), compress = "gz")
+toc()
+
+tic()
+h3.foreign.csre.zoib <- mods.h3.foreign.next_year.raw.nested.zoib %>%
+  mutate(mod.h3.foreign.csre.zoib = data_scaled %>% 
+           future_map(mod.h3.foreign.csre.bayes.zoib))
+write_rds(h3.foreign.csre.zoib, file.path(raw.dir, "h3_foreign_3_zoib.rds.gz"), compress = "gz")
 toc()
 
 toc()
