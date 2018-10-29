@@ -185,7 +185,7 @@ bib:	$(BIB)
 		--filter pandoc-latex-fontsize \
 		--pdf-engine=xelatex \
 		--table-of-contents \
-		--template=$(PREFIX)/templates/xelatex-manuscript.template \
+		--template=$(PREFIX)/templates/xelatex-manuscript-ajps.template \
 		--biblatex \
 		-V $(TEX_REF) \
 		--bibliography=$(BIB_FILE) \
