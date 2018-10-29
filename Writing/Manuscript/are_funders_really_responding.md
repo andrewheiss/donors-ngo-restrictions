@@ -145,8 +145,6 @@ To control for the influence of *government capacity* in donor decision making, 
 
 Foreign aid exhibits serial correlation, since the current year's level of aid is partially dependent on previous commitments. To account for this, we include the value of the dependent variable (i.e. aid, proportion of contentious aid, etc.) in the previous year as a final control.[^longer-lags]
 
-\clearpage
-
 # Results and analysis
 
 We present the estimates of our different models in coefficient plots below. Since there are many control variables, and most are doubled up with *within* and *between* effects, we only include variables related to NGO regulations in each plot. The full results of all models are included Tables A4–7. @tbl:findings-summary summarizes the main findings for each hypothesis.
