@@ -174,15 +174,13 @@ bayesgazer <- function(models, digits = 2, caption = NULL, note = NULL, exponent
   }
   
   model.melded <- bayes.meld(models, coefs.for.top, exponentiate = exponentiate)
-  
   model.output <- model.melded$melded.summary
-  model.coefs <- model.melded$model.coefs
-  
+
   fixed.coefs <- model.output %>%
     mutate(combined = paste0(fixed.digits(med, digits),
                              "\\ \n(",
                              fixed.digits(`2.5%`, digits), ", ", fixed.digits(`97.5%`, digits),
-                             ")\\ \n",
+                             ")\\; ",
                              "*", fixed.digits(p.greater0, digits), "*")) %>%
     select(model.name, term, combined) %>%
     spread(model.name, combined) %>%

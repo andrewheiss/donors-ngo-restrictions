@@ -228,7 +228,7 @@ fig.save.cairo(fig.coefs.h1, filename = "fig-coefs-h1-bayes",
 #### Complete results in a table
 
 ```{r h1-table, results="asis", warning=FALSE}
-caption <- "The effect of anti-NGO legislation on OECD overseas development assistance (ODA) in the following year (H~1~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than zero. {#tbl:h1-coefs}"
+caption <- "The effect of anti-NGO legislation on OECD overseas development assistance (ODA) in the following year (H~1~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than zero (in italics). {#tbl:h1-coefs}"
 note <- c("Dependent variable log transformed.")
 table.h1 <- bayesgazer(mods.h1.next_year.bayes,
                        caption = caption, note = note)
@@ -536,7 +536,7 @@ fig.save.cairo(fig.coefs.h2, filename = "fig-coefs-h2-bayes",
 #### Complete results in a table
 
 ```{r h2-table, results="asis", warning=FALSE}
-caption <- "The effect of anti-NGO legislation on the proportion of OECD overseas development assistance (ODA) committed to contentious purposes in the following year (H~2~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one. {#tbl:h2-coefs}"
+caption <- "The effect of anti-NGO legislation on the proportion of OECD overseas development assistance (ODA) committed to contentious purposes in the following year (H~2~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one (in italics). {#tbl:h2-coefs}"
 note <- c("Logit-linear models. Percent change odds ratios reported.")
 
 table.h2 <- bayesgazer(mods.h2.next_year.bayes, exponentiate = TRUE,
@@ -805,7 +805,7 @@ rstan::stan_diag(model.to.check$fit, information = "divergence")
 #### Proportion to domestic NGOs
 
 ```{r h3-table-domestic, results="asis", warning=FALSE}
-caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *domestic* NGOs in the following year (H~3~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one {#tbl:h3-domestic-coefs}"
+caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *domestic* NGOs in the following year (H~3~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one (in italics) {#tbl:h3-domestic-coefs}"
 note <- c("Logit-linear models. Percent change odds ratios reported.")
 
 table.h3.domestic <- bayesgazer(mods.h3.dom.next_year.bayes,
@@ -818,7 +818,7 @@ cat(table.h3.domestic, file = here("Output", "tbl-h3-domestic-coefs-bayes.md"))
 #### Proportion to foreign NGOs
 
 ```{r h3-table-foreign, results="asis", warning=FALSE}
-caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *US-based and international* NGOs in the following year (H~3~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one {#tbl:h3-foreign-coefs}"
+caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *US-based and international* NGOs in the following year (H~3~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one (in italics) {#tbl:h3-foreign-coefs}"
 note <- c("Logit-linear models. Percent change odds ratios reported.")
 
 table.h3.domestic <- bayesgazer(mods.h3.foreign.next_year.bayes,
@@ -1279,7 +1279,7 @@ fig.save.cairo(fig.coefs.h2.zoib, filename = "fig-coefs-h2-bayes-zoib",
 #### Complete results in a table
 
 ```{r h2-table-zoib, results="asis", warning=FALSE}
-caption <- "The effect of anti-NGO legislation on the proportion of OECD overseas development assistance (ODA) committed to contentious purposes in the following year (H~2~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one. {#tbl:h2-coefs-zoib}"
+caption <- "The effect of anti-NGO legislation on the proportion of OECD overseas development assistance (ODA) committed to contentious purposes in the following year (H~2~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one (in italics). {#tbl:h2-coefs-zoib}"
 note <- c("Zero-one-inflated beta models. Odds ratios reported.")
 
 table.h2.zoib <- bayesgazer(mods.h2.next_year.bayes.zoib, exponentiate = TRUE,
@@ -1359,7 +1359,7 @@ rstan::stan_diag(model.to.check$fit, information = "divergence")
 #### Proportion to domestic NGOs
 
 ```{r h3-table-domestic-zoib, results="asis", warning=FALSE}
-caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *domestic* NGOs in the following year (H~3~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one {#tbl:h3-domestic-coefs-zoib}"
+caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *domestic* NGOs in the following year (H~3~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one (in italics) {#tbl:h3-domestic-coefs-zoib}"
 note <- c("Zero-one-inflated beta models. Odds ratios reported.")
 
 table.h3.domestic.zoib <- bayesgazer(mods.h3.dom.next_year.bayes.zoib,
@@ -1372,7 +1372,7 @@ cat(table.h3.domestic.zoib, file = here("Output", "tbl-h3-domestic-coefs-bayes-z
 #### Proportion to foreign NGOs
 
 ```{r h3-table-foreign-zoib, results="asis", warning=FALSE}
-caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *US-based and international* NGOs in the following year (H~3~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one {#tbl:h3-foreign-coefs-zoib}"
+caption <- "The effect of anti-NGO legislation on the proportion of US aid channeled through *US-based and international* NGOs in the following year (H~3~), full models. Each cell contains the parameter's posterior median, the 95% credible interval, and the probability that the parameter is greater than one (in italics) {#tbl:h3-foreign-coefs-zoib}"
 note <- c("Zero-one-inflated beta models. Odds ratios reported.")
 
 table.h3.domestic.zoib <- bayesgazer(mods.h3.foreign.next_year.bayes.zoib,
