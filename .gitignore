@@ -30,6 +30,7 @@ Writing/**/*.tex
 Writing/Manuscript/tex_out/*
 Writing/Manuscript/vc*
 Writing/Feedback*
+Writing/Submissions/*
 
 # Other folders
 Sandbox/*
