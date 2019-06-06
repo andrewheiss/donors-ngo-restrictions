@@ -8,7 +8,7 @@ author:
   affiliation: Brigham Young University
   email: andrewheiss@gmail.com
 date: October 28, 2018
-published: Please do not cite without permission.
+published: Under review.
 reference-section-title: References
 toc: false
 title-page: true
