@@ -14,7 +14,7 @@ datasets:
         affiliation: Institute for Applied Economic Research, Brasília
         email: andre.souza@ipea.gov.br
     url: http://iojournal.org/the-politics-of-private-foreign-aid-humanitarian-principles-economic-development-objectives-and-organizational-interests-in-ngo-private-aid-allocation/
-    filename: "data_raw/BuetheMajorSouza2012/ButheEtAl_ngoaid_IOrep_data"
+    filename: "raw_data/BuetheMajorSouza2012/ButheEtAl_ngoaid_IOrep_data"
     type: dta
     description: >-
       Measures distribution of private humanitarian and development aid.
@@ -35,7 +35,7 @@ datasets:
       - name: Aseem Prakash
         affiliation: University of Washington, Seattle
     url: http://ssrn.com/abstract=2529620
-    filename: "data_raw/DupuyRonPrakash2014/dpr"
+    filename: "raw_data/DupuyRonPrakash2014/dpr"
     type: csv
     description: >-
       List of dates of onset of foreign funding restrictions in 45 countries 

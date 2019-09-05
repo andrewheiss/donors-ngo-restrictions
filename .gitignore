@@ -1,7 +1,8 @@
 # Temporarily ignore data and output
 Output/*
-Data/data_clean/*.rds
-Data/data_export/*
+Data/derived_data/*.rds
+Data/exported_data/*
+data/private_data/*
 
 lib/Hurdle*
 
@@ -14,13 +15,12 @@ site_libs/*
 *_cache/*
 
 # Analysis output
-index.html
-Analysis/**/*.html
-Analysis/**/*_files/*
-Analysis/**/*_cache/*
-Data/**/*.html
-Data/**/*_files/*
-Data/**/*_cache/*
+analysis/*_files/*
+*/*_cache/*
+
+# Site output
+analysis/_site/*
+analysis/site_libs/*
 
 # Manuscript output
 Writing/**/*.docx
@@ -33,10 +33,7 @@ Writing/Feedback*
 Writing/Submissions/*
 
 # Other folders
-Sandbox/*
-Presentations/*
-Miscellaneous/*
-Readings/*
+admin/*
 
 # R stuff
 .Rproj.user
@@ -48,4 +45,3 @@ Readings/*
 .DS_Store
 .dropbox
 Icon?
-
